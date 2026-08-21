@@ -21,3 +21,13 @@ export function formatPlanLabel(planName?: string | null) {
     ? planName
     : `${planName} plan`;
 }
+
+export function formatOrgRole(role?: string | null) {
+  if (!role) {
+    return "Member";
+  }
+
+  const normalized = role.replace(/^org:/, "").replace(/_/g, " ");
+
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}

@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sidebar";
 import { BillingUsageCard } from "@/components/billing-usage-card";
 import { OrgSwitcherHeader } from "@/components/org-switcher-header";
+import { SidebarUserFooter } from "@/components/sidebar-user-footer";
 
 const buildItems = [
   { title: "Agents", href: "/agents", icon: BotIcon },
@@ -132,6 +133,8 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <BillingUsageCard />
+        <SidebarSeparator />
+        <SidebarUserFooter />
       </SidebarFooter>
 
       <SidebarRail />

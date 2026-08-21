@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <QueryProvider>
       <SidebarProvider
-        className="flex min-h-svh flex-col"
+        className="flex h-svh flex-col overflow-hidden"
         style={
           {
             "--notification-banner-height": bannerHeight,
@@ -27,9 +27,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         {showBanner ? (
           <NotificationBanner onDismiss={() => setShowBanner(false)} />
         ) : null}
-        <div className="flex min-h-0 w-full flex-1">
+        <div className="flex min-h-0 w-full flex-1 overflow-hidden">
           <AppSidebar />
-          <SidebarInset className="relative">
+          <SidebarInset className="relative overflow-y-auto">
             <SidebarTrigger className="absolute left-2 top-2 z-10" />
             <div className="flex flex-1 flex-col">{children}</div>
           </SidebarInset>

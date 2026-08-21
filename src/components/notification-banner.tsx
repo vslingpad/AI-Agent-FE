@@ -25,7 +25,7 @@ export function NotificationBanner({
   };
 
   return (
-    <div className="relative flex shrink-0 items-center justify-center border-b border-border bg-muted/50 px-12 py-2.5 text-sm">
+    <div className="relative z-20 flex shrink-0 items-center justify-center border-b border-border bg-muted/50 px-12 py-2.5 text-sm">
       <p className="text-center text-muted-foreground">{message}</p>
       <Button
         variant="ghost"

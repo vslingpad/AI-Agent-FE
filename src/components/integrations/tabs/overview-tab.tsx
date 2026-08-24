@@ -1,0 +1,157 @@
+"use client";
+
+import { useOrganization } from "@clerk/nextjs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { CapabilityChips } from "@/components/integrations/integration-utils";
+import { formatConnectedDate } from "@/lib/integrations/connector-paths";
+import { getZendeskAuthStatus } from "@/lib/integrations/zendesk-auth";
+import { Badge } from "@/components/ui/badge";
+import type {
+  ConnectorCapability,
+  ConnectorDetail,
+  IntegrationCatalogItem,
+} from "@/lib/schemas/integrations";
+
+type OverviewTabProps = {
+  connector: ConnectorDetail;
+  catalogItem: IntegrationCatalogItem | undefined;
+  enabledCapabilities: ConnectorCapability[];
+  onToggleCapability: (capability: ConnectorCapability) => void;
+};
+
+export function OverviewTab({
+  connector,
+  catalogItem,
+  enabledCapabilities,
+  onToggleCapability,
+}: OverviewTabProps) {
+  const { membership } = useOrganization();
+  const isAdmin = membership?.role === "org:admin";
+
+  return (
+    <div className="grid w-full max-w-6xl gap-4 lg:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Capabilities</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Enable what this connection provides to your organization. Agents
+            opt in per binding.
+          </p>
+        </CardHeader>
+        <CardContent className="gap-0 space-y-4">
+          {catalogItem?.capabilities.map((capability) => {
+            const enabled = enabledCapabilities.includes(capability);
+
+            return (
+              <div
+                key={capability}
+                className="flex items-center justify-between rounded-lg border border-border px-4 py-3"
+              >
+                <Label htmlFor={`cap-${capability}`} className="capitalize">
+                  {capability}
+                </Label>
+                <Switch
+                  id={`cap-${capability}`}
+                  checked={enabled}
+                  disabled={!isAdmin}
+                  onCheckedChange={() => onToggleCapability(capability)}
+                />
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Connection details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <DetailRow label="Display name" value={connector.displayName} />
+          <DetailRow label="Account" value={connector.identifier} />
+          <DetailRow
+            label="Connected by"
+            value={`${connector.connectedBy.name} on ${formatConnectedDate(connector.connectedBy.connectedAt)}`}
+          />
+          <DetailRow
+            label="Status"
+            value={connector.status.replaceAll("_", " ")}
+          />
+          {connector.externalInstanceId && (
+            <DetailRow
+              label="Instance ID"
+              value={connector.externalInstanceId}
+              mono
+            />
+          )}
+          {connector.integrationSlug === "stripe" && (
+            <DetailRow
+              label="Environment"
+              value={String(connector.config.mode ?? "live")}
+            />
+          )}
+          {connector.integrationSlug === "zendesk" && (
+            <>
+              <DetailRow
+                label="Sunshine auth"
+                value={
+                  getZendeskAuthStatus(connector.config).sunshine
+                    ? "Connected"
+                    : "Not connected"
+                }
+              />
+              <DetailRow
+                label="Global Auth"
+                value={
+                  getZendeskAuthStatus(connector.config).globalAuth
+                    ? "Connected"
+                    : "Required for Knowledge & Actions"
+                }
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {connector.integrationSlug === "zendesk" &&
+        !getZendeskAuthStatus(connector.config).globalAuth && (
+          <Card className="lg:col-span-2">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <div>
+                <p className="text-sm font-medium">
+                  Support &amp; Guide authorization
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Enable Knowledge or Actions to authorize Zendesk Global Auth.
+                </p>
+              </div>
+              <Badge variant="warning">Not authorized</Badge>
+            </CardContent>
+          </Card>
+        )}
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span
+        className={`text-sm font-medium ${mono ? "font-mono text-xs" : ""}`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}

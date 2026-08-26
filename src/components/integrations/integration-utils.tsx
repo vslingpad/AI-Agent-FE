@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckIcon, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const CAPABILITY_LABELS: Record<ConnectorCapability, string> = {
+export const CAPABILITY_LABELS: Record<ConnectorCapability, string> = {
   channel: "Channel",
   knowledge: "Knowledge",
   action: "Actions",
@@ -138,18 +138,3 @@ export function groupConnectorsBySlug<T extends { integrationSlug: string }>(
   }, {});
 }
 
-export const FAMILY_LABELS: Record<string, string> = {
-  zendesk: "Helpdesks",
-  freshdesk: "Helpdesks",
-  intercom: "Helpdesks",
-  hubspot: "Helpdesks",
-  zoho: "Helpdesks",
-  platform: "Platform",
-  actions: "Actions",
-  commerce: "Commerce",
-  gorgias: "Helpdesks",
-};
-
-export function getFamilyLabel(family: string) {
-  return FAMILY_LABELS[family] ?? "Other";
-}

@@ -7,7 +7,7 @@ import {
 } from "@/components/integrations/connector-instance-card";
 import { DeleteConnectorDialog } from "@/components/integrations/delete-connector-dialog";
 import {
-  getFamilyLabel,
+  CAPABILITY_LABELS,
   groupConnectorsBySlug,
 } from "@/components/integrations/integration-utils";
 import { RenameConnectorDialog } from "@/components/integrations/rename-connector-dialog";
@@ -16,9 +16,19 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIntegrationsHub } from "@/hooks/use-integrations";
 import type {
+  ConnectorCapability,
   IntegrationCatalogItem,
   OrgConnector,
 } from "@/lib/schemas/integrations";
+
+type CapabilityFilter = "all" | ConnectorCapability;
+
+const CAPABILITY_FILTERS: { id: CapabilityFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "channel", label: CAPABILITY_LABELS.channel },
+  { id: "knowledge", label: CAPABILITY_LABELS.knowledge },
+  { id: "action", label: CAPABILITY_LABELS.action },
+];
 
 function matchesSearch(
   query: string,
@@ -33,23 +43,43 @@ function matchesSearch(
   return values.some((value) => value?.toLowerCase().includes(normalized));
 }
 
-function filterConnectors(connectors: OrgConnector[], query: string) {
-  return connectors.filter((connector) =>
-    matchesSearch(query, [
-      connector.displayName,
-      connector.identifier,
-      connector.externalInstanceId,
-      connector.integrationSlug,
-    ])
+function matchesCapability(
+  capabilities: ConnectorCapability[],
+  filter: CapabilityFilter
+) {
+  if (filter === "all") {
+    return true;
+  }
+
+  return capabilities.includes(filter);
+}
+
+function filterConnectors(
+  connectors: OrgConnector[],
+  query: string,
+  capabilityFilter: CapabilityFilter
+) {
+  return connectors.filter(
+    (connector) =>
+      matchesCapability(connector.capabilities, capabilityFilter) &&
+      matchesSearch(query, [
+        connector.displayName,
+        connector.identifier,
+        connector.externalInstanceId,
+        connector.integrationSlug,
+      ])
   );
 }
 
 function filterCatalog(
   catalog: IntegrationCatalogItem[],
-  query: string
+  query: string,
+  capabilityFilter: CapabilityFilter
 ) {
-  return catalog.filter((item) =>
-    matchesSearch(query, [item.name, item.description, item.slug])
+  return catalog.filter(
+    (item) =>
+      matchesCapability(item.capabilities, capabilityFilter) &&
+      matchesSearch(query, [item.name, item.description, item.slug])
   );
 }
 
@@ -57,28 +87,29 @@ export function IntegrationsHubPage() {
   const { data, isLoading, isError, refetch } = useIntegrationsHub();
   const [renameTarget, setRenameTarget] = useState<OrgConnector | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<OrgConnector | null>(null);
+  const [capabilityFilter, setCapabilityFilter] =
+    useState<CapabilityFilter>("all");
   const { searchQuery } = useBuildSearchQuery();
 
   const filteredConnectors = useMemo(
-    () => (data ? filterConnectors(data.connectors, searchQuery) : []),
-    [data, searchQuery]
+    () =>
+      data
+        ? filterConnectors(data.connectors, searchQuery, capabilityFilter)
+        : [],
+    [data, searchQuery, capabilityFilter]
   );
 
   const filteredCatalog = useMemo(
-    () => (data ? filterCatalog(data.catalog, searchQuery) : []),
-    [data, searchQuery]
+    () =>
+      data
+        ? filterCatalog(data.catalog, searchQuery, capabilityFilter)
+        : [],
+    [data, searchQuery, capabilityFilter]
   );
 
   const grouped = useMemo(
     () => groupConnectorsBySlug(filteredConnectors),
     [filteredConnectors]
-  );
-
-  const families = useMemo(
-    () => [
-      ...new Set(filteredCatalog.map((item) => item.integrationFamily)),
-    ],
-    [filteredCatalog]
   );
 
   const hasResults =
@@ -119,11 +150,30 @@ export function IntegrationsHubPage() {
         )}
       </div>
 
+      <div
+        className="flex flex-wrap gap-2"
+        role="group"
+        aria-label="Filter by capability"
+      >
+        {CAPABILITY_FILTERS.map((filter) => (
+          <Button
+            key={filter.id}
+            type="button"
+            size="sm"
+            variant={capabilityFilter === filter.id ? "default" : "outline"}
+            aria-pressed={capabilityFilter === filter.id}
+            onClick={() => setCapabilityFilter(filter.id)}
+          >
+            {filter.label}
+          </Button>
+        ))}
+      </div>
+
       {!hasResults && (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-16 text-center">
           <p className="text-sm font-medium">No integrations found</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Try a different name, domain, or integration type.
+            Try a different name, domain, or capability.
           </p>
         </div>
       )}
@@ -131,7 +181,7 @@ export function IntegrationsHubPage() {
       {filteredConnectors.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-sm font-medium">Connected</h2>
-          <div className="grid grid-cols-[repeat(auto-fill,375px)] gap-4">
+          <div className="grid grid-cols-[repeat(auto-fill,370px)] gap-4">
             {filteredConnectors.map((connector) => (
               <ConnectorInstanceCard
                 key={connector.id}
@@ -145,30 +195,20 @@ export function IntegrationsHubPage() {
         </section>
       )}
 
-      {families.map((family) => {
-        const items = filteredCatalog.filter(
-          (item) => item.integrationFamily === family
-        );
-
-        if (items.length === 0) {
-          return null;
-        }
-
-        return (
-          <section key={family} className="space-y-3">
-            <h2 className="text-sm font-medium">{getFamilyLabel(family)}</h2>
-            <div className="grid grid-cols-[repeat(auto-fill,375px)] gap-4">
-              {items.map((item) => (
-                <AvailableIntegrationCard
-                  key={item.slug}
-                  item={item}
-                  connectedCount={grouped[item.slug]?.length ?? 0}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      {filteredCatalog.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium">Available</h2>
+          <div className="grid grid-cols-[repeat(auto-fill,370px)] gap-4">
+            {filteredCatalog.map((item) => (
+              <AvailableIntegrationCard
+                key={item.slug}
+                item={item}
+                connectedCount={grouped[item.slug]?.length ?? 0}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <RenameConnectorDialog
         connector={renameTarget}

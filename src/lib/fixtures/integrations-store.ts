@@ -15,7 +15,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "Zendesk",
     description:
       "Connect Zendesk Messaging for channels, Help Center for knowledge, and Support actions.",
-    integrationFamily: "zendesk",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     sortOrder: 10,
@@ -54,7 +53,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "Calendly",
     description:
       "Let agents schedule meetings and look up availability via Calendly.",
-    integrationFamily: "actions",
     capabilities: ["action"],
     status: "active",
     sortOrder: 20,
@@ -78,7 +76,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "Stripe",
     description:
       "Enable subscription lookups, billing actions, and customer portal links.",
-    integrationFamily: "actions",
     capabilities: ["action"],
     status: "active",
     sortOrder: 30,
@@ -114,7 +111,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "Freshdesk",
     description:
       "Create and update tickets, search solution articles, and add internal notes.",
-    integrationFamily: "freshdesk",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     sortOrder: 40,
@@ -146,7 +142,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "Intercom",
     description:
       "Look up conversations, tag contacts, and assign Inbox threads.",
-    integrationFamily: "intercom",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     sortOrder: 50,
@@ -170,7 +165,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "HubSpot",
     description:
       "Look up CRM records, update tickets, and share customer context.",
-    integrationFamily: "hubspot",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     sortOrder: 60,
@@ -194,7 +188,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "Zoho Desk",
     description:
       "Create tickets, update status, and search knowledge base articles.",
-    integrationFamily: "zoho",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     sortOrder: 70,
@@ -218,7 +211,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "Shopify",
     description:
       "Look up orders, refunds, and fulfillment status from your store.",
-    integrationFamily: "commerce",
     capabilities: ["action"],
     status: "active",
     sortOrder: 80,
@@ -250,7 +242,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     name: "Gorgias",
     description:
       "Create helpdesk tickets and add internal notes during conversations.",
-    integrationFamily: "gorgias",
     capabilities: ["channel", "action"],
     status: "active",
     sortOrder: 90,

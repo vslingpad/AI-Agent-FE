@@ -20,18 +20,6 @@ export const SyncStatusSchema = z.enum([
   "never",
 ]);
 
-export const IntegrationFamilySchema = z.enum([
-  "zendesk",
-  "freshdesk",
-  "intercom",
-  "hubspot",
-  "zoho",
-  "platform",
-  "actions",
-  "commerce",
-  "gorgias",
-]);
-
 export const OAuthStepStatusSchema = z.enum([
   "pending",
   "in_progress",
@@ -51,7 +39,6 @@ export const IntegrationCatalogItemSchema = z.object({
   slug: z.string(),
   name: z.string(),
   description: z.string(),
-  integrationFamily: IntegrationFamilySchema,
   capabilities: z.array(ConnectorCapabilitySchema),
   status: z.enum(["active", "beta", "deprecated"]),
   sortOrder: z.number(),

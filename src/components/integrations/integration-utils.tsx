@@ -146,6 +146,8 @@ export const FAMILY_LABELS: Record<string, string> = {
   zoho: "Helpdesks",
   platform: "Platform",
   actions: "Actions",
+  commerce: "Commerce",
+  gorgias: "Helpdesks",
 };
 
 export function getFamilyLabel(family: string) {

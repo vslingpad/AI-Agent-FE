@@ -1,7 +1,30 @@
 import type { OrgConnector } from "@/lib/schemas/integrations";
 
-export function getConnectorPath(slug: string, id: string) {
-  return `/integrations/${slug}/${id}`;
+export function getConnectorPath(
+  slug: string,
+  id: string,
+  options?: { tab?: DetailTab }
+) {
+  const path = `/integrations/${slug}/${id}`;
+
+  if (options?.tab) {
+    return `${path}?tab=${options.tab}`;
+  }
+
+  return path;
+}
+
+export function getConnectWizardPath(
+  slug: string,
+  options?: { from?: "actions" }
+) {
+  const path = `/integrations/new/${slug}`;
+
+  if (options?.from) {
+    return `${path}?from=${options.from}`;
+  }
+
+  return path;
 }
 
 export function formatConnectorIdentifier(
@@ -19,6 +42,10 @@ export function formatConnectorIdentifier(
       return (config.accountEmail as string | undefined) ?? externalInstanceId ?? "—";
     case "stripe":
       return (config.accountId as string | undefined) ?? externalInstanceId ?? "—";
+    case "freshdesk":
+      return subdomain ? `${subdomain}.freshdesk.com` : "—";
+    case "shopify":
+      return (config.shopDomain as string | undefined) ?? externalInstanceId ?? "—";
     default:
       return externalInstanceId ?? "—";
   }
@@ -79,9 +106,37 @@ export const INTEGRATION_BRAND: Record<
     abbr: "ST",
     className: "bg-violet-600 text-white",
   },
+  freshdesk: {
+    abbr: "FD",
+    className: "bg-emerald-600 text-white",
+  },
+  intercom: {
+    abbr: "IC",
+    className: "bg-sky-600 text-white",
+  },
+  hubspot: {
+    abbr: "HS",
+    className: "bg-orange-500 text-white",
+  },
+  zoho_desk: {
+    abbr: "ZO",
+    className: "bg-red-600 text-white",
+  },
+  shopify: {
+    abbr: "SH",
+    className: "bg-green-700 text-white",
+  },
+  gorgias: {
+    abbr: "GO",
+    className: "bg-indigo-600 text-white",
+  },
 };
 
 export type DetailTab = "overview" | "actions";
+
+export function isDetailTab(value: string | null | undefined): value is DetailTab {
+  return value === "overview" || value === "actions";
+}
 
 export function getDetailTabs(_slug: string): DetailTab[] {
   return ["overview", "actions"];

@@ -29,9 +29,10 @@ import { cn } from "@/lib/utils";
 
 type ConnectWizardPageProps = {
   slug: string;
+  from?: string;
 };
 
-export function ConnectWizardPage({ slug }: ConnectWizardPageProps) {
+export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
   const router = useRouter();
   const { data: hub, isLoading } = useIntegrationsHub();
   const createConnector = useCreateConnector();
@@ -82,6 +83,16 @@ export function ConnectWizardPage({ slug }: ConnectWizardPageProps) {
       : catalogItem.name);
 
   const getDefaultCapabilities = () => {
+    if (from === "actions" && catalogItem.capabilities.includes("action")) {
+      if (catalogItem.slug === "zendesk") {
+        return ["channel", "action"] as const;
+      }
+
+      return catalogItem.capabilities.filter(
+        (capability) => capability === "action"
+      );
+    }
+
     if (catalogItem.capabilities.length === 1) {
       return [...catalogItem.capabilities];
     }
@@ -128,7 +139,8 @@ export function ConnectWizardPage({ slug }: ConnectWizardPageProps) {
       router.push(
         getConnectorPath(
           result.connector.integrationSlug,
-          result.connector.id
+          result.connector.id,
+          from === "actions" ? { tab: "actions" } : undefined
         )
       );
     }

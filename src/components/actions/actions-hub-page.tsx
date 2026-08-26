@@ -1,0 +1,380 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { ChevronRightIcon, CodeXmlIcon, LayoutGridIcon } from "lucide-react";
+import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
+import { ConnectorStatusBadge } from "@/components/integrations/integration-utils";
+import { ShowAllActionsDialog } from "@/components/actions/show-all-actions-dialog";
+import { useBuildPageMeta, useBuildSearchQuery } from "@/components/build/use-build-page-meta";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCustomToolsHub } from "@/hooks/use-custom-tools";
+import { useIntegrationsHub } from "@/hooks/use-integrations";
+import { hasActionCapability } from "@/lib/actions/action-utils";
+import {
+  getConnectWizardPath,
+  getConnectorPath,
+} from "@/lib/integrations/connector-paths";
+import type {
+  IntegrationCatalogItem,
+  OrgConnector,
+} from "@/lib/schemas/integrations";
+
+const TILE_WIDTH = 92;
+const TILE_GAP = 12;
+const SHOW_ALL_WIDTH = 92;
+
+export function ActionsHubPage() {
+  const { data: hub, isLoading: hubLoading, isError: hubError, refetch } =
+    useIntegrationsHub();
+  const { data: toolsHub, isLoading: toolsLoading } = useCustomToolsHub();
+  const [showAllOpen, setShowAllOpen] = useState(false);
+  const { searchQuery } = useBuildSearchQuery();
+
+  useBuildPageMeta({
+    enableSearch: true,
+    searchPlaceholder: "Search actions…",
+  });
+
+  const actionCatalog = useMemo(
+    () =>
+      (hub?.catalog ?? [])
+        .filter((item) => hasActionCapability(item.capabilities))
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [hub]
+  );
+
+  const connectedActions = useMemo(
+    () =>
+      (hub?.connectors ?? []).filter(
+        (connector) =>
+          hasActionCapability(connector.capabilities) &&
+          connector.status !== "disconnected" &&
+          connector.status !== "pending_oauth"
+      ),
+    [hub]
+  );
+
+  const filteredCatalog = useMemo(
+    () => filterActionCatalog(actionCatalog, searchQuery),
+    [actionCatalog, searchQuery]
+  );
+
+  const filteredConnected = useMemo(
+    () => filterConnectedActions(connectedActions, hub?.catalog ?? [], searchQuery),
+    [connectedActions, hub, searchQuery]
+  );
+
+  const showCustomCard = matchesCustomActionsSearch(searchQuery);
+  const hasConnectedResults =
+    showCustomCard || filteredConnected.length > 0;
+
+  if (hubLoading || toolsLoading) {
+    return <ActionsHubSkeleton />;
+  }
+
+  if (hubError || !hub) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16">
+        <p className="text-sm text-muted-foreground">Unable to load actions.</p>
+        <Button variant="outline" onClick={() => refetch()}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-1 flex-col gap-8 px-6 pb-8 pt-6">
+      <div>
+        <h1 className="font-heading text-2xl font-semibold tracking-tight">
+          Actions
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          What your agents can do beyond answering — connector actions and
+          custom HTTP calls.
+        </p>
+      </div>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium">Connect an action</h2>
+        <ConnectActionRow
+          catalog={filteredCatalog}
+          onShowAll={() => setShowAllOpen(true)}
+        />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium">Connected actions</h2>
+        {!hasConnectedResults ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-12 text-center">
+            <p className="text-sm font-medium">No connected actions found</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try a different connector, action, or custom API name.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 max-w-5xl">
+            {showCustomCard ? (
+              <CustomActionsCard count={toolsHub?.tools.length ?? 0} />
+            ) : null}
+            {filteredConnected.map((connector) => (
+              <ConnectedActionCard
+                key={connector.id}
+                connector={connector}
+                catalog={hub.catalog}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <ShowAllActionsDialog
+        catalog={actionCatalog}
+        open={showAllOpen}
+        onOpenChange={setShowAllOpen}
+      />
+    </div>
+  );
+}
+
+function ConnectActionRow({
+  catalog,
+  onShowAll,
+}: {
+  catalog: IntegrationCatalogItem[];
+  onShowAll: () => void;
+}) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(4);
+
+  useEffect(() => {
+    const node = rowRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    const update = () => {
+      const width = node.clientWidth;
+      const maxTiles = Math.max(
+        1,
+        Math.floor((width - SHOW_ALL_WIDTH - TILE_GAP) / (TILE_WIDTH + TILE_GAP))
+      );
+      setVisibleCount(Math.min(catalog.length, maxTiles));
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [catalog.length]);
+
+  const visible = catalog.slice(0, visibleCount);
+  const remaining = Math.max(0, catalog.length - visible.length);
+
+  return (
+    <div ref={rowRef} className="flex w-full items-stretch gap-3 overflow-hidden">
+      {visible.map((item) => (
+        <Link
+          key={item.slug}
+          href={getConnectWizardPath(item.slug, { from: "actions" })}
+          className="flex w-25 shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-2 py-3 text-center transition-colors hover:bg-muted/40"
+        >
+          <IntegrationBrandIcon slug={item.slug} />
+          <span className="w-full truncate text-xs font-medium">{item.name}</span>
+        </Link>
+      ))}
+
+      <button
+        type="button"
+        onClick={onShowAll}
+        className="flex w-23 shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-2 py-3 text-center transition-colors hover:bg-muted/40"
+      >
+        <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <LayoutGridIcon className="size-4" />
+        </div>
+        {remaining > 0 ? (
+            <span className="text-[11px] text-muted-foreground">
+              {remaining} more
+            </span>
+          ) : null
+        }
+        <span className="text-xs font-medium">Show all</span>
+      </button>
+    </div>
+  );
+}
+
+function CustomActionsCard({ count }: { count: number }) {
+  return (
+    <Link href="/actions/custom" className="block h-full">
+      <Card
+        size="sm"
+        className="h-full bg-teal-50/80 ring-teal-200/80 transition-shadow hover:shadow-sm dark:bg-teal-950/20 dark:ring-teal-900/60"
+      >
+        <CardContent className="flex h-full flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-800 text-white">
+              <CodeXmlIcon className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">Custom actions</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Org-defined HTTP APIs
+                  </p>
+                </div>
+                <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-medium text-teal-900 dark:bg-teal-950/60 dark:text-teal-100">
+                  {count}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto flex items-center gap-1 pt-1 text-sm font-medium text-teal-900 dark:text-teal-200">
+            <ChevronRightIcon className="size-4" />
+            View, edit, and add custom actions
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+function ConnectedActionCard({
+  connector,
+  catalog,
+}: {
+  connector: OrgConnector;
+  catalog: IntegrationCatalogItem[];
+}) {
+  const catalogItem = catalog.find(
+    (item) => item.slug === connector.integrationSlug
+  );
+  const highlights = catalogItem?.actionHighlights ?? [];
+  const detailPath = getConnectorPath(connector.integrationSlug, connector.id, {
+    tab: "actions",
+  });
+
+  return (
+    <Link href={detailPath} className="block h-full">
+      <Card
+        size="sm"
+        className="h-full transition-shadow hover:shadow-sm"
+      >
+        <CardContent className="flex h-full flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <IntegrationBrandIcon slug={connector.integrationSlug} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">
+                    {connector.displayName}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {connector.identifier}
+                  </p>
+                </div>
+                {connector.status === "active" ? (
+                  <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                    Connected
+                  </span>
+                ) : (
+                  <ConnectorStatusBadge status={connector.status} />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {highlights.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {highlights.map((highlight) => (
+                <span
+                  key={highlight}
+                  className="inline-flex rounded-full border border-border bg-muted px-3.5 py-1.5 text-xs text-foreground"
+                >
+                  {highlight}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+function ActionsHubSkeleton() {
+  return (
+    <div className="flex flex-1 flex-col gap-8 px-6 pb-8 pt-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-36" />
+        <Skeleton className="h-4 w-full max-w-xl" />
+      </div>
+      <div className="flex gap-3">
+        <Skeleton className="h-24 w-23" />
+        <Skeleton className="h-24 w-23" />
+        <Skeleton className="h-24 w-23" />
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Skeleton className="h-44 w-full" />
+        <Skeleton className="h-44 w-full" />
+      </div>
+    </div>
+  );
+}
+
+function matchesQuery(query: string, values: Array<string | null | undefined>) {
+  if (!query.trim()) {
+    return true;
+  }
+
+  const normalized = query.trim().toLowerCase();
+
+  return values.some((value) => value?.toLowerCase().includes(normalized));
+}
+
+function filterActionCatalog(
+  catalog: IntegrationCatalogItem[],
+  query: string
+) {
+  return catalog.filter((item) =>
+    matchesQuery(query, [item.name, item.description, item.slug, ...item.actionHighlights])
+  );
+}
+
+function filterConnectedActions(
+  connectors: OrgConnector[],
+  catalog: IntegrationCatalogItem[],
+  query: string
+) {
+  return connectors.filter((connector) => {
+    const catalogItem = catalog.find(
+      (item) => item.slug === connector.integrationSlug
+    );
+
+    return matchesQuery(query, [
+      connector.displayName,
+      connector.identifier,
+      connector.integrationSlug,
+      catalogItem?.name,
+      ...(catalogItem?.actionHighlights ?? []),
+    ]);
+  });
+}
+
+function matchesCustomActionsSearch(query: string) {
+  return matchesQuery(query, [
+    "custom actions",
+    "custom",
+    "http",
+    "api",
+    "org-defined",
+  ]);
+}

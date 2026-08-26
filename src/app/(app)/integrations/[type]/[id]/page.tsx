@@ -2,9 +2,16 @@ import { ConnectorDetailPage } from "@/components/integrations/connector-detail-
 
 type PageProps = {
   params: Promise<{ type: string; id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 };
 
-export default async function IntegrationDetailRoute({ params }: PageProps) {
+export default async function IntegrationDetailRoute({
+  params,
+  searchParams,
+}: PageProps) {
   const { type, id } = await params;
-  return <ConnectorDetailPage type={type} connectorId={id} />;
+  const { tab } = await searchParams;
+  return (
+    <ConnectorDetailPage type={type} connectorId={id} initialTab={tab} />
+  );
 }

@@ -30,7 +30,13 @@ import type {
 } from "@/lib/schemas/integrations";
 import { cn } from "@/lib/utils";
 
-function IntegrationBrandIcon({ slug }: { slug: string }) {
+function IntegrationBrandIcon({
+  slug,
+  size = "md",
+}: {
+  slug: string;
+  size?: "sm" | "md";
+}) {
   const brand = INTEGRATION_BRAND[slug] ?? {
     abbr: slug.slice(0, 2).toUpperCase(),
     className: "bg-muted text-muted-foreground",
@@ -39,7 +45,8 @@ function IntegrationBrandIcon({ slug }: { slug: string }) {
   return (
     <div
       className={cn(
-        "flex size-10 shrink-0 items-center justify-center rounded-lg text-xs font-bold tracking-tight",
+        "flex shrink-0 items-center justify-center rounded-lg font-bold tracking-tight",
+        size === "sm" ? "size-6 text-[9px]" : "size-10 text-xs",
         brand.className
       )}
     >

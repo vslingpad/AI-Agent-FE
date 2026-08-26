@@ -28,6 +28,8 @@ export const IntegrationFamilySchema = z.enum([
   "zoho",
   "platform",
   "actions",
+  "commerce",
+  "gorgias",
 ]);
 
 export const OAuthStepStatusSchema = z.enum([
@@ -73,6 +75,7 @@ export const IntegrationCatalogItemSchema = z.object({
       required: z.boolean(),
     })
   ),
+  actionHighlights: z.array(z.string()).default([]),
 });
 
 export const OrgConnectorSchema = z.object({

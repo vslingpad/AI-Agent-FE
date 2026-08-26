@@ -37,6 +37,7 @@ import {
   formatConnectedDate,
   getConnectorPath,
   getDetailTabs,
+  isDetailTab,
   type DetailTab,
 } from "@/lib/integrations/connector-paths";
 import type { ActionsPermissionFix } from "@/lib/integrations/actions-permissions";
@@ -50,11 +51,13 @@ import { cn } from "@/lib/utils";
 type ConnectorDetailPageProps = {
   type: string;
   connectorId: string;
+  initialTab?: string;
 };
 
 export function ConnectorDetailPage({
   type,
   connectorId,
+  initialTab,
 }: ConnectorDetailPageProps) {
   const router = useRouter();
   const { data: connector, isLoading, isError } = useConnectorDetail(connectorId);
@@ -63,7 +66,9 @@ export function ConnectorDetailPage({
 
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+  const [activeTab, setActiveTab] = useState<DetailTab>(
+    isDetailTab(initialTab) ? initialTab : "overview"
+  );
   const [actionsSearchQuery, setActionsSearchQuery] = useState("");
   const [enabledCapabilities, setEnabledCapabilities] = useState<
     ConnectorCapability[]

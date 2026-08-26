@@ -43,6 +43,11 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: false,
       },
     ],
+    actionHighlights: [
+      "Create and update support tickets",
+      "Search Help Center articles",
+      "Add internal notes to tickets",
+    ],
   },
   {
     slug: "calendly",
@@ -61,6 +66,11 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         description: "Authorize access to your Calendly account and event types.",
         required: true,
       },
+    ],
+    actionHighlights: [
+      "Check available time slots",
+      "Book a meeting",
+      "Cancel or reschedule a booking",
     ],
   },
   {
@@ -91,6 +101,172 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         description: "Authorize secure access to your Stripe account.",
         required: true,
       },
+    ],
+    actionHighlights: [
+      "Retrieve and display invoices",
+      "Retrieve and display subscriptions",
+      "Change customer information",
+      "Manage subscriptions",
+    ],
+  },
+  {
+    slug: "freshdesk",
+    name: "Freshdesk",
+    description:
+      "Create and update tickets, search solution articles, and add internal notes.",
+    integrationFamily: "freshdesk",
+    capabilities: ["channel", "knowledge", "action"],
+    status: "active",
+    sortOrder: 40,
+    configFields: [
+      {
+        key: "subdomain",
+        label: "Freshdesk domain",
+        type: "text",
+        required: true,
+        placeholder: "acme",
+      },
+    ],
+    oauthSteps: [
+      {
+        id: "oauth",
+        label: "Freshdesk OAuth",
+        description: "Authorize ticket and knowledge access for Freshdesk.",
+        required: true,
+      },
+    ],
+    actionHighlights: [
+      "Create and update tickets",
+      "Search solution articles",
+      "Add internal notes",
+    ],
+  },
+  {
+    slug: "intercom",
+    name: "Intercom",
+    description:
+      "Look up conversations, tag contacts, and assign Inbox threads.",
+    integrationFamily: "intercom",
+    capabilities: ["channel", "knowledge", "action"],
+    status: "active",
+    sortOrder: 50,
+    configFields: [],
+    oauthSteps: [
+      {
+        id: "oauth",
+        label: "Intercom OAuth",
+        description: "Authorize Inbox, contacts, and Help Center access.",
+        required: true,
+      },
+    ],
+    actionHighlights: [
+      "Look up conversations",
+      "Tag and assign contacts",
+      "Search Help Center articles",
+    ],
+  },
+  {
+    slug: "hubspot",
+    name: "HubSpot",
+    description:
+      "Look up CRM records, update tickets, and share customer context.",
+    integrationFamily: "hubspot",
+    capabilities: ["channel", "knowledge", "action"],
+    status: "active",
+    sortOrder: 60,
+    configFields: [],
+    oauthSteps: [
+      {
+        id: "oauth",
+        label: "HubSpot OAuth",
+        description: "Authorize Service Hub tickets and CRM records.",
+        required: true,
+      },
+    ],
+    actionHighlights: [
+      "Look up contacts and companies",
+      "Create and update tickets",
+      "Search knowledge base articles",
+    ],
+  },
+  {
+    slug: "zoho_desk",
+    name: "Zoho Desk",
+    description:
+      "Create tickets, update status, and search knowledge base articles.",
+    integrationFamily: "zoho",
+    capabilities: ["channel", "knowledge", "action"],
+    status: "active",
+    sortOrder: 70,
+    configFields: [],
+    oauthSteps: [
+      {
+        id: "oauth",
+        label: "Zoho Desk OAuth",
+        description: "Authorize Zoho Desk tickets and knowledge base access.",
+        required: true,
+      },
+    ],
+    actionHighlights: [
+      "Create and update tickets",
+      "Assign departments",
+      "Search knowledge base articles",
+    ],
+  },
+  {
+    slug: "shopify",
+    name: "Shopify",
+    description:
+      "Look up orders, refunds, and fulfillment status from your store.",
+    integrationFamily: "commerce",
+    capabilities: ["action"],
+    status: "active",
+    sortOrder: 80,
+    configFields: [
+      {
+        key: "shopDomain",
+        label: "Shop domain",
+        type: "text",
+        required: true,
+        placeholder: "acme.myshopify.com",
+      },
+    ],
+    oauthSteps: [
+      {
+        id: "oauth",
+        label: "Shopify OAuth",
+        description: "Authorize order, customer, and fulfillment access.",
+        required: true,
+      },
+    ],
+    actionHighlights: [
+      "Look up order status",
+      "Retrieve fulfillment and tracking",
+      "Issue refunds",
+    ],
+  },
+  {
+    slug: "gorgias",
+    name: "Gorgias",
+    description:
+      "Create helpdesk tickets and add internal notes during conversations.",
+    integrationFamily: "gorgias",
+    capabilities: ["channel", "action"],
+    status: "active",
+    sortOrder: 90,
+    configFields: [],
+    oauthSteps: [
+      {
+        id: "oauth",
+        label: "Gorgias OAuth",
+        description: "Authorize Gorgias tickets and macros.",
+        required: true,
+      },
+    ],
+    actionHighlights: [
+      "Create and update tickets",
+      "Add internal notes",
+      "Apply macros",
     ],
   },
 ];
@@ -143,6 +319,30 @@ function createSeedConnectors(): OrgConnector[] {
       config: {
         defaultEventType: "/support-call",
         accountEmail: "sales@acme.com",
+      },
+      routingConfig: {},
+      reauthRequired: false,
+      reauthScope: null,
+      reauthReason: null,
+      lastSyncedAt: null,
+      lastSyncAttemptAt: null,
+      connectedBy: { name: "Sam Lee", connectedAt },
+      createdAt: connectedAt,
+      modifiedAt: connectedAt,
+    }),
+    enrichConnector({
+      id: "conn_stripe_acme",
+      organizationId: DEFAULT_ORG_ID,
+      integrationSlug: "stripe",
+      displayName: "Stripe",
+      externalInstanceId: "acct_1acme",
+      capabilities: ["action"],
+      enabledCapabilities: ["action"],
+      status: "active",
+      syncStatus: "never",
+      config: {
+        accountId: "acct_1acme....",
+        mode: "live",
       },
       routingConfig: {},
       reauthRequired: false,

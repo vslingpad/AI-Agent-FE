@@ -60,5 +60,10 @@ export function resolveBuildBreadcrumbs(pathname: string): BreadcrumbItem[] {
     }
   }
 
+  if (section === "actions" && segments[1] === "custom") {
+    crumbs.push({ label: "Custom actions" });
+    return crumbs;
+  }
+
   return crumbs;
 }

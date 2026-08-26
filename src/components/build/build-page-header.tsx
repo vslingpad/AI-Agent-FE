@@ -30,7 +30,7 @@ export function BuildPageHeader() {
         "sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80"
       )}
     >
-      <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 px-6 py-3 pl-12">
+      <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 px-6 py-3">
         <nav aria-label="Breadcrumb" className="min-w-0 flex-1">
           <ol className="flex flex-wrap items-center gap-1 text-sm">
             {breadcrumbs.map((item, index) => {

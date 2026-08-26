@@ -110,9 +110,6 @@ export function BillingUsageCard({
           hideArrow
           className="flex w-64 flex-col items-stretch gap-2 bg-popover p-3 text-left text-popover-foreground shadow-md ring-1 ring-foreground/10"
         >
-          <p className="text-xs font-medium text-muted-foreground">
-            Billing usage
-          </p>
           <BillingUsageDetails
             conversationsUsed={conversationsUsed}
             conversationsLimit={conversationsLimit}
@@ -128,10 +125,6 @@ export function BillingUsageCard({
 
   return (
     <div className="rounded-lg border border-sidebar-border bg-sidebar p-3 text-sidebar-foreground">
-      <p className="mb-3 text-xs font-medium text-sidebar-foreground/70">
-        Billing usage
-      </p>
-
       <BillingUsageDetails
         conversationsUsed={conversationsUsed}
         conversationsLimit={conversationsLimit}

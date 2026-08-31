@@ -1,4 +1,4 @@
-import { AgentProceduresPage } from "@/components/agents/procedures-page";
+import { AgentProceduresPage } from "@/components/agents/build/procedures/procedures-page";
 
 export default async function Page({
   params,

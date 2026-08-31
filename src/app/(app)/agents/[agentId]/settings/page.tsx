@@ -1,4 +1,4 @@
-import { AgentSettingsPage } from "@/components/agents/settings-page";
+import { AgentSettingsPage } from "@/components/agents/settings/settings-page";
 
 export default async function Page({
   params,

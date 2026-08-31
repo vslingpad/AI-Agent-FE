@@ -1,4 +1,4 @@
-import { AgentPlaygroundPage } from "@/components/agents/playground-page";
+import { AgentPlaygroundPage } from "@/components/agents/test/playground/playground-page";
 
 export default async function Page({
   params,

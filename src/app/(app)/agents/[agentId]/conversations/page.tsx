@@ -1,4 +1,4 @@
-import { AgentConversationsPage } from "@/components/agents/conversations-page";
+import { AgentConversationsPage } from "@/components/agents/conversations/conversations-page";
 
 export default async function Page({
   params,

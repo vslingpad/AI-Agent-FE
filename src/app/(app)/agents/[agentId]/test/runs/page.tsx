@@ -1,4 +1,4 @@
-import { AgentTestRunsPage } from "@/components/agents/test-pages";
+import { AgentTestRunsPage } from "@/components/agents/test/runs/test-runs-page";
 
 export default async function Page({
   params,

@@ -1,4 +1,4 @@
-import { AgentKnowledgePage } from "@/components/agents/knowledge-page";
+import { AgentKnowledgePage } from "@/components/agents/build/knowledge/knowledge-page";
 
 export default async function Page({
   params,

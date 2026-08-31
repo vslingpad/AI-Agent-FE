@@ -1,4 +1,4 @@
-import { AgentAnalyticsPage } from "@/components/agents/analytics-page";
+import { AgentAnalyticsPage } from "@/components/agents/analytics/analytics-page";
 
 export default async function Page({
   params,

@@ -1,4 +1,4 @@
-import { AgentWebChatPage } from "@/components/agents/web-chat-page";
+import { AgentWebChatPage } from "@/components/agents/deploy/web-chat/web-chat-page";
 
 export default async function Page({
   params,

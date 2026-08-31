@@ -1,4 +1,4 @@
-import { AgentHelpDeskPage } from "@/components/agents/help-desk-page";
+import { AgentHelpDeskPage } from "@/components/agents/deploy/help-desk/help-desk-page";
 
 export default async function Page({
   params,

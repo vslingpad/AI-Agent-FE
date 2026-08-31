@@ -1,4 +1,4 @@
-import { AgentImprovePage } from "@/components/agents/improve-page";
+import { AgentImprovePage } from "@/components/agents/improve/improve-page";
 
 export default async function Page({
   params,

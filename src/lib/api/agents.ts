@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api/client";
 import {
   AgentActionsListSchema,
   AgentAnalyticsSchema,
@@ -136,6 +136,10 @@ export async function updateAgent(
   const parsed = UpdateAgentCoreInputSchema.parse(input);
   const json = await apiPatch<unknown>(`/api/agents/${agentId}`, parsed);
   return AgentCoreSchema.parse(json);
+}
+
+export async function deleteAgent(agentId: string): Promise<void> {
+  await apiDelete(`/api/agents/${agentId}`);
 }
 
 export async function updateAgentSettings(

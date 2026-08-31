@@ -5,7 +5,11 @@ import {
   withAgentId,
   type AgentRouteContext,
 } from "@/lib/api/agent-routes";
-import { getAgentCore, updateAgentCore } from "@/lib/fixtures/agents-store";
+import {
+  deleteAgent,
+  getAgentCore,
+  updateAgentCore,
+} from "@/lib/fixtures/agents-store";
 import { UpdateAgentCoreInputSchema } from "@/lib/schemas/agents";
 
 export async function GET(_request: Request, context: AgentRouteContext) {
@@ -36,5 +40,17 @@ export async function PATCH(request: Request, context: AgentRouteContext) {
     }
 
     return jsonOk(core);
+  });
+}
+
+export async function DELETE(_request: Request, context: AgentRouteContext) {
+  return withAgentId(context, async (orgId, agentId) => {
+    const deleted = deleteAgent(orgId, agentId);
+
+    if (!deleted) {
+      return agentNotFound();
+    }
+
+    return jsonOk({ ok: true });
   });
 }

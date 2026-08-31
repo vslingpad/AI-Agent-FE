@@ -1391,3 +1391,14 @@ export function updateAgentHelpDesk(
   touchAgent(agent);
   return cloneWorkspace(agent).helpDesk;
 }
+
+export function deleteAgent(orgId: string, agentId: string) {
+  const index = findAgentIndex(orgId, agentId);
+
+  if (index === -1) {
+    return false;
+  }
+
+  getOrgAgents(orgId).splice(index, 1);
+  return true;
+}

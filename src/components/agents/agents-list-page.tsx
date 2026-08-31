@@ -2,12 +2,20 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { PlusIcon } from "lucide-react";
+import { EllipsisVerticalIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { Show } from "@clerk/nextjs";
 import { CreateAgentDialog } from "@/components/agents/dialogs/create-agent-dialog";
+import { DeleteAgentDialog } from "@/components/agents/dialogs/delete-agent-dialog";
+import { UpdateAgentDialog } from "@/components/agents/dialogs/update-agent-dialog";
 import { AgentErrorState, AgentListSkeleton } from "@/components/agents/agent-states";
 import { useBuildPageMeta, useBuildSearchQuery } from "@/components/build/use-build-page-meta";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useAgentsList } from "@/hooks/use-agents";
 import { agentPath } from "@/lib/navigation/agent-sections";
 import type { AgentListItem } from "@/lib/schemas/agents";
@@ -28,6 +36,8 @@ function limitChars(value: string, max: number) {
 export function AgentsListPage() {
   const { data, isLoading, isError, refetch } = useAgentsList();
   const [createOpen, setCreateOpen] = useState(false);
+  const [updateTarget, setUpdateTarget] = useState<AgentListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AgentListItem | null>(null);
   const { searchQuery } = useBuildSearchQuery();
 
   useBuildPageMeta({
@@ -97,30 +107,77 @@ export function AgentsListPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {agents.map((agent) => (
-            <AgentCard key={agent.id} agent={agent} />
+            <AgentCard
+              key={agent.id}
+              agent={agent}
+              onUpdate={setUpdateTarget}
+              onDelete={setDeleteTarget}
+            />
           ))}
         </div>
       )}
 
       <CreateAgentDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+      <UpdateAgentDialog
+        agent={updateTarget}
+        open={Boolean(updateTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setUpdateTarget(null);
+          }
+        }}
+      />
+
+      <DeleteAgentDialog
+        agent={deleteTarget}
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+      />
     </div>
   );
 }
 
-function AgentCard({ agent }: { agent: AgentListItem }) {
+function AgentCard({
+  agent,
+  onUpdate,
+  onDelete,
+}: {
+  agent: AgentListItem;
+  onUpdate: (agent: AgentListItem) => void;
+  onDelete: (agent: AgentListItem) => void;
+}) {
+  const detailPath = agentPath(agent.id);
+
   return (
-    <Link href={agentPath(agent.id)} className="group block">
-      <Card className="h-full transition-shadow group-hover:shadow-sm">
-        <CardContent className="gap-4">
-          <div className="min-w-0 space-y-1">
-            <p className="font-medium" title={agent.name}>
+    <Card className="group h-full transition-shadow hover:shadow-sm">
+      <CardContent className="gap-4">
+        <div className="flex items-start justify-between gap-2">
+          <Link href={detailPath} className="min-w-0 flex-1">
+            <p className="font-medium hover:underline" title={agent.name}>
               {limitChars(agent.name, NAME_MAX_CHARS)}
             </p>
-            <p className="text-sm text-muted-foreground" title={agent.description}>
+            <p
+              className="mt-1 text-sm text-muted-foreground"
+              title={agent.description}
+            >
               {limitChars(agent.description, DESCRIPTION_MAX_CHARS)}
             </p>
-          </div>
+          </Link>
 
+          <Show when={{ role: "org:admin" }}>
+            <AgentCardActions
+              onUpdate={() => onUpdate(agent)}
+              onDelete={() => onDelete(agent)}
+            />
+          </Show>
+        </div>
+
+        <Link href={detailPath} className="block">
           <div className="grid grid-cols-3 gap-3 text-sm">
             <Metric label="Handled" value={String(agent.tickets)} />
             <Metric
@@ -132,9 +189,63 @@ function AgentCard({ agent }: { agent: AgentListItem }) {
               value={agent.status === "draft" ? "—" : `${agent.handoffRate}%`}
             />
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AgentCardActions({
+  onUpdate,
+  onDelete,
+}: {
+  onUpdate: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const close = () => setOpen(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Agent actions"
+            className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 data-popup-open:opacity-100"
+            onClick={(event) => event.stopPropagation()}
+          />
+        }
+      >
+        <EllipsisVerticalIcon className="size-4" />
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-44 p-1">
+        <button
+          type="button"
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
+          onClick={() => {
+            close();
+            onUpdate();
+          }}
+        >
+          <PencilIcon className="size-4" />
+          Update
+        </button>
+        <button
+          type="button"
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+          onClick={() => {
+            close();
+            onDelete();
+          }}
+        >
+          <Trash2Icon className="size-4" />
+          Delete
+        </button>
+      </PopoverContent>
+    </Popover>
   );
 }
 

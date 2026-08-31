@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@clerk/nextjs";
 import {
   createAgent,
+  deleteAgent,
   getAgent,
   getAgentActions,
   getAgentAnalytics,
@@ -168,6 +169,21 @@ export function useUpdateAgent(agentId: string) {
         agentSectionKey(organization?.id, agentId, "core"),
         core
       );
+      invalidateAgentList(queryClient, organization?.id);
+    },
+  });
+}
+
+export function useDeleteAgent() {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: (agentId: string) => deleteAgent(agentId),
+    onSuccess: (_result, agentId) => {
+      queryClient.removeQueries({
+        queryKey: ["agents", organization?.id, agentId],
+      });
       invalidateAgentList(queryClient, organization?.id);
     },
   });

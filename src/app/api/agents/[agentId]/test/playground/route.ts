@@ -4,16 +4,17 @@ import {
   withAgentId,
   type AgentRouteContext,
 } from "@/lib/api/agent-routes";
-import { getAgentPlayground } from "@/lib/fixtures/agents-store";
+import { createPlaygroundSession } from "@/lib/fixtures/agents-store";
 
-export async function GET(_request: Request, context: AgentRouteContext) {
+export async function POST(_request: Request, context: AgentRouteContext) {
   return withAgentId(context, async (orgId, agentId) => {
-    const playground = getAgentPlayground(orgId, agentId);
+    const session = createPlaygroundSession(orgId, agentId);
 
-    if (!playground) {
+    if (!session) {
       return agentNotFound();
     }
 
-    return jsonOk(playground);
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    return jsonOk(session, { status: 201 });
   });
 }

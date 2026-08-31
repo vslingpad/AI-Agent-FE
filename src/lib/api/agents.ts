@@ -7,6 +7,10 @@ import {
   AgentImproveListSchema,
   AgentKnowledgeSchema,
   AgentPlaygroundSchema,
+  PlaygroundSessionSchema,
+  SendPlaygroundMessageInputSchema,
+  SendPlaygroundMessageResponseSchema,
+  UpdatePlaygroundSessionInputSchema,
   AgentProceduresListSchema,
   AgentSettingsSchema,
   AgentTestCasesListSchema,
@@ -29,6 +33,9 @@ import {
   type AgentImproveList,
   type AgentKnowledge,
   type AgentPlayground,
+  type PlaygroundSession,
+  type SendPlaygroundMessageInput,
+  type UpdatePlaygroundSessionInput,
   type AgentProceduresList,
   type AgentSettings,
   type AgentsList,
@@ -121,6 +128,47 @@ export async function getAgentTestRuns(agentId: string) {
 export async function getAgentPlayground(agentId: string): Promise<AgentPlayground> {
   const json = await apiGet<unknown>(`/api/agents/${agentId}/test/playground`);
   return AgentPlaygroundSchema.parse(json);
+}
+
+export async function createPlaygroundSession(agentId: string): Promise<PlaygroundSession> {
+  const json = await apiPost<unknown>(`/api/agents/${agentId}/test/playground`, {});
+  return PlaygroundSessionSchema.parse(json);
+}
+
+export async function getPlaygroundSession(
+  agentId: string,
+  sessionId: string
+): Promise<PlaygroundSession> {
+  const json = await apiGet<unknown>(
+    `/api/agents/${agentId}/test/playground/${sessionId}`
+  );
+  return PlaygroundSessionSchema.parse(json);
+}
+
+export async function updatePlaygroundSession(
+  agentId: string,
+  sessionId: string,
+  input: UpdatePlaygroundSessionInput
+): Promise<PlaygroundSession> {
+  const parsed = UpdatePlaygroundSessionInputSchema.parse(input);
+  const json = await apiPatch<unknown>(
+    `/api/agents/${agentId}/test/playground/${sessionId}`,
+    parsed
+  );
+  return PlaygroundSessionSchema.parse(json);
+}
+
+export async function sendPlaygroundMessage(
+  agentId: string,
+  sessionId: string,
+  input: SendPlaygroundMessageInput
+): Promise<PlaygroundSession> {
+  const parsed = SendPlaygroundMessageInputSchema.parse(input);
+  const json = await apiPost<unknown>(
+    `/api/agents/${agentId}/test/playground/${sessionId}/messages`,
+    parsed
+  );
+  return SendPlaygroundMessageResponseSchema.parse(json).session;
 }
 
 export async function createAgent(input: CreateAgentInput): Promise<AgentCore> {

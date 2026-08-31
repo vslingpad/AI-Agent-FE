@@ -1044,6 +1044,211 @@ export function getAgentPlayground(orgId: string, agentId: string) {
   };
 }
 
+type StoredPlaygroundSession = {
+  id: string;
+  agentId: string;
+  orgId: string;
+  sessionNumber: number;
+  createdAt: string;
+  promptOverride: string | null;
+  messages: Array<{
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+    at: string;
+  }>;
+  billed: boolean;
+};
+
+const playgroundSessions = new Map<string, StoredPlaygroundSession[]>();
+const playgroundSessionCounters = new Map<string, number>();
+
+function playgroundSessionsKey(orgId: string, agentId: string) {
+  return `${orgId}:${agentId}`;
+}
+
+function buildPlaygroundPlan(agent: AgentWorkspace) {
+  const { remainingCredits, includedCredits } = agent.analytics;
+  const allowOverage = true;
+
+  let canSendMessages = true;
+  let blockReason: string | null = null;
+
+  if (remainingCredits <= 0 && !allowOverage) {
+    canSendMessages = false;
+    blockReason =
+      "Included conversations used. Enable overage on Billing or upgrade your plan.";
+  }
+
+  return {
+    includedCredits,
+    remainingCredits,
+    allowOverage,
+    canSendMessages,
+    blockReason,
+  };
+}
+
+function toPlaygroundSession(
+  orgId: string,
+  agent: AgentWorkspace,
+  session: StoredPlaygroundSession
+) {
+  const effectivePrompt = session.promptOverride ?? agent.settings.systemPrompt;
+
+  return {
+    id: session.id,
+    agentId: agent.id,
+    agentName: agent.name,
+    sessionNumber: session.sessionNumber,
+    createdAt: session.createdAt,
+    productionPrompt: agent.settings.systemPrompt,
+    promptOverride: session.promptOverride,
+    effectivePrompt,
+    messages: session.messages,
+    billed: session.billed,
+    plan: buildPlaygroundPlan(agent),
+  };
+}
+
+function mockPlaygroundReply(prompt: string, agentName: string) {
+  const lower = prompt.toLowerCase();
+
+  if (lower.includes("order") || lower.includes("track")) {
+    return "Order 11902 is with UPS and out for delivery today. Tracking number 1Z999AA10123456784.";
+  }
+
+  if (lower.includes("refund")) {
+    return "Refunds are issued within 5–7 business days after approval. Sale items follow a 14-day window. I can start a refund if you share the order ID.";
+  }
+
+  return `${agentName} here. I can help with that from the knowledge base. Could you share a bit more detail, or an order ID if this is about a purchase?`;
+}
+
+export function createPlaygroundSession(orgId: string, agentId: string) {
+  const agent = findAgent(orgId, agentId);
+
+  if (!agent) {
+    return null;
+  }
+
+  const key = playgroundSessionsKey(orgId, agentId);
+  const sessionNumber = (playgroundSessionCounters.get(key) ?? 0) + 1;
+  playgroundSessionCounters.set(key, sessionNumber);
+
+  const session: StoredPlaygroundSession = {
+    id: `pg-${agentId}-${sessionNumber}-${Date.now()}`,
+    agentId,
+    orgId,
+    sessionNumber,
+    createdAt: new Date().toISOString(),
+    promptOverride: null,
+    messages: [],
+    billed: false,
+  };
+
+  const sessions = playgroundSessions.get(key) ?? [];
+  sessions.unshift(session);
+  playgroundSessions.set(key, sessions);
+
+  return toPlaygroundSession(orgId, agent, session);
+}
+
+export function getPlaygroundSession(
+  orgId: string,
+  agentId: string,
+  sessionId: string
+) {
+  const agent = findAgent(orgId, agentId);
+
+  if (!agent) {
+    return null;
+  }
+
+  const sessions = playgroundSessions.get(playgroundSessionsKey(orgId, agentId)) ?? [];
+  const session = sessions.find((item) => item.id === sessionId);
+
+  if (!session) {
+    return null;
+  }
+
+  return toPlaygroundSession(orgId, agent, session);
+}
+
+export function updatePlaygroundSession(
+  orgId: string,
+  agentId: string,
+  sessionId: string,
+  input: { promptOverride: string | null }
+) {
+  const agent = findAgent(orgId, agentId);
+
+  if (!agent) {
+    return null;
+  }
+
+  const sessions = playgroundSessions.get(playgroundSessionsKey(orgId, agentId)) ?? [];
+  const session = sessions.find((item) => item.id === sessionId);
+
+  if (!session) {
+    return null;
+  }
+
+  session.promptOverride = input.promptOverride;
+  return toPlaygroundSession(orgId, agent, session);
+}
+
+export function sendPlaygroundMessage(
+  orgId: string,
+  agentId: string,
+  sessionId: string,
+  content: string
+) {
+  const agent = findAgent(orgId, agentId);
+
+  if (!agent) {
+    return null;
+  }
+
+  const plan = buildPlaygroundPlan(agent);
+
+  if (!plan.canSendMessages) {
+    return { error: plan.blockReason ?? "Conversation credits unavailable." } as const;
+  }
+
+  const sessions = playgroundSessions.get(playgroundSessionsKey(orgId, agentId)) ?? [];
+  const session = sessions.find((item) => item.id === sessionId);
+
+  if (!session) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+
+  session.messages.push({
+    id: `u-${Date.now()}`,
+    role: "user",
+    content: content.trim(),
+    at: now,
+  });
+
+  const replyContent = mockPlaygroundReply(content, agent.name);
+
+  session.messages.push({
+    id: `a-${Date.now() + 1}`,
+    role: "assistant",
+    content: replyContent,
+    at: new Date().toISOString(),
+  });
+
+  if (!session.billed) {
+    session.billed = true;
+    agent.analytics.remainingCredits = Math.max(0, agent.analytics.remainingCredits - 1);
+  }
+
+  return { session: toPlaygroundSession(orgId, agent, session) } as const;
+}
+
 /** @deprecated Use section getters instead */
 export function getAgentWorkspace(orgId: string, agentId: string): AgentWorkspace | null {
   const agent = findAgent(orgId, agentId);

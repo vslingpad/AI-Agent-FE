@@ -312,6 +312,48 @@ export const AgentTestRunsListSchema = z.object({
   testRuns: z.array(TestRunSchema),
 });
 
+export const PlaygroundPlanSchema = z.object({
+  includedCredits: z.number(),
+  remainingCredits: z.number(),
+  allowOverage: z.boolean(),
+  canSendMessages: z.boolean(),
+  blockReason: z.string().nullable(),
+});
+
+export const PlaygroundMessageSchema = z.object({
+  id: z.string(),
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+  at: z.string(),
+});
+
+export const PlaygroundSessionSchema = z.object({
+  id: z.string(),
+  agentId: z.string(),
+  agentName: z.string(),
+  sessionNumber: z.number(),
+  createdAt: z.string(),
+  productionPrompt: z.string(),
+  promptOverride: z.string().nullable(),
+  effectivePrompt: z.string(),
+  messages: z.array(PlaygroundMessageSchema),
+  billed: z.boolean(),
+  plan: PlaygroundPlanSchema,
+});
+
+export const UpdatePlaygroundSessionInputSchema = z.object({
+  promptOverride: z.string().max(8000).nullable(),
+});
+
+export const SendPlaygroundMessageInputSchema = z.object({
+  content: z.string().min(1).max(4000),
+});
+
+export const SendPlaygroundMessageResponseSchema = z.object({
+  session: PlaygroundSessionSchema,
+});
+
+/** @deprecated Use PlaygroundSessionSchema via POST /test/playground */
 export const AgentPlaygroundSchema = z.object({
   name: z.string(),
   remainingCredits: z.number(),
@@ -431,6 +473,15 @@ export type AgentCore = z.infer<typeof AgentCoreSchema>;
 export type AgentWorkspace = z.infer<typeof AgentWorkspaceSchema>;
 export type AgentsList = z.infer<typeof AgentsListSchema>;
 export type AgentPlayground = z.infer<typeof AgentPlaygroundSchema>;
+export type PlaygroundPlan = z.infer<typeof PlaygroundPlanSchema>;
+export type PlaygroundMessage = z.infer<typeof PlaygroundMessageSchema>;
+export type PlaygroundSession = z.infer<typeof PlaygroundSessionSchema>;
+export type UpdatePlaygroundSessionInput = z.infer<
+  typeof UpdatePlaygroundSessionInputSchema
+>;
+export type SendPlaygroundMessageInput = z.infer<
+  typeof SendPlaygroundMessageInputSchema
+>;
 export type CreateAgentInput = z.infer<typeof CreateAgentInputSchema>;
 export type UpdateAgentCoreInput = z.infer<typeof UpdateAgentCoreInputSchema>;
 export type UpdateAgentSettingsInput = z.infer<typeof UpdateAgentSettingsInputSchema>;

@@ -58,9 +58,6 @@ export function AgentWorkspaceShell({
                   {data.name}
                 </h1>
               </div>
-              <p className="truncate text-xs text-muted-foreground">
-                {data.description}
-              </p>
             </div>
           </div>
         </div>

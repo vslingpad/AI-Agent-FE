@@ -1,253 +1,420 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { ChatMessageContent } from "@/components/agents/test/playground/chat-message-content";
+import {
+  BotIcon,
+  LoaderCircleIcon,
+  RotateCcwIcon,
+} from "lucide-react";
 import { AgentErrorState, AgentPlaygroundSkeleton } from "@/components/agents/agent-states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAgentPlayground } from "@/hooks/use-agents";
+import { Label } from "@/components/ui/label";
+import {
+  useCreatePlaygroundSession,
+  useSendPlaygroundMessage,
+  useUpdatePlaygroundSession,
+} from "@/hooks/use-agents";
+import type { PlaygroundSession } from "@/lib/schemas/agents";
 import { cn } from "@/lib/utils";
 
-type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
-
-type DebugState = {
-  intent: string;
-  modelTier: string;
-  modelName: string;
-  procedure: string;
-  sources: string[];
-  confidence: number;
-  tools: string[];
-};
-
-const starterDebug: DebugState = {
-  intent: "—",
-  modelTier: "medium",
-  modelName: "claude-sonnet",
-  procedure: "None",
-  sources: [],
-  confidence: 0,
-  tools: [],
-};
+const promptTextareaClassName =
+  "min-h-0 w-full flex-1 resize-none overflow-y-auto rounded-lg border border-input bg-transparent px-3 py-2 text-xs leading-relaxed shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export function AgentPlaygroundPage({ agentId }: { agentId: string }) {
-  const { data, isLoading, isError, refetch } = useAgentPlayground(agentId);
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [debug, setDebug] = useState<DebugState>(starterDebug);
-  const [busy, setBusy] = useState(false);
-  const [session, setSession] = useState(1);
+  const {
+    mutate,
+    data: session,
+    isPending,
+    isError,
+    reset,
+  } = useCreatePlaygroundSession(agentId);
 
-  if (isLoading) {
+  useEffect(() => {
+    reset();
+    mutate();
+  }, [agentId, mutate, reset]);
+
+  if (isPending && !session) {
     return <AgentPlaygroundSkeleton />;
   }
 
-  if (isError || !data) {
+  if (isError && !session) {
     return (
-      <AgentErrorState message="Unable to load playground." onRetry={() => refetch()} />
+      <AgentErrorState
+        message="Unable to start playground session."
+        onRetry={() => {
+          reset();
+          mutate();
+        }}
+      />
     );
   }
+
+  if (!session) {
+    return <AgentPlaygroundSkeleton />;
+  }
+
+  return (
+    <PlaygroundWorkspace
+      key={session.id}
+      agentId={agentId}
+      session={session}
+      onNewSession={() => mutate()}
+      startingSession={isPending}
+    />
+  );
+}
+
+function PlaygroundWorkspace({
+  agentId,
+  session: initialSession,
+  onNewSession,
+  startingSession,
+}: {
+  agentId: string;
+  session: PlaygroundSession;
+  onNewSession: () => void;
+  startingSession: boolean;
+}) {
+  const [session, setSession] = useState(initialSession);
+  const [input, setInput] = useState("");
+  const sendMessage = useSendPlaygroundMessage(agentId, session.id);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSession(initialSession);
+    setInput("");
+  }, [initialSession]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [session.messages.length, sendMessage.isPending]);
 
   const send = async () => {
     const text = input.trim();
 
-    if (!text || busy) {
+    if (!text || sendMessage.isPending || !session.plan.canSendMessages) {
       return;
     }
 
-    const userMessage: ChatMessage = {
-      id: `u-${Date.now()}`,
-      role: "user",
-      content: text,
-    };
-
-    setMessages((current) => [...current, userMessage]);
     setInput("");
-    setBusy(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 700));
-
-    const reply = mockReply(text, data.name);
-    setMessages((current) => [
-      ...current,
-      { id: `a-${Date.now()}`, role: "assistant", content: reply.content },
-    ]);
-    setDebug(reply.debug);
-    setBusy(false);
-  };
-
-  const newTest = () => {
-    setMessages([]);
-    setDebug(starterDebug);
-    setSession((value) => value + 1);
+    const updated = await sendMessage.mutateAsync({ content: text });
+    setSession(updated);
   };
 
   return (
     <div className="flex h-[calc(100svh-var(--notification-banner-height)-3.5rem)] min-h-[32rem] flex-col">
-      <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-3">
-        <div>
-          <h1 className="font-heading text-lg font-semibold">Playground</h1>
-          <p className="text-xs text-muted-foreground">
-            Session {session} · first AI reply uses 1 conversation credit ·{" "}
-            {data.remainingCredits} remaining
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={newTest}>
-          New test
-        </Button>
-      </div>
-
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[1fr_280px]">
-        <div className="flex min-h-0 flex-col">
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-4">
-            {messages.length === 0 ? (
-              <p className="pt-8 text-sm text-muted-foreground">
-                Send a customer message to see how {data.name} answers, which
-                sources it uses, and which procedure or tool it calls.
-              </p>
-            ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "max-w-[80%] rounded-xl px-3 py-2 text-sm",
-                    message.role === "user"
-                      ? "ml-auto bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  )}
-                >
-                  {message.content}
-                </div>
-              ))
-            )}
-            {busy ? (
-              <p className="text-xs text-muted-foreground">Thinking…</p>
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-heading text-lg font-semibold">Playground</h1>
+            {session.billed ? (
+              <Badge variant="muted">Billable</Badge>
             ) : null}
           </div>
-
-          <form
-            className="flex gap-2 border-t border-border p-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void send();
-            }}
-          >
-            <input
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask as a customer…"
-              className="h-9 min-w-0 flex-1 rounded-md border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            />
-            <Button type="submit" disabled={busy || !input.trim()}>
-              Send
-            </Button>
-          </form>
+          <p className="text-xs text-muted-foreground">
+            Session {session.sessionNumber} ·{" "}
+            {session.plan.remainingCredits.toLocaleString()} of{" "}
+            {session.plan.includedCredits.toLocaleString()} conversations remaining
+            {" · "}credits deducted for substantive AI replies only
+          </p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onNewSession}
+          disabled={startingSession}
+        >
+          {startingSession ? (
+            <>
+              <LoaderCircleIcon className="animate-spin" />
+              Starting…
+            </>
+          ) : (
+            "New test"
+          )}
+        </Button>
+      </header>
 
-        <aside className="hidden overflow-y-auto border-l border-border p-4 text-sm lg:block">
-          <p className="mb-3 font-medium">Debug</p>
-          <dl className="space-y-3">
-            <DebugRow label="Intent" value={debug.intent} />
-            <DebugRow
-              label="Model"
-              value={`${debug.modelTier} · ${debug.modelName}`}
-            />
-            <div>
-              <dt className="text-xs text-muted-foreground">Procedure</dt>
-              <dd className="mt-0.5">{debug.procedure}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Tools</dt>
-              <dd className="mt-1 flex flex-wrap gap-1">
-                {debug.tools.length === 0 ? (
-                  <span>—</span>
-                ) : (
-                  debug.tools.map((tool) => (
-                    <Badge key={tool} variant="outline">
-                      {tool}
-                    </Badge>
-                  ))
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Sources</dt>
-              <dd className="mt-1 space-y-1">
-                {debug.sources.length === 0
-                  ? "—"
-                  : debug.sources.map((source) => (
-                      <p key={source}>{source}</p>
-                    ))}
-              </dd>
-            </div>
-            <DebugRow
-              label="Confidence"
-              value={debug.confidence ? `${Math.round(debug.confidence * 100)}%` : "—"}
-            />
-          </dl>
-        </aside>
+      {!session.plan.canSendMessages && session.plan.blockReason ? (
+        <div className="border-b border-destructive/20 bg-destructive/5 px-6 py-3">
+          <p className="text-sm text-destructive">{session.plan.blockReason}</p>
+          <Button variant="link" className="h-auto px-0 text-destructive" render={<Link href="/billing" />}>
+            View billing
+          </Button>
+        </div>
+      ) : null}
+
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_350px]">
+        <ChatPanel
+          agentName={session.agentName}
+          messages={session.messages}
+          input={input}
+          onInputChange={setInput}
+          onSend={() => void send()}
+          busy={sendMessage.isPending}
+          disabled={!session.plan.canSendMessages}
+          scrollRef={scrollRef}
+        />
+
+        <PromptPanel
+          agentId={agentId}
+          sessionId={session.id}
+          productionPrompt={session.productionPrompt}
+          promptOverride={session.promptOverride}
+          onSessionUpdate={setSession}
+        />
       </div>
     </div>
   );
 }
 
-function DebugRow({ label, value }: { label: string; value: string }) {
+function ChatPanel({
+  agentName,
+  messages,
+  input,
+  onInputChange,
+  onSend,
+  busy,
+  disabled,
+  scrollRef,
+}: {
+  agentName: string;
+  messages: PlaygroundSession["messages"];
+  input: string;
+  onInputChange: (value: string) => void;
+  onSend: () => void;
+  busy: boolean;
+  disabled: boolean;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+}) {
   return (
-    <div>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5 font-mono text-xs">{value}</dd>
+    <div className="flex min-h-0 flex-1 items-center justify-center bg-muted/20 p-4">
+      <div className="flex flex-col h-full items-center justify-center">
+      <div className="flex h-full max-h-[600px] w-[400px] flex-col overflow-hidden rounded-xl border border-border bg-background shadow-sm">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          {messages.length === 0 ? (
+            <div className="flex h-full min-h-[12rem] flex-col items-center justify-center gap-3 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <BotIcon className="size-6 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Test {agentName} as a customer</p>
+                <p className="text-sm text-muted-foreground">
+                  Send a message to preview answers before publishing to a live
+                  channel.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {messages.map((message) => (
+                <ChatBubble key={message.id} message={message} agentName={agentName} />
+              ))}
+              {busy ? <TypingIndicator agentName={agentName} /> : null}
+            </div>
+          )}
+        </div>
+        <form
+          className="shrink-0 border-t border-border p-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSend();
+          }}
+        >
+          <div className="flex gap-2">
+            <textarea
+              value={input}
+              onChange={(event) => onInputChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  onSend();
+                }
+              }}
+              placeholder={
+                disabled ? "Conversation credits unavailable" : "Ask as a customer…"
+              }
+              disabled={disabled || busy}
+              rows={1}
+              className="max-h-24 min-h-9 min-w-0 flex-1 resize-none rounded-md border border-input bg-transparent px-2.5 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60"
+            />
+            <Button
+              type="submit"
+              className="self-end"
+              disabled={disabled || busy || !input.trim()}
+            >
+              Send
+            </Button>
+          </div>
+        </form>
+      </div>
+      <p className="mt-2 text-center text-[11px] text-muted-foreground">
+            Enter to send · Shift+Enter for a new line
+      </p>
+      </div>
     </div>
   );
 }
 
-function mockReply(prompt: string, agentName: string) {
-  const lower = prompt.toLowerCase();
+function ChatBubble({
+  message,
+  agentName,
+}: {
+  message: PlaygroundSession["messages"][number];
+  agentName: string;
+}) {
+  const isUser = message.role === "user";
+  const time = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(message.at));
 
-  if (lower.includes("order") || lower.includes("track")) {
-    return {
-      content:
-        "Order 11902 is with UPS and out for delivery today. Tracking number 1Z999AA10123456784.",
-      debug: {
-        intent: "order_status",
-        modelTier: "low",
-        modelName: "gpt-4.1-mini",
-        procedure: "Order status · step 3/4",
-        sources: ["Order Lookup tool"],
-        confidence: 0.91,
-        tools: ["order_lookup"],
-      },
-    };
-  }
+  return (
+    <div
+      className={cn(
+        "flex w-full flex-col gap-1",
+        isUser ? "items-end pl-10" : "items-start pr-10"
+      )}
+    >
+      <div
+        className={cn(
+          "flex items-center gap-2 text-[11px] text-muted-foreground",
+          isUser && "flex-row-reverse"
+        )}
+      >
+        <span>{isUser ? "Customer" : agentName}</span>
+        <span>{time}</span>
+      </div>
+      <div
+        className={cn(
+          "max-w-full px-3 py-2",
+          isUser
+            ? "rounded-2xl rounded-br-sm bg-primary text-primary-foreground"
+            : "rounded-2xl rounded-bl-sm bg-muted text-foreground"
+        )}
+      >
+        <ChatMessageContent content={message.content} inverted={isUser} />
+      </div>
+    </div>
+  );
+}
 
-  if (lower.includes("refund")) {
-    return {
-      content:
-        "Refunds are issued within 5–7 business days after approval. Sale items follow a 14-day window. I can start a refund if you share the order ID.",
-      debug: {
-        intent: "refund_policy",
-        modelTier: "medium",
-        modelName: "claude-sonnet",
-        procedure: "Refund escalation · step 1/6",
-        sources: ["Refund policy.pdf", "Zendesk · Billing & Refunds"],
-        confidence: 0.64,
-        tools: [],
-      },
-    };
-  }
+function TypingIndicator({ agentName }: { agentName: string }) {
+  return (
+    <div className="flex w-full flex-col items-start gap-1 pr-10">
+      <p className="text-[11px] text-muted-foreground">{agentName}</p>
+      <div className="inline-flex w-fit items-center gap-1 rounded-2xl rounded-bl-sm bg-muted px-3 py-2">
+        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.2s]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.1s]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground" />
+      </div>
+    </div>
+  );
+}
 
-  return {
-    content: `${agentName} here. I can help with that from the knowledge base. Could you share a bit more detail, or an order ID if this is about a purchase?`,
-    debug: {
-      intent: "general",
-      modelTier: "low",
-      modelName: "gpt-4.1-mini",
-      procedure: "None",
-      sources: ["Native Q&A"],
-      confidence: 0.71,
-      tools: ["search_knowledge_base"],
-    },
+function PromptPanel({
+  agentId,
+  sessionId,
+  productionPrompt,
+  promptOverride,
+  onSessionUpdate,
+}: {
+  agentId: string;
+  sessionId: string;
+  productionPrompt: string;
+  promptOverride: string | null;
+  onSessionUpdate: (session: PlaygroundSession) => void;
+}) {
+  const updateSession = useUpdatePlaygroundSession(agentId, sessionId);
+  const [draft, setDraft] = useState(promptOverride ?? productionPrompt);
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    setDraft(promptOverride ?? productionPrompt);
+    setDirty(false);
+  }, [productionPrompt, promptOverride, sessionId]);
+
+  const save = () => {
+    const trimmed = draft.trim();
+    const nextOverride = trimmed === productionPrompt.trim() ? null : trimmed;
+
+    updateSession.mutate(
+      { promptOverride: nextOverride },
+      {
+        onSuccess: (updated) => {
+          setDirty(false);
+          onSessionUpdate(updated);
+        },
+      }
+    );
   };
+
+  const reset = () => {
+    setDraft(productionPrompt);
+    updateSession.mutate(
+      { promptOverride: null },
+      {
+        onSuccess: (updated) => {
+          setDirty(false);
+          onSessionUpdate(updated);
+        },
+      }
+    );
+  };
+
+  return (
+    <aside className="hidden h-full w-[350px] shrink-0 min-h-0 flex-col overflow-hidden border-l border-border bg-background lg:flex">
+      <div className="shrink-0 border-b border-border px-4 py-3">
+        <p className="font-medium">Configuration</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Playground-only prompt override. Published settings are unchanged.
+        </p>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="playground-prompt">System prompt</Label>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={reset}
+              disabled={updateSession.isPending}
+            >
+              <RotateCcwIcon className="size-3.5" />
+              Reset
+            </Button>
+          </div>
+          <textarea
+            id="playground-prompt"
+            value={draft}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              setDirty(true);
+            }}
+            className={promptTextareaClassName}
+          />
+        </div>
+
+        <div className="flex shrink-0 justify-end">
+          <Button
+            size="sm"
+            onClick={save}
+            disabled={!dirty || updateSession.isPending}
+          >
+            {updateSession.isPending ? "Saving…" : "Apply prompt"}
+          </Button>
+        </div>
+      </div>
+    </aside>
+  );
 }

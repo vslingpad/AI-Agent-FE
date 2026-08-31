@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@clerk/nextjs";
 import {
   createAgent,
+  createPlaygroundSession,
   deleteAgent,
   getAgent,
   getAgentActions,
@@ -13,6 +14,9 @@ import {
   getAgentImprove,
   getAgentKnowledge,
   getAgentPlayground,
+  getPlaygroundSession,
+  sendPlaygroundMessage,
+  updatePlaygroundSession,
   getAgentProcedures,
   getAgentSettings,
   getAgentsList,
@@ -37,6 +41,8 @@ import type {
   UpdateAgentProceduresInput,
   UpdateAgentSettingsInput,
   UpdateAgentWebChatInput,
+  UpdatePlaygroundSessionInput,
+  SendPlaygroundMessageInput,
 } from "@/lib/schemas/agents";
 
 function agentsKey(orgId?: string) {
@@ -142,8 +148,77 @@ export function useAgentTestRuns(agentId: string) {
   return useAgentSectionQuery(agentId, "test-runs", () => getAgentTestRuns(agentId));
 }
 
+function playgroundSessionKey(
+  orgId: string | undefined,
+  agentId: string,
+  sessionId: string
+) {
+  return ["agents", orgId, agentId, "playground", sessionId] as const;
+}
+
 export function useAgentPlayground(agentId: string) {
   return useAgentSectionQuery(agentId, "playground", () => getAgentPlayground(agentId));
+}
+
+export function useCreatePlaygroundSession(agentId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: () => createPlaygroundSession(agentId),
+    onSuccess: (session) => {
+      queryClient.setQueryData(
+        playgroundSessionKey(organization?.id, agentId, session.id),
+        session
+      );
+    },
+  });
+}
+
+export function usePlaygroundSession(agentId: string, sessionId: string | null) {
+  const { organization, isLoaded } = useOrganization();
+
+  return useQuery({
+    queryKey: playgroundSessionKey(organization?.id, agentId, sessionId ?? ""),
+    queryFn: () => getPlaygroundSession(agentId, sessionId!),
+    enabled: isLoaded && Boolean(organization?.id) && Boolean(agentId) && Boolean(sessionId),
+  });
+}
+
+export function useUpdatePlaygroundSession(agentId: string, sessionId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: (input: UpdatePlaygroundSessionInput) =>
+      updatePlaygroundSession(agentId, sessionId, input),
+    onSuccess: (session) => {
+      queryClient.setQueryData(
+        playgroundSessionKey(organization?.id, agentId, sessionId),
+        session
+      );
+    },
+  });
+}
+
+export function useSendPlaygroundMessage(agentId: string, sessionId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: (input: SendPlaygroundMessageInput) =>
+      sendPlaygroundMessage(agentId, sessionId, input),
+    onSuccess: (session) => {
+      queryClient.setQueryData(
+        playgroundSessionKey(organization?.id, agentId, sessionId),
+        session
+      );
+      invalidateAgentList(queryClient, organization?.id);
+      queryClient.invalidateQueries({
+        queryKey: agentSectionKey(organization?.id, agentId, "analytics"),
+      });
+    },
+  });
 }
 
 export function useCreateAgent() {

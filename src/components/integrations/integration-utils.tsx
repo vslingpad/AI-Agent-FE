@@ -1,6 +1,7 @@
 import type {
   ConnectorCapability,
   ConnectorStatus,
+  KnowledgeSubCapability,
   SyncStatus,
 } from "@/lib/schemas/integrations";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,14 @@ export const CAPABILITY_LABELS: Record<ConnectorCapability, string> = {
   channel: "Channel",
   knowledge: "Knowledge",
   action: "Actions",
+};
+
+export const KNOWLEDGE_SUB_CAPABILITY_LABELS: Record<
+  KnowledgeSubCapability,
+  string
+> = {
+  help_center: "Help Center",
+  tickets: "Tickets",
 };
 
 export function CapabilityChips({

@@ -4,7 +4,7 @@ import { useOrganization } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { CapabilityChips } from "@/components/integrations/integration-utils";
+import { KNOWLEDGE_SUB_CAPABILITY_LABELS } from "@/components/integrations/integration-utils";
 import { formatConnectedDate } from "@/lib/integrations/connector-paths";
 import { getZendeskAuthStatus } from "@/lib/integrations/zendesk-auth";
 import { Badge } from "@/components/ui/badge";
@@ -12,20 +12,25 @@ import type {
   ConnectorCapability,
   ConnectorDetail,
   IntegrationCatalogItem,
+  KnowledgeSubCapability,
 } from "@/lib/schemas/integrations";
 
 type OverviewTabProps = {
   connector: ConnectorDetail;
   catalogItem: IntegrationCatalogItem | undefined;
   enabledCapabilities: ConnectorCapability[];
+  enabledKnowledgeSubCapabilities: KnowledgeSubCapability[];
   onToggleCapability: (capability: ConnectorCapability) => void;
+  onToggleKnowledgeSubCapability: (capability: KnowledgeSubCapability) => void;
 };
 
 export function OverviewTab({
   connector,
   catalogItem,
   enabledCapabilities,
+  enabledKnowledgeSubCapabilities,
   onToggleCapability,
+  onToggleKnowledgeSubCapability,
 }: OverviewTabProps) {
   const { membership } = useOrganization();
   const isAdmin = membership?.role === "org:admin";
@@ -43,21 +48,56 @@ export function OverviewTab({
         <CardContent className="gap-0 space-y-4">
           {catalogItem?.capabilities.map((capability) => {
             const enabled = enabledCapabilities.includes(capability);
+            const knowledgeSubs =
+              capability === "knowledge"
+                ? catalogItem.knowledgeSubCapabilities ?? []
+                : [];
 
             return (
-              <div
-                key={capability}
-                className="flex items-center justify-between rounded-lg border border-border px-4 py-3"
-              >
-                <Label htmlFor={`cap-${capability}`} className="capitalize">
-                  {capability}
-                </Label>
-                <Switch
-                  id={`cap-${capability}`}
-                  checked={enabled}
-                  disabled={!isAdmin}
-                  onCheckedChange={() => onToggleCapability(capability)}
-                />
+              <div key={capability} className="space-y-2">
+                <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                  <Label htmlFor={`cap-${capability}`} className="capitalize">
+                    {capability}
+                  </Label>
+                  <Switch
+                    id={`cap-${capability}`}
+                    checked={enabled}
+                    disabled={!isAdmin}
+                    onCheckedChange={() => onToggleCapability(capability)}
+                  />
+                </div>
+
+                {knowledgeSubs.length > 0 ? (
+                  <div className="ml-4 space-y-2 border-l border-border pl-4">
+                    {knowledgeSubs.map((subCapability) => {
+                      const subEnabled =
+                        enabled &&
+                        enabledKnowledgeSubCapabilities.includes(subCapability);
+
+                      return (
+                        <div
+                          key={subCapability}
+                          className="flex items-center justify-between rounded-lg border border-border px-4 py-2.5"
+                        >
+                          <Label
+                            htmlFor={`knowledge-sub-${subCapability}`}
+                            className="text-sm font-normal"
+                          >
+                            {KNOWLEDGE_SUB_CAPABILITY_LABELS[subCapability]}
+                          </Label>
+                          <Switch
+                            id={`knowledge-sub-${subCapability}`}
+                            checked={subEnabled}
+                            disabled={!isAdmin || !enabled}
+                            onCheckedChange={() =>
+                              onToggleKnowledgeSubCapability(subCapability)
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             );
           })}

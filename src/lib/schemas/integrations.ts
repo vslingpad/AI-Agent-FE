@@ -6,6 +6,8 @@ export const ConnectorCapabilitySchema = z.enum([
   "action",
 ]);
 
+export const KnowledgeSubCapabilitySchema = z.enum(["help_center", "tickets"]);
+
 export const ConnectorStatusSchema = z.enum([
   "pending_oauth",
   "active",
@@ -40,6 +42,7 @@ export const IntegrationCatalogItemSchema = z.object({
   name: z.string(),
   description: z.string(),
   capabilities: z.array(ConnectorCapabilitySchema),
+  knowledgeSubCapabilities: z.array(KnowledgeSubCapabilitySchema).optional(),
   status: z.enum(["active", "beta", "deprecated"]),
   sortOrder: z.number(),
   configFields: z.array(
@@ -74,6 +77,10 @@ export const OrgConnectorSchema = z.object({
   identifier: z.string(),
   capabilities: z.array(ConnectorCapabilitySchema),
   enabledCapabilities: z.array(ConnectorCapabilitySchema),
+  knowledgeSubCapabilities: z.array(KnowledgeSubCapabilitySchema).optional(),
+  enabledKnowledgeSubCapabilities: z
+    .array(KnowledgeSubCapabilitySchema)
+    .optional(),
   status: ConnectorStatusSchema,
   syncStatus: SyncStatusSchema,
   config: z.record(z.string(), z.unknown()),
@@ -177,6 +184,9 @@ export const CreateConnectorInputSchema = z.object({
 export const UpdateConnectorInputSchema = z.object({
   displayName: z.string().min(1).max(120).optional(),
   enabledCapabilities: z.array(ConnectorCapabilitySchema).optional(),
+  enabledKnowledgeSubCapabilities: z
+    .array(KnowledgeSubCapabilitySchema)
+    .optional(),
   config: z.record(z.string(), z.unknown()).optional(),
   routingConfig: z.record(z.string(), z.unknown()).optional(),
 });
@@ -191,6 +201,7 @@ export const StartOAuthStepInputSchema = z.object({
 });
 
 export type ConnectorCapability = z.infer<typeof ConnectorCapabilitySchema>;
+export type KnowledgeSubCapability = z.infer<typeof KnowledgeSubCapabilitySchema>;
 export type ConnectorStatus = z.infer<typeof ConnectorStatusSchema>;
 export type SyncStatus = z.infer<typeof SyncStatusSchema>;
 export type IntegrationCatalogItem = z.infer<

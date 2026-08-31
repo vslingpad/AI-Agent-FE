@@ -65,5 +65,10 @@ export function resolveBuildBreadcrumbs(pathname: string): BreadcrumbItem[] {
     return crumbs;
   }
 
+  if (section === "agents" && segments.length >= 2) {
+    crumbs.push({ label: "Agent" });
+    return crumbs;
+  }
+
   return crumbs;
 }

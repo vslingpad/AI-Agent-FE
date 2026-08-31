@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   ArrowRightIcon,
   CreditCardIcon,
@@ -6,6 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { agentPath } from "@/lib/navigation/agent-sections";
 import type { AgentPerformanceRow } from "@/lib/schemas/dashboard";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +63,12 @@ export function AgentPerformanceTable({ rows }: AgentPerformanceTableProps) {
     <Card className="flex h-full flex-col">
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>AI agent performance</CardTitle>
-        <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1 text-muted-foreground"
+          render={<Link href="/agents" />}
+        >
           View all agents
           <ArrowRightIcon className="size-4" />
         </Button>
@@ -84,12 +91,15 @@ export function AgentPerformanceTable({ rows }: AgentPerformanceTableProps) {
                 return (
                   <tr key={row.id} className="border-b border-border/60 last:border-0">
                     <td className="py-4 pr-4">
-                      <div className="flex items-center gap-2">
+                      <Link
+                        href={agentPath(row.id)}
+                        className="flex items-center gap-2 hover:underline"
+                      >
                         <div className="flex size-8 items-center justify-center rounded-full bg-muted">
                           <Icon className="size-4 text-muted-foreground" />
                         </div>
                         <span className="font-medium">{row.name}</span>
-                      </div>
+                      </Link>
                     </td>
                     <td className="py-4 pr-4 tabular-nums">{row.tickets}</td>
                     <td className="py-4 pr-4">

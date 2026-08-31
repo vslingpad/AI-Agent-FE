@@ -41,7 +41,10 @@ import {
   type DetailTab,
 } from "@/lib/integrations/connector-paths";
 import type { ActionsPermissionFix } from "@/lib/integrations/actions-permissions";
-import type { ConnectorCapability } from "@/lib/schemas/integrations";
+import type {
+  ConnectorCapability,
+  KnowledgeSubCapability,
+} from "@/lib/schemas/integrations";
 import {
   capabilityRequiresGlobalAuth,
   getZendeskAuthStatus,
@@ -73,6 +76,8 @@ export function ConnectorDetailPage({
   const [enabledCapabilities, setEnabledCapabilities] = useState<
     ConnectorCapability[]
   >([]);
+  const [enabledKnowledgeSubCapabilities, setEnabledKnowledgeSubCapabilities] =
+    useState<KnowledgeSubCapability[]>([]);
   const [globalAuthOpen, setGlobalAuthOpen] = useState(false);
   const [pendingCapability, setPendingCapability] =
     useState<ConnectorCapability | null>(null);
@@ -108,6 +113,9 @@ export function ConnectorDetailPage({
     }
 
     setEnabledCapabilities(connector.enabledCapabilities);
+    setEnabledKnowledgeSubCapabilities(
+      connector.enabledKnowledgeSubCapabilities ?? []
+    );
   }, [connector, type, router]);
 
   if (isLoading) {
@@ -148,12 +156,70 @@ export function ConnectorDetailPage({
       : enabledCapabilities.filter((item) => item !== capability);
 
     setEnabledCapabilities(next);
+
+    if (capability === "knowledge" && !isEnabling) {
+      setEnabledKnowledgeSubCapabilities([]);
+      await updateConnector.mutateAsync({
+        enabledCapabilities: next,
+        enabledKnowledgeSubCapabilities: [],
+      });
+      return;
+    }
+
+    if (capability === "knowledge" && isEnabling && catalogItem?.knowledgeSubCapabilities) {
+      const subs = [...catalogItem.knowledgeSubCapabilities];
+      setEnabledKnowledgeSubCapabilities(subs);
+      await updateConnector.mutateAsync({
+        enabledCapabilities: next,
+        enabledKnowledgeSubCapabilities: subs,
+      });
+      return;
+    }
+
     await updateConnector.mutateAsync({ enabledCapabilities: next });
+  };
+
+  const toggleKnowledgeSubCapability = async (
+    subCapability: KnowledgeSubCapability
+  ) => {
+    if (!enabledCapabilities.includes("knowledge")) {
+      return;
+    }
+
+    const isEnabling = !enabledKnowledgeSubCapabilities.includes(subCapability);
+
+    if (
+      isEnabling &&
+      connector.integrationSlug === "zendesk" &&
+      !getZendeskAuthStatus(connector.config).globalAuth
+    ) {
+      setPendingCapability("knowledge");
+      setGlobalAuthOpen(true);
+      return;
+    }
+
+    const next = isEnabling
+      ? [...enabledKnowledgeSubCapabilities, subCapability]
+      : enabledKnowledgeSubCapabilities.filter((item) => item !== subCapability);
+
+    setEnabledKnowledgeSubCapabilities(next);
+    await updateConnector.mutateAsync({ enabledKnowledgeSubCapabilities: next });
   };
 
   const handleGlobalAuthComplete = async (capability: ConnectorCapability) => {
     const next = [...new Set([...enabledCapabilities, capability])];
     setEnabledCapabilities(next);
+
+    if (capability === "knowledge" && catalogItem?.knowledgeSubCapabilities) {
+      const subs = [...catalogItem.knowledgeSubCapabilities];
+      setEnabledKnowledgeSubCapabilities(subs);
+      await updateConnector.mutateAsync({
+        enabledCapabilities: next,
+        enabledKnowledgeSubCapabilities: subs,
+      });
+      return;
+    }
+
     await updateConnector.mutateAsync({ enabledCapabilities: next });
   };
 
@@ -288,7 +354,9 @@ export function ConnectorDetailPage({
             connector={connector}
             catalogItem={catalogItem}
             enabledCapabilities={enabledCapabilities}
+            enabledKnowledgeSubCapabilities={enabledKnowledgeSubCapabilities}
             onToggleCapability={toggleCapability}
+            onToggleKnowledgeSubCapability={toggleKnowledgeSubCapability}
           />
         </TabsContent>
 

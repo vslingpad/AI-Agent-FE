@@ -16,6 +16,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     description:
       "Connect Zendesk Messaging for channels, Help Center for knowledge, and Support actions.",
     capabilities: ["channel", "knowledge", "action"],
+    knowledgeSubCapabilities: ["help_center", "tickets"],
     status: "active",
     sortOrder: 10,
     configFields: [
@@ -277,6 +278,8 @@ function createSeedConnectors(): OrgConnector[] {
       externalInstanceId: "acme",
       capabilities: ["channel", "knowledge", "action"],
       enabledCapabilities: ["channel"],
+      knowledgeSubCapabilities: ["help_center", "tickets"],
+      enabledKnowledgeSubCapabilities: [],
       status: "active",
       syncStatus: "synced",
       config: {
@@ -631,6 +634,10 @@ function makeConnector(
     externalInstanceId,
     capabilities: catalog.capabilities,
     enabledCapabilities: input.capabilities,
+    knowledgeSubCapabilities: catalog.knowledgeSubCapabilities ?? [],
+    enabledKnowledgeSubCapabilities: input.capabilities.includes("knowledge")
+      ? [...(catalog.knowledgeSubCapabilities ?? [])]
+      : [],
     status: "pending_oauth",
     syncStatus: "never",
     config:
@@ -868,11 +875,30 @@ export function updateOrgConnector(
     }
   }
 
+  if (input.enabledKnowledgeSubCapabilities && catalog) {
+    const available = catalog.knowledgeSubCapabilities ?? [];
+    const invalid = input.enabledKnowledgeSubCapabilities.filter(
+      (cap) => !available.includes(cap)
+    );
+
+    if (invalid.length > 0) {
+      throw new Error("Invalid knowledge sub-capabilities");
+    }
+  }
+
+  const nextEnabledCapabilities =
+    input.enabledCapabilities ?? existing.enabledCapabilities;
+  const knowledgeEnabled = nextEnabledCapabilities.includes("knowledge");
+
   const updated = enrichConnector({
     ...existing,
     displayName: input.displayName ?? existing.displayName,
-    enabledCapabilities:
-      input.enabledCapabilities ?? existing.enabledCapabilities,
+    enabledCapabilities: nextEnabledCapabilities,
+    enabledKnowledgeSubCapabilities: knowledgeEnabled
+      ? (input.enabledKnowledgeSubCapabilities ??
+        existing.enabledKnowledgeSubCapabilities ??
+        [])
+      : [],
     config: input.config
       ? { ...existing.config, ...input.config }
       : existing.config,

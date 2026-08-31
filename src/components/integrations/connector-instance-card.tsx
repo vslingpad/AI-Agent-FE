@@ -12,6 +12,7 @@ import {
   SyncStatusBadge,
   getCatalogItem,
 } from "@/components/integrations/integration-utils";
+import { IntegrationBrandIcon } from "@/components/integrations/integration-brand-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,7 +21,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  INTEGRATION_BRAND,
   formatLastSyncAttempt,
   getConnectorPath,
 } from "@/lib/integrations/connector-paths";
@@ -28,32 +28,6 @@ import type {
   IntegrationCatalogItem,
   OrgConnector,
 } from "@/lib/schemas/integrations";
-import { cn } from "@/lib/utils";
-
-function IntegrationBrandIcon({
-  slug,
-  size = "md",
-}: {
-  slug: string;
-  size?: "sm" | "md";
-}) {
-  const brand = INTEGRATION_BRAND[slug] ?? {
-    abbr: slug.slice(0, 2).toUpperCase(),
-    className: "bg-muted text-muted-foreground",
-  };
-
-  return (
-    <div
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-lg font-bold tracking-tight",
-        size === "sm" ? "size-6 text-[9px]" : "size-10 text-xs",
-        brand.className
-      )}
-    >
-      {brand.abbr}
-    </div>
-  );
-}
 
 type ConnectorInstanceCardProps = {
   connector: OrgConnector;
@@ -209,4 +183,4 @@ export function AvailableIntegrationCard({
   );
 }
 
-export { IntegrationBrandIcon };
+export { IntegrationBrandIcon } from "@/components/integrations/integration-brand-icon";

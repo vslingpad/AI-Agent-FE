@@ -122,6 +122,38 @@ export const INTEGRATION_BRAND: Record<
     abbr: "ZO",
     className: "bg-red-600 text-white",
   },
+  notion: {
+    abbr: "NO",
+    className: "bg-neutral-800 text-white",
+  },
+  google_drive: {
+    abbr: "GD",
+    className: "bg-yellow-500 text-neutral-900",
+  },
+  confluence: {
+    abbr: "CF",
+    className: "bg-sky-700 text-white",
+  },
+  website: {
+    abbr: "WEB",
+    className: "bg-slate-700 text-white",
+  },
+  files: {
+    abbr: "UP",
+    className: "bg-amber-700 text-white",
+  },
+  qna: {
+    abbr: "QA",
+    className: "bg-fuchsia-700 text-white",
+  },
+  help_centers: {
+    abbr: "HC",
+    className: "bg-teal-800 text-white",
+  },
+  tickets: {
+    abbr: "TK",
+    className: "bg-indigo-700 text-white",
+  },
   shopify: {
     abbr: "SH",
     className: "bg-green-700 text-white",

@@ -51,7 +51,10 @@ Scope all operations to `(orgId, agentId)`.
 | `GET` | `/api/agents/:agentId/improve?kind=…` | Improve tabs | ✓ | |
 | `GET` | `/api/agents/:agentId/test/cases` | Test Cases | ✓ | |
 | `GET` | `/api/agents/:agentId/test/runs` | Test Runs | ✓ | |
-| `GET` | `/api/agents/:agentId/test/playground` | Playground header | ✓ | |
+| `GET` | `/api/agents/:agentId/test/playground/:sessionId` | Playground session | ✓ | |
+| `POST` | `/api/agents/:agentId/test/playground` | New playground session | | ✓ |
+| `PATCH` | `/api/agents/:agentId/test/playground/:sessionId` | Playground prompt override | | ✓ |
+| `POST` | `/api/agents/:agentId/test/playground/:sessionId/messages` | Playground chat | | ✓ |
 
 There is **no monolithic workspace GET**. `GET /api/agents/:agentId` returns **core metadata only**.
 
@@ -592,16 +595,119 @@ Test Runs page also calls `GET …/test/cases` to check if any cases exist.
 
 ---
 
-## `GET /api/agents/:agentId/test/playground`
+## `POST /api/agents/:agentId/test/playground` — Create session
 
-Minimal payload for the playground header:
+Creates a **new playground session** when the user opens the playground or clicks **New test**. One session = one billable conversation 
+
+Not billable if:
+  - spam
+  - immediate escalation
+  - greeting only
+  - automated acknowledgement only
+  - duplicate
+  - abandoned before AI work
+  - test/system ticket
+
+
+### Response `201` → `PlaygroundSession`
 
 ```json
 {
-  "name": "Customer Support",
-  "remainingCredits": 588
+  "id": "pg-customer-support-2-1756646400000",
+  "agentId": "customer-support",
+  "agentName": "Customer Support",
+  "sessionNumber": 2,
+  "createdAt": "2026-08-31T08:00:00.000Z",
+  "productionPrompt": "You are Acme's support agent…",
+  "promptOverride": null,
+  "effectivePrompt": "You are Acme's support agent…",
+  "messages": [],
+  "billed": false,
+  "plan": {
+    "includedCredits": 1000,
+    "remainingCredits": 588,
+    "allowOverage": true,
+    "canSendMessages": true,
+    "blockReason": null
+  }
 }
 ```
+
+| `plan.canSendMessages` | `false` when credits exhausted and overage unavailable |
+| `billed` | `true` after the first AI reply in this session |
+
+---
+
+## `GET /api/agents/:agentId/test/playground/:sessionId`
+
+Returns the current session state (messages, prompt override, plan credits).
+
+Response: `PlaygroundSession`.
+
+---
+
+## `PATCH /api/agents/:agentId/test/playground/:sessionId`
+
+Updates **playground-only** configuration. Does not change published agent settings.
+
+### Prompt override
+
+```json
+{ "promptOverride": "You are a concise support agent for Acme…" }
+```
+
+Reset to production prompt:
+
+```json
+{ "promptOverride": null }
+```
+
+Response: updated `PlaygroundSession` with refreshed `effectivePrompt`.
+
+---
+
+## `POST /api/agents/:agentId/test/playground/:sessionId/messages`
+
+Send a customer message and receive an AI reply
+
+### Request
+
+```json
+{ "content": "Where is order 11902?" }
+```
+
+### Response
+
+```json
+{
+  "session": {
+    "id": "pg-customer-support-2-1756646400000",
+    "messages": [
+      {
+        "id": "u-1756646401000",
+        "role": "user",
+        "content": "Where is order 11902?",
+        "at": "2026-08-31T08:00:01.000Z"
+      },
+      {
+        "id": "a-1756646401001",
+        "role": "assistant",
+        "content": "Order 11902 is with UPS…",
+        "at": "2026-08-31T08:00:02.000Z"
+      }
+    ],
+    "billed": true,
+    "plan": { "remainingCredits": 587 }
+  }
+}
+```
+
+### Errors
+
+| Condition | Status |
+|-----------|--------|
+| Session not found | `404` |
+| Credits exhausted (plan blocks send) | `402` |
 
 ---
 
@@ -626,7 +732,10 @@ Minimal payload for the playground header:
 | `useAgentImprove(id, kind)` | `GET …/improve?kind=` |
 | `useAgentTestCases(id)` | `GET …/test/cases` |
 | `useAgentTestRuns(id)` | `GET …/test/runs` |
-| `useAgentPlayground(id)` | `GET …/test/playground` |
+| `useCreatePlaygroundSession(id)` | `POST …/test/playground` |
+| `usePlaygroundSession(id, sessionId)` | `GET …/test/playground/:sessionId` |
+| `useUpdatePlaygroundSession(id, sessionId)` | `PATCH …/test/playground/:sessionId` |
+| `useSendPlaygroundMessage(id, sessionId)` | `POST …/test/playground/:sessionId/messages` |
 
 React Query keys: `["agents", orgId, agentId, section]`.
 

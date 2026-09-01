@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 export function ConnectActionTile({ item }: { item: IntegrationCatalogItem }) {
   const available = isActionConnectorAvailable(item.slug);
   const className =
-    "flex w-25 shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-2 py-3 text-center";
+    "flex w-28 shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-2 py-3 text-center";
 
   if (available) {
     return (

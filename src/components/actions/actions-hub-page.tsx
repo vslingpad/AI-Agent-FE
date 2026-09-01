@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronRightIcon, CodeXmlIcon, LayoutGridIcon } from "lucide-react";
-import { ConnectActionTile } from "@/components/actions/connect-action-tile";
+import { ChevronRightIcon, CodeXmlIcon } from "lucide-react";
+import { ConnectActionRow } from "@/components/actions/connect-action-row";
 import { ShowAllActionsDialog } from "@/components/actions/show-all-actions-dialog";
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
 import { ConnectorStatusBadge } from "@/components/integrations/integration-utils";
@@ -21,10 +21,6 @@ import type {
   IntegrationCatalogItem,
   OrgConnector,
 } from "@/lib/schemas/integrations";
-
-const TILE_WIDTH = 92;
-const TILE_GAP = 12;
-const SHOW_ALL_WIDTH = 92;
 
 export function ActionsHubPage() {
   const { data: hub, isLoading: hubLoading, isError: hubError, refetch } =
@@ -136,68 +132,6 @@ export function ActionsHubPage() {
         open={showAllOpen}
         onOpenChange={setShowAllOpen}
       />
-    </div>
-  );
-}
-
-function ConnectActionRow({
-  catalog,
-  onShowAll,
-}: {
-  catalog: IntegrationCatalogItem[];
-  onShowAll: () => void;
-}) {
-  const rowRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState(4);
-
-  useEffect(() => {
-    const node = rowRef.current;
-
-    if (!node) {
-      return;
-    }
-
-    const update = () => {
-      const width = node.clientWidth;
-      const maxTiles = Math.max(
-        1,
-        Math.floor((width - SHOW_ALL_WIDTH - TILE_GAP) / (TILE_WIDTH + TILE_GAP))
-      );
-      setVisibleCount(Math.min(catalog.length, maxTiles));
-    };
-
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(node);
-
-    return () => observer.disconnect();
-  }, [catalog.length]);
-
-  const visible = catalog.slice(0, visibleCount);
-  const remaining = Math.max(0, catalog.length - visible.length);
-
-  return (
-    <div ref={rowRef} className="flex w-full items-stretch gap-3 overflow-hidden">
-      {visible.map((item) => (
-        <ConnectActionTile key={item.slug} item={item} />
-      ))}
-
-      <button
-        type="button"
-        onClick={onShowAll}
-        className="flex w-23 shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-2 py-3 text-center transition-colors hover:bg-muted/40"
-      >
-        <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <LayoutGridIcon className="size-4" />
-        </div>
-        {remaining > 0 ? (
-            <span className="text-[11px] text-muted-foreground">
-              {remaining} more
-            </span>
-          ) : null
-        }
-        <span className="text-xs font-medium">Show all</span>
-      </button>
     </div>
   );
 }

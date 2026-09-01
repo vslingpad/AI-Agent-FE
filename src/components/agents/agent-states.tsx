@@ -112,10 +112,13 @@ export function AgentKnowledgeSkeleton() {
 export function AgentSettingsSkeleton() {
   return (
     <AgentPageShell withAction>
-      <div className="grid max-w-3xl gap-4">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <Skeleton key={index} className="h-44 w-full rounded-xl" />
-        ))}
+      <div className="max-w-3xl space-y-4">
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-32 rounded-lg" />
+          <Skeleton className="h-9 w-36 rounded-lg" />
+        </div>
+        <Skeleton className="h-52 w-full rounded-xl" />
+        <Skeleton className="h-44 w-full rounded-xl" />
       </div>
     </AgentPageShell>
   );

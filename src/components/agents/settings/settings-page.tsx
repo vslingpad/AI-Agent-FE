@@ -1,212 +1,243 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { Show, useOrganization } from "@clerk/nextjs";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
+import { DeleteAgentDialog } from "@/components/agents/dialogs/delete-agent-dialog";
 import { AgentErrorState, AgentSettingsSkeleton } from "@/components/agents/agent-states";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { useAgentSettings, useUpdateAgentSettings } from "@/hooks/use-agents";
-import type { AgentHandover, HandoverMode } from "@/lib/schemas/agents";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  useAgent,
+  useAgentSettings,
+  useUpdateAgent,
+  useUpdateAgentSettings,
+} from "@/hooks/use-agents";
 
 const textareaClassName =
-  "min-h-32 w-full rounded-md border border-input bg-transparent px-2.5 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "min-h-32 w-full rounded-md border border-input bg-transparent px-2.5 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60";
 
 const selectClassName =
   "h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
+type SettingsTab = "general" | "handover";
+
 export function AgentSettingsPage({ agentId }: { agentId: string }) {
-  const { data, isLoading, isError, refetch } = useAgentSettings(agentId);
+  const { membership } = useOrganization();
+  const isAdmin = membership?.role === "org:admin";
+  const {
+    data: agent,
+    isLoading: agentLoading,
+    isError: agentError,
+    refetch: refetchAgent,
+  } = useAgent(agentId);
+  const {
+    data: settings,
+    isLoading: settingsLoading,
+    isError: settingsError,
+    refetch: refetchSettings,
+  } = useAgentSettings(agentId);
+  const updateAgent = useUpdateAgent(agentId);
   const updateSettings = useUpdateAgentSettings(agentId);
+
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [prompt, setPrompt] = useState("");
-  const [escalate, setEscalate] = useState(true);
-  const [handover, setHandover] = useState<AgentHandover | null>(null);
+  const [handoverConnectorId, setHandoverConnectorId] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
-    if (!data) {
+    if (!agent) {
       return;
     }
 
-    setPrompt(data.systemPrompt);
-    setEscalate(data.escalateOnLowConfidence);
-    setHandover(data.handover);
-  }, [data]);
+    setName(agent.name);
+    setDescription(agent.description);
+  }, [agent]);
 
-  if (isLoading || (data && !handover)) {
+  useEffect(() => {
+    if (!settings) {
+      return;
+    }
+
+    setPrompt(settings.systemPrompt);
+    setHandoverConnectorId(settings.handoverConnectorId);
+  }, [settings]);
+
+  const isLoading = agentLoading || settingsLoading;
+  const isError = agentError || settingsError;
+
+  if (isLoading) {
     return <AgentSettingsSkeleton />;
   }
 
-  if (isError || !data || !handover) {
+  if (isError || !agent || !settings) {
     return (
-      <AgentErrorState message="Unable to load settings." onRetry={() => refetch()} />
+      <AgentErrorState
+        message="Unable to load settings."
+        onRetry={() => {
+          void refetchAgent();
+          void refetchSettings();
+        }}
+      />
     );
   }
 
-  const save = () => {
-    updateSettings.mutate({
-      settings: {
-        systemPrompt: prompt,
-        escalateOnLowConfidence: escalate,
-        handover,
-      },
-    });
+  const saving = updateAgent.isPending || updateSettings.isPending;
+
+  const save = async () => {
+    const tasks: Array<Promise<unknown>> = [];
+
+    if (
+      isAdmin &&
+      (name.trim() !== agent.name || description.trim() !== agent.description)
+    ) {
+      tasks.push(
+        updateAgent.mutateAsync({
+          name: name.trim(),
+          description: description.trim(),
+        })
+      );
+    }
+
+    if (activeTab === "general") {
+      tasks.push(
+        updateSettings.mutateAsync({
+          settings: { systemPrompt: prompt },
+        })
+      );
+    } else {
+      tasks.push(
+        updateSettings.mutateAsync({
+          settings: { handoverConnectorId },
+        })
+      );
+    }
+
+    await Promise.all(tasks);
   };
 
   return (
-    <AgentPageFrame
-      title="Settings"
-      description="Prompt, automatic model routing, and where humans receive escalations."
-      actions={
-        <Button onClick={save} disabled={updateSettings.isPending}>
-          {updateSettings.isPending ? "Saving…" : "Save"}
-        </Button>
-      }
-    >
-      <div className="grid max-w-3xl gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Model routing</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Mode: Automatic (complexity-based). There is no per-agent model
-              picker — tier is chosen at runtime.
-            </p>
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3">
-              <Label htmlFor="escalate">
-                Allow escalation to a higher tier on low confidence
-              </Label>
-              <Switch
-                id="escalate"
-                checked={escalate}
-                onCheckedChange={setEscalate}
-              />
-            </div>
-          </CardContent>
-        </Card>
+    <>
+      <AgentPageFrame
+        title="Settings"
+        description="Agent identity, system prompt, and human handover configuration."
+        actions={
+          <Button onClick={() => void save()} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        }
+      >
+        <Tabs
+          className="max-w-3xl"
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as SettingsTab)}
+        >
+          <TabsList>
+            <TabsTrigger value="general">General settings</TabsTrigger>
+            <TabsTrigger value="handover">Handover settings</TabsTrigger>
+          </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>System prompt</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <textarea
-              value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
-              className={textareaClassName}
-            />
-          </CardContent>
-        </Card>
+          <TabsContent value="general" className="mt-4 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Agent details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Field label="Name">
+                  <Input
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    readOnly={!isAdmin}
+                    disabled={!isAdmin}
+                  />
+                </Field>
+                <Field label="Description">
+                  <textarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    readOnly={!isAdmin}
+                    disabled={!isAdmin}
+                    className={textareaClassName}
+                    rows={3}
+                  />
+                </Field>
+                {!isAdmin ? (
+                  <p className="text-xs text-muted-foreground">
+                    Ask an admin to update the agent name or description.
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Handover & escalation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Independent of knowledge source and chat channel. Humans receive
-              the conversation here when the AI transfers.
-            </p>
-
-            <fieldset className="space-y-2">
-              <legend className="text-sm font-medium">When a customer asks for a human</legend>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="handover-mode"
-                  checked={handover.mode === "helpdesk"}
-                  onChange={() =>
-                    setHandover({ ...handover, mode: "helpdesk" satisfies HandoverMode })
-                  }
+            <Card>
+              <CardHeader>
+                <CardTitle>System prompt</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <textarea
+                  value={prompt}
+                  onChange={(event) => setPrompt(event.target.value)}
+                  className={textareaClassName}
                 />
-                Create ticket in helpdesk
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="radio"
-                  name="handover-mode"
-                  checked={handover.mode === "email"}
-                  onChange={() => setHandover({ ...handover, mode: "email" })}
-                />
-                Email / contact page only
-              </label>
-            </fieldset>
+              </CardContent>
+            </Card>
 
-            {handover.mode === "helpdesk" ? (
-              <div className="grid gap-3 sm:grid-cols-2">
+            <Show when={{ role: "org:admin" }}>
+              <Card className="border-destructive/30">
+                <CardHeader>
+                  <CardTitle>Danger zone</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Delete this agent</p>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently remove this agent and all of its configuration.
+                    </p>
+                  </div>
+                  <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+                    Delete agent
+                  </Button>
+                </CardContent>
+              </Card>
+            </Show>
+          </TabsContent>
+
+          <TabsContent value="handover" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Handover & escalation</CardTitle>
+                <CardDescription>
+                  Choose where conversations go when the AI transfers to a human.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2 w-1/2">
                 <Field label="Target">
                   <select
                     className={selectClassName}
-                    value={handover.connectorId ?? ""}
-                    onChange={(event) =>
-                      setHandover({ ...handover, connectorId: event.target.value })
-                    }
+                    value={handoverConnectorId}
+                    onChange={(event) => setHandoverConnectorId(event.target.value)}
                   >
                     <option value="conn_zd_us">Zendesk — US Support</option>
                   </select>
                 </Field>
-                <Field label="Team">
-                  <Input
-                    value={handover.team}
-                    onChange={(event) =>
-                      setHandover({ ...handover, team: event.target.value })
-                    }
-                  />
-                </Field>
-                <Field label="Tags">
-                  <Input
-                    value={handover.tags}
-                    onChange={(event) =>
-                      setHandover({ ...handover, tags: event.target.value })
-                    }
-                  />
-                </Field>
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-3 sm:col-span-2">
-                  <Label htmlFor="summary">Include AI summary as internal note</Label>
-                  <Switch
-                    id="summary"
-                    checked={handover.includeAiSummary}
-                    onCheckedChange={(checked) =>
-                      setHandover({ ...handover, includeAiSummary: checked })
-                    }
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Email">
-                  <Input
-                    value={handover.email}
-                    onChange={(event) =>
-                      setHandover({ ...handover, email: event.target.value })
-                    }
-                  />
-                </Field>
-                <Field label="Contact URL">
-                  <Input
-                    value={handover.contactUrl}
-                    onChange={(event) =>
-                      setHandover({ ...handover, contactUrl: event.target.value })
-                    }
-                  />
-                </Field>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </AgentPageFrame>
 
-            <Field label="Handoff message">
-              <Input
-                value={handover.handoffMessage}
-                onChange={(event) =>
-                  setHandover({ ...handover, handoffMessage: event.target.value })
-                }
-              />
-            </Field>
-          </CardContent>
-        </Card>
-      </div>
-    </AgentPageFrame>
+      <DeleteAgentDialog
+        agent={{ id: agent.id, name: agent.name }}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        redirectOnDelete
+      />
+    </>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,19 +11,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useDeleteAgent } from "@/hooks/use-agents";
-import type { AgentListItem } from "@/lib/schemas/agents";
+
+type DeleteAgentTarget = {
+  id: string;
+  name: string;
+} | null;
 
 type DeleteAgentDialogProps = {
-  agent: AgentListItem | null;
+  agent: DeleteAgentTarget;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  redirectOnDelete?: boolean;
 };
 
 export function DeleteAgentDialog({
   agent,
   open,
   onOpenChange,
+  redirectOnDelete = false,
 }: DeleteAgentDialogProps) {
+  const router = useRouter();
   const deleteAgent = useDeleteAgent();
 
   const handleDelete = async () => {
@@ -32,6 +40,10 @@ export function DeleteAgentDialog({
 
     await deleteAgent.mutateAsync(agent.id);
     onOpenChange(false);
+
+    if (redirectOnDelete) {
+      router.push("/agents");
+    }
   };
 
   return (

@@ -7,7 +7,6 @@ export const KnowledgeSourceStateSchema = z.enum([
   "not_connected",
   "reauth_required",
 ]);
-export const HandoverModeSchema = z.enum(["helpdesk", "email"]);
 export const ConversationChannelSchema = z.enum([
   "web_chat",
   "zendesk",
@@ -45,21 +44,9 @@ export const AgentListItemSchema = z.object({
   openImproveCount: z.number(),
 });
 
-export const AgentHandoverSchema = z.object({
-  mode: HandoverModeSchema,
-  connectorId: z.string().nullable(),
-  team: z.string(),
-  tags: z.string(),
-  includeAiSummary: z.boolean(),
-  email: z.string(),
-  contactUrl: z.string(),
-  handoffMessage: z.string(),
-});
-
 export const AgentSettingsSchema = z.object({
   systemPrompt: z.string(),
-  escalateOnLowConfidence: z.boolean(),
-  handover: AgentHandoverSchema,
+  handoverConnectorId: z.string(),
 });
 
 export const AgentKpiSchema = z.object({
@@ -391,9 +378,7 @@ export const UpdateAgentCoreInputSchema = z.object({
 });
 
 export const UpdateAgentSettingsInputSchema = z.object({
-  settings: AgentSettingsSchema.partial().extend({
-    handover: AgentHandoverSchema.partial().optional(),
-  }),
+  settings: AgentSettingsSchema.partial(),
 });
 
 export const UpdateAgentKnowledgeInputSchema = z.object({
@@ -442,11 +427,9 @@ export const UpdateAgentHelpDeskInputSchema = z.object({
 
 export type AgentStatus = z.infer<typeof AgentStatusSchema>;
 export type AgentIcon = z.infer<typeof AgentIconSchema>;
-export type HandoverMode = z.infer<typeof HandoverModeSchema>;
 export type ConversationChannel = z.infer<typeof ConversationChannelSchema>;
 export type ConversationStatus = z.infer<typeof ConversationStatusSchema>;
 export type AgentListItem = z.infer<typeof AgentListItemSchema>;
-export type AgentHandover = z.infer<typeof AgentHandoverSchema>;
 export type AgentSettings = z.infer<typeof AgentSettingsSchema>;
 export type AgentAnalytics = z.infer<typeof AgentAnalyticsSchema>;
 export type KnowledgeOptionKind = z.infer<typeof KnowledgeOptionKindSchema>;

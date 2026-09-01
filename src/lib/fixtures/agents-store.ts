@@ -46,16 +46,10 @@ function defaultPrompt(name: string) {
   return `You are ${name}, a support agent for Acme. Answer from the knowledge base. If you cannot help, transfer to a human. Be concise, accurate, and never invent policy.`;
 }
 
-function defaultHandover(): AgentWorkspace["settings"]["handover"] {
+function defaultAgentSettings(systemPrompt: string): AgentWorkspace["settings"] {
   return {
-    mode: "helpdesk",
-    connectorId: "conn_zd_us",
-    team: "Support",
-    tags: "ai_escalated",
-    includeAiSummary: true,
-    email: "support@acme.com",
-    contactUrl: "https://acme.com/contact",
-    handoffMessage: "Connecting you with our support team. They’ll pick this up shortly.",
+    systemPrompt,
+    handoverConnectorId: "conn_zd_us",
   };
 }
 
@@ -569,11 +563,7 @@ function createCustomerSupport(): AgentWorkspace {
     hasUnpublishedChanges: false,
     updatedAt: hoursAgo(4),
     publishedAt: daysAgo(12),
-    settings: {
-      systemPrompt: defaultPrompt("the Customer Support agent"),
-      escalateOnLowConfidence: true,
-      handover: defaultHandover(),
-    },
+    settings: defaultAgentSettings(defaultPrompt("the Customer Support agent")),
     analytics: {
       kpis: [
         {
@@ -690,11 +680,7 @@ function createBillingSupport(): AgentWorkspace {
     hasUnpublishedChanges: true,
     updatedAt: hoursAgo(2),
     publishedAt: daysAgo(20),
-    settings: {
-      systemPrompt: defaultPrompt("the Billing Support agent"),
-      escalateOnLowConfidence: true,
-      handover: { ...defaultHandover(), team: "Billing", tags: "ai_escalated,billing" },
-    },
+    settings: defaultAgentSettings(defaultPrompt("the Billing Support agent")),
     analytics: {
       kpis: [
         {
@@ -804,11 +790,7 @@ function createTechnicalSupport(): AgentWorkspace {
     hasUnpublishedChanges: true,
     updatedAt: hoursAgo(1),
     publishedAt: null,
-    settings: {
-      systemPrompt: defaultPrompt("the Technical Support agent"),
-      escalateOnLowConfidence: true,
-      handover: defaultHandover(),
-    },
+    settings: defaultAgentSettings(defaultPrompt("the Technical Support agent")),
     analytics: {
       kpis: [
         {
@@ -1350,15 +1332,8 @@ export function updateAgentSettings(
     agent.settings.systemPrompt = input.systemPrompt;
   }
 
-  if (input.escalateOnLowConfidence !== undefined) {
-    agent.settings.escalateOnLowConfidence = input.escalateOnLowConfidence;
-  }
-
-  if (input.handover) {
-    agent.settings.handover = {
-      ...agent.settings.handover,
-      ...input.handover,
-    };
+  if (input.handoverConnectorId !== undefined) {
+    agent.settings.handoverConnectorId = input.handoverConnectorId;
   }
 
   touchAgent(agent);

@@ -2,6 +2,16 @@ export function hasActionCapability(capabilities: string[]) {
   return capabilities.includes("action");
 }
 
+export const AVAILABLE_ACTION_CONNECTOR_SLUGS = [
+  "zendesk",
+  "calendly",
+  "stripe",
+] as const;
+
+export function isActionConnectorAvailable(slug: string) {
+  return (AVAILABLE_ACTION_CONNECTOR_SLUGS as readonly string[]).includes(slug);
+}
+
 export const CUSTOM_TOOL_AUTH_LABELS: Record<string, string> = {
   none: "None",
   api_key: "API key",

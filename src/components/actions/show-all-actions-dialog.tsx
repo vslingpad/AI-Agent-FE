@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { getConnectWizardPath } from "@/lib/integrations/connector-paths";
+import { isActionConnectorAvailable } from "@/lib/actions/action-utils";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
+import { cn } from "@/lib/utils";
 
 type ShowAllActionsDialogProps = {
   catalog: IntegrationCatalogItem[];
@@ -88,18 +90,37 @@ export function ShowAllActionsDialog({
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
             {filtered.map((item) => (
-              <Link
-                key={item.slug}
-                href={getConnectWizardPath(item.slug, { from: "actions" })}
-                className="flex h-14 items-center justify-start gap-2 rounded-lg border border-border px-3 text-sm font-medium transition-colors hover:bg-muted/50"
-              >
-                <IntegrationBrandIcon slug={item.slug} size="sm" />
-                From {item.name}
-              </Link>
+              <ShowAllActionItem key={item.slug} item={item} />
             ))}
           </div>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ShowAllActionItem({ item }: { item: IntegrationCatalogItem }) {
+  const available = isActionConnectorAvailable(item.slug);
+  const className =
+    "flex h-14 items-center justify-start gap-2 rounded-lg border border-border px-3 text-sm font-medium transition-colors";
+
+  if (available) {
+    return (
+      <Link
+        href={getConnectWizardPath(item.slug, { from: "actions" })}
+        className={cn(className, "hover:bg-muted/50")}
+      >
+        <IntegrationBrandIcon slug={item.slug} size="sm" />
+        <span className="truncate">From {item.name}</span>
+      </Link>
+    );
+  }
+
+  return (
+    <div className={cn(className, "opacity-80")}>
+      <IntegrationBrandIcon slug={item.slug} size="sm" />
+      <span className="min-w-0 flex-1 truncate">From {item.name}</span>
+      <span className="shrink-0 text-xs text-muted-foreground">Coming soon</span>
+    </div>
   );
 }

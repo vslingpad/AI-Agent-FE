@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import {
   CodeXmlIcon,
   LayoutGridIcon,
   SearchIcon,
 } from "lucide-react";
+import { ConnectActionTile } from "@/components/actions/connect-action-tile";
 import { ShowAllActionsDialog } from "@/components/actions/show-all-actions-dialog";
 import { AgentActionDetail } from "@/components/agents/build/actions/agent-action-detail";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { useAgentActions } from "@/hooks/use-agents";
 import { useIntegrationsHub } from "@/hooks/use-integrations";
 import { hasActionCapability } from "@/lib/actions/action-utils";
-import { getConnectWizardPath } from "@/lib/integrations/connector-paths";
 import type { AgentActionBinding } from "@/lib/schemas/agents";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
 import { cn } from "@/lib/utils";
@@ -199,14 +198,7 @@ function ConnectActionRow({
   return (
     <div ref={rowRef} className="flex w-full items-stretch gap-3 overflow-hidden">
       {visible.map((item) => (
-        <Link
-          key={item.slug}
-          href={getConnectWizardPath(item.slug, { from: "actions" })}
-          className="flex w-25 shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-2 py-3 text-center transition-colors hover:bg-muted/40"
-        >
-          <IntegrationBrandIcon slug={item.slug} />
-          <span className="w-full truncate text-xs font-medium">{item.name}</span>
-        </Link>
+        <ConnectActionTile key={item.slug} item={item} />
       ))}
 
       <button

@@ -217,40 +217,56 @@ After delete, the frontend invalidates the agents list and drops cached queries 
 
 ## `GET/PATCH /api/agents/:agentId/settings`
 
+Agent configuration shown on the **Settings** page. Name and description come from **Agent core** (`GET/PATCH /api/agents/:agentId`); this endpoint covers prompt and handover target only.
+
 ### GET → `AgentSettings`
 
 ```json
 {
-  "systemPrompt": "You are …",
-  "escalateOnLowConfidence": true,
-  "handover": {
-    "mode": "helpdesk",
-    "connectorId": "conn_zd_us",
-    "team": "Support",
-    "tags": "ai_escalated",
-    "includeAiSummary": true,
-    "email": "support@acme.com",
-    "contactUrl": "https://acme.com/contact",
-    "handoffMessage": "Connecting you with our support team…"
-  }
+  "systemPrompt": "You are Acme's support agent…",
+  "handoverConnectorId": "conn_zd_us"
 }
 ```
 
-| `handover.mode` | `"helpdesk"` \| `"email"` |
+| Field | Description |
+|-------|-------------|
+| `systemPrompt` | System prompt for the agent |
+| `handoverConnectorId` | Org connector ID for human handover (**Target** in Handover settings) |
 
 ### PATCH request
+
+Partial update. Send only fields being changed.
+
+**General tab — system prompt**
 
 ```json
 {
   "settings": {
-    "systemPrompt": "…",
-    "escalateOnLowConfidence": true,
-    "handover": { "team": "Billing", "tags": "ai_escalated,billing" }
+    "systemPrompt": "You are a concise support agent for Acme…"
   }
 }
 ```
 
-Nested objects are shallow-merged. Response is the full updated `AgentSettings`.
+**Handover tab — target**
+
+```json
+{
+  "settings": {
+    "handoverConnectorId": "conn_zd_us"
+  }
+}
+```
+
+Response: full updated `AgentSettings`.
+
+**Settings page data sources**
+
+| UI field | API |
+|----------|-----|
+| Name, description | `GET/PATCH /api/agents/:agentId` (admin can PATCH) |
+| System prompt | `GET/PATCH …/settings` |
+| Handover target | `GET/PATCH …/settings` |
+| Delete agent | `DELETE /api/agents/:agentId` (admin only) |
 
 ---
 

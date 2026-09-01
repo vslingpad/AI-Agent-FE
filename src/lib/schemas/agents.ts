@@ -299,14 +299,6 @@ export const AgentTestRunsListSchema = z.object({
   testRuns: z.array(TestRunSchema),
 });
 
-export const PlaygroundPlanSchema = z.object({
-  includedCredits: z.number(),
-  remainingCredits: z.number(),
-  allowOverage: z.boolean(),
-  canSendMessages: z.boolean(),
-  blockReason: z.string().nullable(),
-});
-
 export const PlaygroundMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant"]),
@@ -324,8 +316,6 @@ export const PlaygroundSessionSchema = z.object({
   promptOverride: z.string().nullable(),
   effectivePrompt: z.string(),
   messages: z.array(PlaygroundMessageSchema),
-  billed: z.boolean(),
-  plan: PlaygroundPlanSchema,
 });
 
 export const UpdatePlaygroundSessionInputSchema = z.object({
@@ -338,12 +328,6 @@ export const SendPlaygroundMessageInputSchema = z.object({
 
 export const SendPlaygroundMessageResponseSchema = z.object({
   session: PlaygroundSessionSchema,
-});
-
-/** @deprecated Use PlaygroundSessionSchema via POST /test/playground */
-export const AgentPlaygroundSchema = z.object({
-  name: z.string(),
-  remainingCredits: z.number(),
 });
 
 /** Internal fixture shape — not exposed by a single API endpoint */
@@ -455,8 +439,6 @@ export type AgentTestRunsList = z.infer<typeof AgentTestRunsListSchema>;
 export type AgentCore = z.infer<typeof AgentCoreSchema>;
 export type AgentWorkspace = z.infer<typeof AgentWorkspaceSchema>;
 export type AgentsList = z.infer<typeof AgentsListSchema>;
-export type AgentPlayground = z.infer<typeof AgentPlaygroundSchema>;
-export type PlaygroundPlan = z.infer<typeof PlaygroundPlanSchema>;
 export type PlaygroundMessage = z.infer<typeof PlaygroundMessageSchema>;
 export type PlaygroundSession = z.infer<typeof PlaygroundSessionSchema>;
 export type UpdatePlaygroundSessionInput = z.infer<

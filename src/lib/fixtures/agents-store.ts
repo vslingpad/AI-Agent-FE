@@ -1013,19 +1013,6 @@ export function getAgentTestRuns(orgId: string, agentId: string) {
   return agent ? { testRuns: cloneWorkspace(agent).testRuns } : null;
 }
 
-export function getAgentPlayground(orgId: string, agentId: string) {
-  const agent = findAgent(orgId, agentId);
-
-  if (!agent) {
-    return null;
-  }
-
-  return {
-    name: agent.name,
-    remainingCredits: agent.analytics.remainingCredits,
-  };
-}
-
 type StoredPlaygroundSession = {
   id: string;
   agentId: string;
@@ -1039,7 +1026,6 @@ type StoredPlaygroundSession = {
     content: string;
     at: string;
   }>;
-  billed: boolean;
 };
 
 const playgroundSessions = new Map<string, StoredPlaygroundSession[]>();
@@ -1049,33 +1035,7 @@ function playgroundSessionsKey(orgId: string, agentId: string) {
   return `${orgId}:${agentId}`;
 }
 
-function buildPlaygroundPlan(agent: AgentWorkspace) {
-  const { remainingCredits, includedCredits } = agent.analytics;
-  const allowOverage = true;
-
-  let canSendMessages = true;
-  let blockReason: string | null = null;
-
-  if (remainingCredits <= 0 && !allowOverage) {
-    canSendMessages = false;
-    blockReason =
-      "Included conversations used. Enable overage on Billing or upgrade your plan.";
-  }
-
-  return {
-    includedCredits,
-    remainingCredits,
-    allowOverage,
-    canSendMessages,
-    blockReason,
-  };
-}
-
-function toPlaygroundSession(
-  orgId: string,
-  agent: AgentWorkspace,
-  session: StoredPlaygroundSession
-) {
+function toPlaygroundSession(agent: AgentWorkspace, session: StoredPlaygroundSession) {
   const effectivePrompt = session.promptOverride ?? agent.settings.systemPrompt;
 
   return {
@@ -1088,8 +1048,6 @@ function toPlaygroundSession(
     promptOverride: session.promptOverride,
     effectivePrompt,
     messages: session.messages,
-    billed: session.billed,
-    plan: buildPlaygroundPlan(agent),
   };
 }
 
@@ -1126,14 +1084,13 @@ export function createPlaygroundSession(orgId: string, agentId: string) {
     createdAt: new Date().toISOString(),
     promptOverride: null,
     messages: [],
-    billed: false,
   };
 
   const sessions = playgroundSessions.get(key) ?? [];
   sessions.unshift(session);
   playgroundSessions.set(key, sessions);
 
-  return toPlaygroundSession(orgId, agent, session);
+  return toPlaygroundSession(agent, session);
 }
 
 export function getPlaygroundSession(
@@ -1154,7 +1111,7 @@ export function getPlaygroundSession(
     return null;
   }
 
-  return toPlaygroundSession(orgId, agent, session);
+  return toPlaygroundSession(agent, session);
 }
 
 export function updatePlaygroundSession(
@@ -1177,7 +1134,7 @@ export function updatePlaygroundSession(
   }
 
   session.promptOverride = input.promptOverride;
-  return toPlaygroundSession(orgId, agent, session);
+  return toPlaygroundSession(agent, session);
 }
 
 export function sendPlaygroundMessage(
@@ -1190,12 +1147,6 @@ export function sendPlaygroundMessage(
 
   if (!agent) {
     return null;
-  }
-
-  const plan = buildPlaygroundPlan(agent);
-
-  if (!plan.canSendMessages) {
-    return { error: plan.blockReason ?? "Conversation credits unavailable." } as const;
   }
 
   const sessions = playgroundSessions.get(playgroundSessionsKey(orgId, agentId)) ?? [];
@@ -1223,12 +1174,7 @@ export function sendPlaygroundMessage(
     at: new Date().toISOString(),
   });
 
-  if (!session.billed) {
-    session.billed = true;
-    agent.analytics.remainingCredits = Math.max(0, agent.analytics.remainingCredits - 1);
-  }
-
-  return { session: toPlaygroundSession(orgId, agent, session) } as const;
+  return { session: toPlaygroundSession(agent, session) } as const;
 }
 
 /** @deprecated Use section getters instead */

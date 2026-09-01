@@ -13,7 +13,6 @@ import {
   getAgentHelpDesk,
   getAgentImprove,
   getAgentKnowledge,
-  getAgentPlayground,
   getPlaygroundSession,
   sendPlaygroundMessage,
   updatePlaygroundSession,
@@ -156,10 +155,6 @@ function playgroundSessionKey(
   return ["agents", orgId, agentId, "playground", sessionId] as const;
 }
 
-export function useAgentPlayground(agentId: string) {
-  return useAgentSectionQuery(agentId, "playground", () => getAgentPlayground(agentId));
-}
-
 export function useCreatePlaygroundSession(agentId: string) {
   const queryClient = useQueryClient();
   const { organization } = useOrganization();
@@ -213,10 +208,6 @@ export function useSendPlaygroundMessage(agentId: string, sessionId: string) {
         playgroundSessionKey(organization?.id, agentId, sessionId),
         session
       );
-      invalidateAgentList(queryClient, organization?.id);
-      queryClient.invalidateQueries({
-        queryKey: agentSectionKey(organization?.id, agentId, "analytics"),
-      });
     },
   });
 }

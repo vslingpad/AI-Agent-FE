@@ -6,7 +6,6 @@ import {
   AgentCoreSchema,
   AgentImproveListSchema,
   AgentKnowledgeSchema,
-  AgentPlaygroundSchema,
   PlaygroundSessionSchema,
   SendPlaygroundMessageInputSchema,
   SendPlaygroundMessageResponseSchema,
@@ -32,7 +31,6 @@ import {
   type AgentCore,
   type AgentImproveList,
   type AgentKnowledge,
-  type AgentPlayground,
   type PlaygroundSession,
   type SendPlaygroundMessageInput,
   type UpdatePlaygroundSessionInput,
@@ -123,11 +121,6 @@ export async function getAgentTestCases(agentId: string) {
 export async function getAgentTestRuns(agentId: string) {
   const json = await apiGet<unknown>(`/api/agents/${agentId}/test/runs`);
   return AgentTestRunsListSchema.parse(json);
-}
-
-export async function getAgentPlayground(agentId: string): Promise<AgentPlayground> {
-  const json = await apiGet<unknown>(`/api/agents/${agentId}/test/playground`);
-  return AgentPlaygroundSchema.parse(json);
 }
 
 export async function createPlaygroundSession(agentId: string): Promise<PlaygroundSession> {

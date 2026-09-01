@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { ChatMessageContent } from "@/components/agents/test/playground/chat-message-content";
 import {
   BotIcon,
@@ -9,7 +8,6 @@ import {
   RotateCcwIcon,
 } from "lucide-react";
 import { AgentErrorState, AgentPlaygroundSkeleton } from "@/components/agents/agent-states";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -99,7 +97,7 @@ function PlaygroundWorkspace({
   const send = async () => {
     const text = input.trim();
 
-    if (!text || sendMessage.isPending || !session.plan.canSendMessages) {
+    if (!text || sendMessage.isPending) {
       return;
     }
 
@@ -113,18 +111,8 @@ function PlaygroundWorkspace({
     <div className="flex h-[calc(100svh-var(--notification-banner-height)-3.5rem)] min-h-[32rem] flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
         <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-heading text-lg font-semibold">Playground</h1>
-            {session.billed ? (
-              <Badge variant="muted">Billable</Badge>
-            ) : null}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Session {session.sessionNumber} ·{" "}
-            {session.plan.remainingCredits.toLocaleString()} of{" "}
-            {session.plan.includedCredits.toLocaleString()} conversations remaining
-            {" · "}credits deducted for substantive AI replies only
-          </p>
+          <h1 className="font-heading text-lg font-semibold">Playground</h1>
+          <p className="text-xs text-muted-foreground">Session {session.sessionNumber}</p>
         </div>
         <Button
           variant="outline"
@@ -143,15 +131,6 @@ function PlaygroundWorkspace({
         </Button>
       </header>
 
-      {!session.plan.canSendMessages && session.plan.blockReason ? (
-        <div className="border-b border-destructive/20 bg-destructive/5 px-6 py-3">
-          <p className="text-sm text-destructive">{session.plan.blockReason}</p>
-          <Button variant="link" className="h-auto px-0 text-destructive" render={<Link href="/billing" />}>
-            View billing
-          </Button>
-        </div>
-      ) : null}
-
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_350px]">
         <ChatPanel
           agentName={session.agentName}
@@ -160,7 +139,6 @@ function PlaygroundWorkspace({
           onInputChange={setInput}
           onSend={() => void send()}
           busy={sendMessage.isPending}
-          disabled={!session.plan.canSendMessages}
           scrollRef={scrollRef}
         />
 
@@ -183,7 +161,6 @@ function ChatPanel({
   onInputChange,
   onSend,
   busy,
-  disabled,
   scrollRef,
 }: {
   agentName: string;
@@ -192,7 +169,6 @@ function ChatPanel({
   onInputChange: (value: string) => void;
   onSend: () => void;
   busy: boolean;
-  disabled: boolean;
   scrollRef: React.RefObject<HTMLDivElement | null>;
 }) {
   return (
@@ -239,17 +215,15 @@ function ChatPanel({
                   onSend();
                 }
               }}
-              placeholder={
-                disabled ? "Conversation credits unavailable" : "Ask as a customer…"
-              }
-              disabled={disabled || busy}
+              placeholder="Type your message here..."
+              disabled={busy}
               rows={1}
               className="max-h-24 min-h-9 min-w-0 flex-1 resize-none rounded-md border border-input bg-transparent px-2.5 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60"
             />
             <Button
               type="submit"
               className="self-end"
-              disabled={disabled || busy || !input.trim()}
+              disabled={busy || !input.trim()}
             >
               Send
             </Button>

@@ -613,17 +613,7 @@ Test Runs page also calls `GET …/test/cases` to check if any cases exist.
 
 ## `POST /api/agents/:agentId/test/playground` — Create session
 
-Creates a **new playground session** when the user opens the playground or clicks **New test**. One session = one billable conversation 
-
-Not billable if:
-  - spam
-  - immediate escalation
-  - greeting only
-  - automated acknowledgement only
-  - duplicate
-  - abandoned before AI work
-  - test/system ticket
-
+Creates a **new playground session** when the user opens the playground or clicks **New test**. Playground messages are free and do not consume conversation credits.
 
 ### Response `201` → `PlaygroundSession`
 
@@ -637,26 +627,15 @@ Not billable if:
   "productionPrompt": "You are Acme's support agent…",
   "promptOverride": null,
   "effectivePrompt": "You are Acme's support agent…",
-  "messages": [],
-  "billed": false,
-  "plan": {
-    "includedCredits": 1000,
-    "remainingCredits": 588,
-    "allowOverage": true,
-    "canSendMessages": true,
-    "blockReason": null
-  }
+  "messages": []
 }
 ```
-
-| `plan.canSendMessages` | `false` when credits exhausted and overage unavailable |
-| `billed` | `true` after the first AI reply in this session |
 
 ---
 
 ## `GET /api/agents/:agentId/test/playground/:sessionId`
 
-Returns the current session state (messages, prompt override, plan credits).
+Returns the current session state (messages and prompt override).
 
 Response: `PlaygroundSession`.
 
@@ -711,9 +690,7 @@ Send a customer message and receive an AI reply
         "content": "Order 11902 is with UPS…",
         "at": "2026-08-31T08:00:02.000Z"
       }
-    ],
-    "billed": true,
-    "plan": { "remainingCredits": 587 }
+    ]
   }
 }
 ```
@@ -723,7 +700,6 @@ Send a customer message and receive an AI reply
 | Condition | Status |
 |-----------|--------|
 | Session not found | `404` |
-| Credits exhausted (plan blocks send) | `402` |
 
 ---
 

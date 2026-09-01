@@ -4,7 +4,6 @@ import {
   parseJsonBody,
   withAgentId,
 } from "@/lib/api/agent-routes";
-import { apiError } from "@/lib/api/auth";
 import { sendPlaygroundMessage } from "@/lib/fixtures/agents-store";
 import { SendPlaygroundMessageInputSchema } from "@/lib/schemas/agents";
 
@@ -30,10 +29,6 @@ export async function POST(request: Request, context: PlaygroundMessagesRouteCon
 
     if (!result) {
       return agentNotFound();
-    }
-
-    if ("error" in result) {
-      return apiError(result.error ?? "Conversation credits unavailable.", 402);
     }
 
     await new Promise((resolve) => setTimeout(resolve, 500));

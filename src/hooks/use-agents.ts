@@ -10,6 +10,7 @@ import {
   getAgentActions,
   getAgentAnalytics,
   getAgentConversations,
+  getAgentConversationLocations,
   getAgentHelpDesk,
   getAgentImprove,
   getAgentKnowledge,
@@ -31,6 +32,7 @@ import {
   updateAgentWebChat,
 } from "@/lib/api/agents";
 import type {
+  ConversationQuery,
   CreateAgentInput,
   ImproveKind,
   UpdateAgentActionsInput,
@@ -123,9 +125,19 @@ export function useAgentHelpDesk(agentId: string) {
   return useAgentSectionQuery(agentId, "help-desk", () => getAgentHelpDesk(agentId));
 }
 
-export function useAgentConversations(agentId: string) {
-  return useAgentSectionQuery(agentId, "conversations", () =>
-    getAgentConversations(agentId)
+export function useAgentConversations(agentId: string, params?: ConversationQuery) {
+  const { organization, isLoaded } = useOrganization();
+
+  return useQuery({
+    queryKey: [...agentSectionKey(organization?.id, agentId, "conversations"), params],
+    queryFn: () => getAgentConversations(agentId, params),
+    enabled: isLoaded && Boolean(organization?.id) && Boolean(agentId),
+  });
+}
+
+export function useAgentConversationLocations(agentId: string) {
+  return useAgentSectionQuery(agentId, "conversation-locations", () =>
+    getAgentConversationLocations(agentId)
   );
 }
 

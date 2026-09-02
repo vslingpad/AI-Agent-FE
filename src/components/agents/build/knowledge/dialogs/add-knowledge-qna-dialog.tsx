@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { MessageCircleQuestionIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,8 @@ type AddKnowledgeQnaDialogProps = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (input: { title: string; question: string; answer: string }) => void;
   pending?: boolean;
+  defaults?: { title?: string; question?: string; answer?: string };
+  submitLabel?: string;
 };
 
 export function AddKnowledgeQnaDialog({
@@ -25,20 +28,42 @@ export function AddKnowledgeQnaDialog({
   onOpenChange,
   onSubmit,
   pending,
+  defaults,
+  submitLabel = "Add Q&A source",
 }: AddKnowledgeQnaDialogProps) {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const title = String(formData.get("title") ?? "").trim();
-    const question = String(formData.get("question") ?? "").trim();
-    const answer = String(formData.get("answer") ?? "").trim();
+  const [title, setTitle] = useState("");
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
 
-    if (!title || !question || !answer) {
+  useEffect(() => {
+    if (!open) {
       return;
     }
 
-    onSubmit({ title, question, answer });
-    event.currentTarget.reset();
+    setTitle(defaults?.title ?? "");
+    setQuestion(defaults?.question ?? "");
+    setAnswer(defaults?.answer ?? "");
+  }, [open, defaults?.title, defaults?.question, defaults?.answer]);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmedTitle = title.trim();
+    const trimmedQuestion = question.trim();
+    const trimmedAnswer = answer.trim();
+
+    if (!trimmedTitle || !trimmedQuestion || !trimmedAnswer) {
+      return;
+    }
+
+    onSubmit({
+      title: trimmedTitle,
+      question: trimmedQuestion,
+      answer: trimmedAnswer,
+    });
+    setTitle("");
+    setQuestion("");
+    setAnswer("");
     onOpenChange(false);
   };
 
@@ -63,6 +88,8 @@ export function AddKnowledgeQnaDialog({
             <Input
               id="knowledge-qna-title"
               name="title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
               placeholder="Ex: Refund requests"
               required
             />
@@ -73,6 +100,8 @@ export function AddKnowledgeQnaDialog({
             <Input
               id="knowledge-qna-question"
               name="question"
+              value={question}
+              onChange={(event) => setQuestion(event.target.value)}
               placeholder="Ex: How do I request a refund?"
               required
             />
@@ -85,6 +114,8 @@ export function AddKnowledgeQnaDialog({
               name="answer"
               rows={5}
               required
+              value={answer}
+              onChange={(event) => setAnswer(event.target.value)}
               placeholder="Enter your answer…"
               className="flex min-h-28 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
@@ -95,7 +126,7 @@ export function AddKnowledgeQnaDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              Add Q&amp;A source
+              {submitLabel}
             </Button>
           </DialogFooter>
         </form>

@@ -1,40 +1,188 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { AgentPageFrame } from "@/components/agents/agent-page-frame";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { AddKnowledgeQnaDialog } from "@/components/agents/build/knowledge/dialogs/add-knowledge-qna-dialog";
+import { ConversationDetailPanel } from "@/components/agents/conversations/conversation-detail-panel";
+import { ConversationFiltersBar } from "@/components/agents/conversations/conversation-filters-bar";
+import { ConversationList } from "@/components/agents/conversations/conversation-list";
+import { PAGE_SIZE_OPTIONS } from "@/components/agents/conversations/conversation-labels";
 import { AgentConversationsSkeleton, AgentErrorState } from "@/components/agents/agent-states";
-import { Badge } from "@/components/ui/badge";
-import { useAgentConversations } from "@/hooks/use-agents";
-import { formatLastSyncAttempt } from "@/lib/integrations/connector-paths";
-import type { AgentConversation, ConversationChannel, ConversationStatus } from "@/lib/schemas/agents";
-import { cn } from "@/lib/utils";
+import { TablePagination } from "@/components/ui/table-pagination";
+import {
+  useAgent,
+  useAgentConversationLocations,
+  useAgentConversations,
+  useUpdateAgentKnowledge,
+} from "@/hooks/use-agents";
+import { exportAgentConversations } from "@/lib/api/agents";
+import type { ConversationQuery } from "@/lib/schemas/agents";
 
-const CHANNEL_LABEL: Record<ConversationChannel, string> = {
-  web_chat: "Web Chat",
-  zendesk: "Zendesk",
-  playground: "Playground",
-};
+function parseFilters(searchParams: URLSearchParams): ConversationQuery {
+  const pageSizeParam = Number(searchParams.get("pageSize"));
+  const pageParam = Number(searchParams.get("page"));
+  const billableParam = searchParams.get("billable");
+  const knowledgeGapParam = searchParams.get("knowledgeGap");
 
-const STATUS_LABEL: Record<ConversationStatus, string> = {
-  ai_active: "AI handling",
-  handed_over: "Handed over",
-  resolved: "Resolved",
-};
+  return {
+    customer: searchParams.get("customer") ?? undefined,
+    conversationId: searchParams.get("conversationId") ?? undefined,
+    dateFrom: searchParams.get("dateFrom") ?? undefined,
+    dateTo: searchParams.get("dateTo") ?? undefined,
+    location: searchParams.get("location") ?? undefined,
+    channel: (searchParams.get("channel") ?? undefined) as ConversationQuery["channel"],
+    status: (searchParams.get("status") ?? undefined) as ConversationQuery["status"],
+    billable:
+      billableParam === "true"
+        ? true
+        : billableParam === "false"
+          ? false
+          : undefined,
+    knowledgeGap:
+      knowledgeGapParam === "true"
+        ? true
+        : knowledgeGapParam === "false"
+          ? false
+          : undefined,
+    page: Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1,
+    pageSize:
+      PAGE_SIZE_OPTIONS.includes(pageSizeParam as (typeof PAGE_SIZE_OPTIONS)[number])
+        ? pageSizeParam
+        : 20,
+  };
+}
+
+function filtersToSearchParams(filters: ConversationQuery) {
+  const params = new URLSearchParams();
+
+  if (filters.customer) {
+    params.set("customer", filters.customer);
+  }
+
+  if (filters.conversationId) {
+    params.set("conversationId", filters.conversationId);
+  }
+
+  if (filters.dateFrom) {
+    params.set("dateFrom", filters.dateFrom);
+  }
+
+  if (filters.dateTo) {
+    params.set("dateTo", filters.dateTo);
+  }
+
+  if (filters.location) {
+    params.set("location", filters.location);
+  }
+
+  if (filters.channel) {
+    params.set("channel", filters.channel);
+  }
+
+  if (filters.status) {
+    params.set("status", filters.status);
+  }
+
+  if (filters.billable !== undefined) {
+    params.set("billable", String(filters.billable));
+  }
+
+  if (filters.knowledgeGap !== undefined) {
+    params.set("knowledgeGap", String(filters.knowledgeGap));
+  }
+
+  if (filters.page && filters.page > 1) {
+    params.set("page", String(filters.page));
+  }
+
+  if (filters.pageSize && filters.pageSize !== 20) {
+    params.set("pageSize", String(filters.pageSize));
+  }
+
+  return params;
+}
 
 export function AgentConversationsPage({ agentId }: { agentId: string }) {
-  const { data, isLoading, isError, refetch } = useAgentConversations(agentId);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+  const { data: agent } = useAgent(agentId);
+  const {
+    data: locationOptions,
+    isLoading: locationsLoading,
+  } = useAgentConversationLocations(agentId);
+  const { data, isLoading, isError, refetch } = useAgentConversations(agentId, filters);
+  const updateKnowledge = useUpdateAgentKnowledge(agentId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [reviseDefaults, setReviseDefaults] = useState<{
+    title: string;
+    question: string;
+    answer: string;
+  } | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const conversations = data?.conversations ?? [];
+  const pagination = data?.pagination;
 
   const selected = useMemo(() => {
-    const list = data?.conversations ?? [];
-    return list.find((item) => item.id === selectedId) ?? list[0] ?? null;
-  }, [data, selectedId]);
+    return (
+      conversations.find((conversation) => conversation.id === selectedId) ??
+      conversations[0] ??
+      null
+    );
+  }, [conversations, selectedId]);
+
+  useEffect(() => {
+    if (conversations.length === 0) {
+      setSelectedId(null);
+      return;
+    }
+
+    if (!selectedId || !conversations.some((conversation) => conversation.id === selectedId)) {
+      setSelectedId(conversations[0]?.id ?? null);
+    }
+  }, [conversations, selectedId]);
+
+  const updateFilters = (nextFilters: ConversationQuery) => {
+    const params = filtersToSearchParams(nextFilters);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+
+    try {
+      const blob = await exportAgentConversations(agentId, {
+        customer: filters.customer,
+        conversationId: filters.conversationId,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        location: filters.location,
+        channel: filters.channel,
+        status: filters.status,
+        billable: filters.billable,
+        knowledgeGap: filters.knowledgeGap,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "conversations-export.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (isLoading) {
     return <AgentConversationsSkeleton />;
   }
 
-  if (isError || !data) {
+  if (isError || !data || !pagination) {
     return (
       <AgentErrorState
         message="Unable to load conversations."
@@ -43,95 +191,90 @@ export function AgentConversationsPage({ agentId }: { agentId: string }) {
     );
   }
 
+  const pageStart = (pagination.page - 1) * pagination.pageSize;
+
   return (
-    <AgentPageFrame
-      title="Conversations"
-      description="Production and playground threads this agent handled. Session replay is off on this route."
-    >
-      {data.conversations.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border px-6 py-16 text-center">
-          <p className="text-sm font-medium">No conversations yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Publish this agent and send a test in Playground, or wait for a live
-            channel message.
-          </p>
+    <div className="flex h-[calc(100svh-var(--notification-banner-height)-3.5rem)] min-h-[32rem] flex-col">
+      <ConversationFiltersBar
+        filters={filters}
+        locationOptions={locationOptions?.locations ?? []}
+        locationsLoading={locationsLoading}
+        onFiltersChange={updateFilters}
+        onSearchChange={(value) =>
+          updateFilters({
+            ...filtersRef.current,
+            customer: value,
+            conversationId: value,
+            page: 1,
+          })
+        }
+        onExport={() => void handleExport()}
+        exporting={exporting}
+      />
+
+      {conversations.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center px-6">
+          <div className="max-w-md rounded-xl border border-dashed border-border px-6 py-16 text-center">
+            <p className="text-sm font-medium">No conversations match these filters</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try clearing filters or wait for live channel traffic.
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="grid min-h-[28rem] overflow-hidden rounded-xl border border-border lg:grid-cols-[280px_1fr]">
-          <ul className="divide-y overflow-y-auto border-b border-border lg:border-r lg:border-b-0">
-            {data.conversations.map((conversation) => (
-              <li key={conversation.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(conversation.id)}
-                  className={cn(
-                    "flex w-full flex-col items-start gap-1 px-4 py-3 text-left text-sm hover:bg-muted/60",
-                    selected?.id === conversation.id && "bg-muted"
-                  )}
-                >
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <span className="font-medium">{conversation.customerName}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {formatLastSyncAttempt(conversation.startedAt)}
-                    </span>
-                  </div>
-                  <p className="line-clamp-2 text-xs text-muted-foreground">
-                    {conversation.preview}
-                  </p>
-                </button>
-              </li>
-            ))}
-          </ul>
+        <div className="grid min-h-0 flex-1 lg:grid-cols-[350px_1fr]">
+          <ConversationList
+            conversations={conversations}
+            selectedId={selected?.id ?? null}
+            onSelect={setSelectedId}
+          />
 
-          {selected ? <Thread conversation={selected} /> : null}
+          {selected ? (
+            <ConversationDetailPanel
+              conversation={selected}
+              agentName={agent?.name}
+              onReviseAnswer={(defaults) => setReviseDefaults(defaults)}
+            />
+          ) : null}
         </div>
       )}
-    </AgentPageFrame>
-  );
-}
 
-function Thread({ conversation }: { conversation: AgentConversation }) {
-  return (
-    <div className="flex min-w-0 flex-col">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-medium">{conversation.customerName}</p>
-          <p className="text-xs text-muted-foreground">{conversation.customerEmail}</p>
-        </div>
-        <Badge variant="outline">{CHANNEL_LABEL[conversation.channel]}</Badge>
-        <Badge
-          variant={
-            conversation.status === "resolved"
-              ? "success"
-              : conversation.status === "handed_over"
-                ? "warning"
-                : "muted"
+      {pagination.totalItems > 0 ? (
+        <TablePagination
+          page={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageStart={pageStart}
+          pageSize={pagination.pageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          onPageChange={(page) => updateFilters({ ...filters, page })}
+          onPageSizeChange={(pageSize) =>
+            updateFilters({ ...filters, pageSize, page: 1 })
           }
-        >
-          {STATUS_LABEL[conversation.status]}
-        </Badge>
-        {conversation.billable ? <Badge variant="secondary">Billable</Badge> : null}
-        {conversation.knowledgeGap ? (
-          <Badge variant="warning">Knowledge gap</Badge>
-        ) : null}
-      </div>
+          rowsLabel="Per page"
+        />
+      ) : null}
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
-        {conversation.messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              "max-w-[85%] rounded-xl px-3 py-2 text-sm",
-              message.role === "customer" && "bg-muted",
-              message.role === "assistant" && "ml-auto bg-primary text-primary-foreground",
-              message.role === "system" &&
-                "mx-auto max-w-full bg-amber-50 text-center text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
-            )}
-          >
-            {message.content}
-          </div>
-        ))}
-      </div>
+      <AddKnowledgeQnaDialog
+        key={reviseDefaults?.question ?? "closed"}
+        open={reviseDefaults !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setReviseDefaults(null);
+          }
+        }}
+        defaults={reviseDefaults ?? undefined}
+        submitLabel="Save Q&A"
+        onSubmit={(input) => {
+          updateKnowledge.mutate(
+            { addQna: input },
+            {
+              onSuccess: () => setReviseDefaults(null),
+            }
+          );
+        }}
+        pending={updateKnowledge.isPending}
+      />
     </div>
   );
 }

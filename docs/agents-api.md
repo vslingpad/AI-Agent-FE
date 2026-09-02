@@ -48,6 +48,7 @@ Scope all operations to `(orgId, agentId)`.
 | `GET` | `/api/agents/:agentId/deploy/help-desk` | Help Desk | ✓ | |
 | `PATCH` | `/api/agents/:agentId/deploy/help-desk` | Help Desk | | ✓ |
 | `GET` | `/api/agents/:agentId/conversations` | Conversations | ✓ | |
+| `GET` | `/api/agents/:agentId/conversations/locations` | Conversation location filters | ✓ | |
 | `GET` | `/api/agents/:agentId/improve?kind=…` | Improve tabs | ✓ | |
 | `GET` | `/api/agents/:agentId/test/cases` | Test Cases | ✓ | |
 | `GET` | `/api/agents/:agentId/test/runs` | Test Runs | ✓ | |
@@ -517,6 +518,22 @@ Response: full updated `HelpDeskBinding`.
 
 ## `GET /api/agents/:agentId/conversations`
 
+Optional query parameters:
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `customer` | string | Match customer name or email |
+| `conversationId` | string | Match conversation ID (partial) |
+| `dateFrom` | string | Filter on or after date (`YYYY-MM-DD`) |
+| `dateTo` | string | Filter on or before date (`YYYY-MM-DD`) |
+| `location` | string | Filter by location (exact). Use `__none__` for missing location |
+| `channel` | `web_chat` \| `zendesk` \| `playground` | Filter by channel |
+| `status` | `ai_active` \| `handed_over` \| `resolved` | Filter by status |
+| `billable` | boolean | Filter billable conversations |
+| `knowledgeGap` | boolean | Filter knowledge-gap conversations |
+| `page` | number | Page number (default `1`) |
+| `pageSize` | number | Page size (default `20`, max `100`) |
+
 ```json
 {
   "conversations": [
@@ -525,6 +542,7 @@ Response: full updated `HelpDeskBinding`.
       "channel": "zendesk",
       "customerName": "Maya Chen",
       "customerEmail": "maya@example.com",
+      "location": "San Francisco, US",
       "preview": "I need a refund for order #48219…",
       "status": "handed_over",
       "startedAt": "2026-08-31T03:00:00.000Z",
@@ -535,9 +553,40 @@ Response: full updated `HelpDeskBinding`.
         { "id": "m1", "role": "customer", "content": "…", "at": "…" }
       ]
     }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "totalItems": 18,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+## `GET /api/agents/:agentId/conversations/locations`
+
+Returns distinct location filter options for the agent's conversations, derived from stored conversation data.
+
+```json
+{
+  "locations": [
+    { "value": "Berlin, DE", "label": "Berlin, DE" },
+    { "value": "London, UK", "label": "London, UK" },
+    { "value": "San Francisco, US", "label": "San Francisco, US" },
+    { "value": "__none__", "label": "No location" }
   ]
 }
 ```
+
+`__none__` is included only when at least one conversation has no location.
+
+---
+
+## `GET /api/agents/:agentId/conversations/export`
+
+Same filter query params as the list endpoint (`customer`, `conversationId`, `dateFrom`, `dateTo`, `location`, `channel`, `status`, `billable`, `knowledgeGap`). Returns all matching conversations as a CSV download (`Content-Type: text/csv`).
 
 ---
 
@@ -720,7 +769,8 @@ Send a customer message and receive an AI reply
 | `useAgentProcedures(id)` | `GET/PATCH …/procedures` |
 | `useAgentWebChat(id)` | `GET/PATCH …/deploy/web-chat` |
 | `useAgentHelpDesk(id)` | `GET/PATCH …/deploy/help-desk` |
-| `useAgentConversations(id)` | `GET …/conversations` |
+| `useAgentConversations(id, params?)` | `GET …/conversations`, `GET …/conversations/export` |
+| `useAgentConversationLocations(id)` | `GET …/conversations/locations` |
 | `useAgentImprove(id, kind)` | `GET …/improve?kind=` |
 | `useAgentTestCases(id)` | `GET …/test/cases` |
 | `useAgentTestRuns(id)` | `GET …/test/runs` |

@@ -1,12 +1,13 @@
+import { NextResponse } from "next/server";
 import { apiError } from "@/lib/api/auth";
 import { ConversationQuerySchema } from "@/lib/schemas/agents";
 import {
   agentNotFound,
-  jsonOk,
   withAgentId,
   type AgentRouteContext,
 } from "@/lib/api/agent-routes";
-import { queryAgentConversations } from "@/lib/fixtures/agents-store";
+import { conversationsToCsv } from "@/lib/conversations/export-conversations";
+import { exportAgentConversations } from "@/lib/fixtures/agents-store";
 
 export async function GET(request: Request, context: AgentRouteContext) {
   return withAgentId(context, async (orgId, agentId) => {
@@ -21,20 +22,26 @@ export async function GET(request: Request, context: AgentRouteContext) {
       status: searchParams.get("status") ?? undefined,
       billable: searchParams.get("billable") ?? undefined,
       knowledgeGap: searchParams.get("knowledgeGap") ?? undefined,
-      page: searchParams.get("page") ?? undefined,
-      pageSize: searchParams.get("pageSize") ?? undefined,
     });
 
     if (!parsed.success) {
       return apiError("Invalid query parameters");
     }
 
-    const conversations = queryAgentConversations(orgId, agentId, parsed.data);
+    const { page: _page, pageSize: _pageSize, ...filters } = parsed.data;
+    const exportData = exportAgentConversations(orgId, agentId, filters);
 
-    if (!conversations) {
+    if (!exportData) {
       return agentNotFound();
     }
 
-    return jsonOk(conversations);
+    const csv = conversationsToCsv(exportData.conversations);
+
+    return new NextResponse(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="conversations-export.csv"',
+      },
+    });
   });
 }

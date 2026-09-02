@@ -170,9 +170,31 @@ export function AgentHelpDeskSkeleton() {
 
 export function AgentConversationsSkeleton() {
   return (
-    <AgentPageShell>
-      <Skeleton className="min-h-[28rem] w-full rounded-xl" />
-    </AgentPageShell>
+    <div className="flex h-[calc(100svh-var(--notification-banner-height)-3.5rem)] min-h-[32rem] flex-col">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <Skeleton className="h-6 w-36" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-56" />
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[320px_1fr]">
+        <div className="space-y-2 border-r border-border p-4">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-20 w-full rounded-lg" />
+          ))}
+        </div>
+        <div className="space-y-3 p-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-24 w-[70%] rounded-xl" />
+          <Skeleton className="ml-auto h-24 w-[70%] rounded-xl" />
+        </div>
+      </div>
+      <div className="border-t border-border px-4 py-3">
+        <Skeleton className="h-8 w-full max-w-xl" />
+      </div>
+    </div>
   );
 }
 

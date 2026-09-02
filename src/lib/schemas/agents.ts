@@ -222,8 +222,9 @@ export const ConversationMessageSchema = z.object({
 export const AgentConversationSchema = z.object({
   id: z.string(),
   channel: ConversationChannelSchema,
-  customerName: z.string(),
-  customerEmail: z.string(),
+  customerName: z.string().nullish(),
+  customerEmail: z.string().nullish(),
+  location: z.string().nullish(),
   preview: z.string(),
   status: ConversationStatusSchema,
   startedAt: z.string(),
@@ -283,8 +284,37 @@ export const AgentProceduresListSchema = z.object({
   procedures: z.array(AgentProcedureBindingSchema),
 });
 
+export const ConversationQuerySchema = z.object({
+  customer: z.string().optional(),
+  conversationId: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  location: z.string().optional(),
+  channel: ConversationChannelSchema.optional(),
+  status: ConversationStatusSchema.optional(),
+  billable: z.coerce.boolean().optional(),
+  knowledgeGap: z.coerce.boolean().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export const AgentConversationsListSchema = z.object({
   conversations: z.array(AgentConversationSchema),
+  pagination: z.object({
+    page: z.number(),
+    pageSize: z.number(),
+    totalItems: z.number(),
+    totalPages: z.number(),
+  }),
+});
+
+export const ConversationLocationOptionSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+});
+
+export const AgentConversationLocationsSchema = z.object({
+  locations: z.array(ConversationLocationOptionSchema),
 });
 
 export const AgentImproveListSchema = z.object({
@@ -424,7 +454,9 @@ export type AgentActionBinding = z.infer<typeof AgentActionBindingSchema>;
 export type AgentProcedureBinding = z.infer<typeof AgentProcedureBindingSchema>;
 export type WebChatConfig = z.infer<typeof WebChatConfigSchema>;
 export type HelpDeskBinding = z.infer<typeof HelpDeskBindingSchema>;
+export type ConversationMessage = z.infer<typeof ConversationMessageSchema>;
 export type AgentConversation = z.infer<typeof AgentConversationSchema>;
+export type ConversationQuery = z.infer<typeof ConversationQuerySchema>;
 export type ImproveItem = z.infer<typeof ImproveItemSchema>;
 export type ImproveKind = z.infer<typeof ImproveKindSchema>;
 export type ImproveStatus = z.infer<typeof ImproveStatusSchema>;
@@ -433,6 +465,8 @@ export type TestRun = z.infer<typeof TestRunSchema>;
 export type AgentActionsList = z.infer<typeof AgentActionsListSchema>;
 export type AgentProceduresList = z.infer<typeof AgentProceduresListSchema>;
 export type AgentConversationsList = z.infer<typeof AgentConversationsListSchema>;
+export type ConversationLocationOption = z.infer<typeof ConversationLocationOptionSchema>;
+export type AgentConversationLocations = z.infer<typeof AgentConversationLocationsSchema>;
 export type AgentImproveList = z.infer<typeof AgentImproveListSchema>;
 export type AgentTestCasesList = z.infer<typeof AgentTestCasesListSchema>;
 export type AgentTestRunsList = z.infer<typeof AgentTestRunsListSchema>;

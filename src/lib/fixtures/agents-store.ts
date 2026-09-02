@@ -3,11 +3,13 @@ import type {
   AgentCore,
   AgentWorkspace,
   AgentsList,
+  ConversationQuery,
   CreateAgentInput,
   ImproveItem,
   KnowledgeSource,
   UpdateAgentSettingsInput,
 } from "@/lib/schemas/agents";
+import { CONVERSATION_LOCATION_NONE } from "@/lib/conversations/conversation-utils";
 import { nativeSourceId } from "@/lib/knowledge/catalog";
 import { templateSubActions } from "@/lib/actions/agent-action-catalog";
 
@@ -461,96 +463,458 @@ function improveItems(prefix: string): ImproveItem[] {
   ];
 }
 
-function conversations(prefix: string, channel: AgentWorkspace["conversations"][number]["channel"]): AgentWorkspace["conversations"] {
-  return [
+function refundConversation(
+  prefix: string
+): AgentWorkspace["conversations"][number] {
+  const hours = 3;
+  const startedAt = hoursAgo(hours);
+  const thread: Array<{
+    role: "customer" | "assistant";
+    content: string;
+  }> = [
+    {
+      role: "customer",
+      content:
+        "Hi — I need a **refund for order `#48219`**. The package arrived yesterday and the **ceramic vase inside was shattered**. I already took photos.",
+    },
+    {
+      role: "assistant",
+      content:
+        "I'm sorry your order arrived damaged, Maya. I pulled up **order `#48219`** shipped on **Aug 18** via UPS.\n\nTo start a refund I need:\n\n1. A clear photo of the **outer box** showing damage\n2. A photo of the **broken item**\n3. Confirmation you want a **full refund** (not a replacement)\n\nYou can upload files here or email **returns@acme.com** with the subject `REFUND-48219`.",
+    },
+    {
+      role: "customer",
+      content:
+        "Photos attached. The box was **crushed on one corner** — looks like it was dropped. I want a **full refund** to my original card, not store credit.\n\nAlso, I paid **$14.99 for expedited shipping**. Should that be refunded too?",
+    },
+    {
+      role: "assistant",
+      content:
+        "Thanks — I can see both images.\n\nFor **damaged-in-transit** claims our policy covers:\n\n- **Item price** — `$89.00` for the vase\n- **Expedited shipping** — `$14.99` when the item cannot be used\n- **Tax** — `$8.01` pro-rated on the refunded amount\n\n**Estimated total refund: `$112.00`** to the Visa ending in `4242`.\n\nRefunds typically post in **3–5 business days** after approval.",
+    },
+    {
+      role: "customer",
+      content:
+        "That works. One more thing — I bought this as a **gift** and already gave the recipient the tracking link from https://track.acme.com/t/48219. Will they get any email about the refund?",
+    },
+    {
+      role: "assistant",
+      content:
+        "Good question. **Refund notifications** go only to the **account email** on file — `maya@example.com`. The gift recipient will **not** receive billing emails.\n\nIf you want, I can add an internal note that the item was returned/refunded so support doesn't ask them to rate delivery.",
+    },
+    {
+      role: "customer",
+      content:
+        "Yes please add that note. Also, do I need to **ship the broken vase back**? It's in pieces and not really packable.",
+    },
+    {
+      role: "assistant",
+      content:
+        "For **shattered fragile items** we usually **do not require a return shipment** when photos clearly show the damage.\n\nI've flagged this case as **keep item / dispose locally** so you don't need to print a return label.\n\n```\nReturn required: NO\nReason: Damaged beyond use — photos verified\n```",
+    },
+    {
+      role: "customer",
+      content:
+        "Perfect. How long until the refund is **approved**? I need it before my card statement closes on the **30th**.",
+    },
+    {
+      role: "assistant",
+      content:
+        "I've submitted the refund for **auto-approval** since photos meet our damage threshold.\n\n- **Approval:** usually within **2 hours** during business hours\n- **Bank posting:** **3–5 business days** after approval\n- **Statement date Aug 30:** you should see it if approved today\n\nI'll watch the case and reply here if finance needs anything else.",
+    },
+    {
+      role: "customer",
+      content:
+        "Got it. Can you confirm the **case number** in case I need to call back? Last time support couldn't find my ticket.",
+    },
+    {
+      role: "assistant",
+      content:
+        "Absolutely. Your case details:\n\n- **Case ID:** `ZD-88421-REF`\n- **Order:** `#48219`\n- **Type:** Damaged delivery — full refund\n- **Status:** *Pending auto-approval*\n\nQuote **`ZD-88421-REF`** to any agent and they'll see this entire thread.",
+    },
+    {
+      role: "customer",
+      content:
+        "Thanks. If approval fails for some reason, will someone **email me** or do I have to check back here?",
+    },
+    {
+      role: "assistant",
+      content:
+        "You'll get an email at **`maya@example.com`** either way:\n\n- **Approved** → subject: *Your refund for order 48219 is on the way*\n- **Needs info** → subject: *Action needed on your refund request*\n\nYou can also reply in this chat — I'll reopen the case automatically.",
+    },
+    {
+      role: "customer",
+      content:
+        "One last question: will this refund affect my **Acme Rewards points** from that purchase? I earned about **890 points**.",
+    },
+    {
+      role: "assistant",
+      content:
+        "Yes — when a order is **fully refunded**, points earned on that order are **clawed back** proportionally.\n\nFor `#48219` you'd lose **890 points** (~**$8.90** in store credit value). Points already redeemed won't go negative; your balance stops at **0**.\n\nI can send a **rewards ledger export** if you want the exact line item.",
+    },
+    {
+      role: "customer",
+      content:
+        "No that's fine, just wanted to know. Please proceed with the **$112 refund** as discussed.",
+    },
+    {
+      role: "assistant",
+      content:
+        "Done — I've locked in the refund request:\n\n**Refund breakdown**\n1. Vase — `$89.00`\n2. Expedited shipping — `$14.99`\n3. Tax — `$8.01`\n\n**Total refund: `$112.00`**\n\nApproval is queued. You'll get a confirmation email once finance releases it.",
+    },
+    {
+      role: "customer",
+      content:
+        "Thanks — just confirm the total is **$112** to my Visa ending in **4242** before I sign off.",
+    },
+    {
+      role: "assistant",
+      content:
+        "Yes — **$112.00 total** is correct. Sorry for the formatting; here's the plain summary:\n\n**Refund breakdown**\n- Product: `$89.00`\n- Shipping: `$14.99`\n- Tax: `$8.01`\n\n**Total refund: `$112.00`** to Visa `•••• 4242`.\n\nA specialist will take over only if auto-approval rejects the claim — otherwise you're all set.",
+    },
+  ];
+
+  const messages: AgentWorkspace["conversations"][number]["messages"] = thread.map(
+    (entry, index) => ({
+      id: `${prefix}-c-refund-m${index + 1}`,
+      role: entry.role,
+      content: entry.content,
+      at: new Date(
+        new Date(startedAt).getTime() + index * 2 * 60 * 1000
+      ).toISOString(),
+    })
+  );
+
+  return {
+    id: `${prefix}-c-refund`,
+    channel: "zendesk",
+    customerName: "Maya Chen",
+    customerEmail: "maya@example.com",
+    location: "San Francisco, US",
+    preview: thread[0]?.content.slice(0, 120) ?? "",
+    status: "handed_over",
+    startedAt,
+    messageCount: messages.length,
+    billable: true,
+    knowledgeGap: false,
+    messages,
+  };
+}
+
+function conversations(prefix: string): AgentWorkspace["conversations"] {
+  const templates: Array<{
+    id: string;
+    channel: AgentWorkspace["conversations"][number]["channel"];
+    customerName: string | null;
+    customerEmail: string | null;
+    location: string | null;
+    customerMsg: string;
+    assistantMsg: string;
+    status: AgentWorkspace["conversations"][number]["status"];
+    hours: number;
+    billable: boolean;
+    knowledgeGap: boolean;
+    systemMsg?: string;
+  }> = [
     {
       id: `${prefix}-c-refund`,
-      channel,
+      channel: "zendesk",
       customerName: "Maya Chen",
       customerEmail: "maya@example.com",
-      preview: "I need a refund for order #48219 — it arrived damaged.",
+      location: "San Francisco, US",
+      customerMsg: "",
+      assistantMsg: "",
       status: "handed_over",
-      startedAt: hoursAgo(3),
-      messageCount: 6,
+      hours: 3,
       billable: true,
       knowledgeGap: false,
-      messages: [
-        {
-          id: "m1",
-          role: "customer",
-          content: "I need a refund for order #48219 — it arrived damaged.",
-          at: hoursAgo(3),
-        },
-        {
-          id: "m2",
-          role: "assistant",
-          content:
-            "I’m sorry the order arrived damaged. I found #48219 shipped Aug 18. I can start a refund after a photo of the damage. Would you like me to connect you with a specialist?",
-          at: hoursAgo(3),
-        },
-        {
-          id: "m3",
-          role: "system",
-          content: "Handed over to Zendesk Support · tag ai_escalated",
-          at: hoursAgo(2.9),
-        },
-      ],
     },
     {
       id: `${prefix}-c-track`,
-      channel,
+      channel: "zendesk",
       customerName: "Jonah Price",
       customerEmail: "jonah@example.com",
-      preview: "Where is my package? Order 11902.",
+      location: "London, UK",
+      customerMsg: "Where is my package? Order 11902.",
+      assistantMsg:
+        "Order 11902 is with UPS, out for delivery today. Tracking: 1Z999AA10123456784.",
       status: "resolved",
-      startedAt: hoursAgo(8),
-      messageCount: 4,
+      hours: 8,
       billable: true,
       knowledgeGap: false,
-      messages: [
-        {
-          id: "m1",
-          role: "customer",
-          content: "Where is my package? Order 11902.",
-          at: hoursAgo(8),
-        },
-        {
-          id: "m2",
-          role: "assistant",
-          content:
-            "Order 11902 is with UPS, out for delivery today. Tracking: 1Z999AA10123456784.",
-          at: hoursAgo(8),
-        },
-      ],
     },
     {
       id: `${prefix}-c-warranty`,
       channel: "web_chat",
       customerName: "Priya Shah",
       customerEmail: "priya@example.com",
-      preview: "Can I still buy extended warranty? I bought this 45 days ago.",
+      location: null,
+      customerMsg: "Can I still buy extended warranty? I bought this 45 days ago.",
+      assistantMsg:
+        "I don't have a documented policy for buying warranty after 30 days. I can connect you with a specialist who can check eligibility.",
       status: "ai_active",
-      startedAt: hoursAgo(5),
-      messageCount: 3,
+      hours: 5,
       billable: true,
       knowledgeGap: true,
-      messages: [
-        {
-          id: "m1",
-          role: "customer",
-          content: "Can I still buy extended warranty? I bought this 45 days ago.",
-          at: hoursAgo(5),
-        },
-        {
-          id: "m2",
-          role: "assistant",
-          content:
-            "I don’t have a documented policy for buying warranty after 30 days. I can connect you with a specialist who can check eligibility.",
-          at: hoursAgo(5),
-        },
-      ],
+    },
+    {
+      id: `${prefix}-c-cancel`,
+      channel: "web_chat",
+      customerName: "Alex Rivera",
+      customerEmail: "alex@example.com",
+      location: "New York, US",
+      customerMsg: "How do I cancel my subscription before renewal?",
+      assistantMsg:
+        "You can cancel from Settings → Billing → Manage plan. Renewal stops immediately and access continues until the period ends.",
+      status: "resolved",
+      hours: 12,
+      billable: true,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-invoice`,
+      channel: "zendesk",
+      customerName: "Sam Ortiz",
+      customerEmail: "sam@example.com",
+      location: "Toronto, CA",
+      customerMsg: "Can you send me a copy of invoice INV-8821?",
+      assistantMsg:
+        "Invoice INV-8821 for $129.00 was emailed to sam@example.com on Aug 12. I can resend it now if you'd like.",
+      status: "resolved",
+      hours: 16,
+      billable: false,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-password`,
+      channel: "web_chat",
+      customerName: "Jordan Lee",
+      customerEmail: "jordan@example.com",
+      location: null,
+      customerMsg: "I forgot my password and the reset link expired.",
+      assistantMsg:
+        "I can send a fresh reset link to jordan@example.com. It expires in 30 minutes.",
+      status: "ai_active",
+      hours: 20,
+      billable: false,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-shipping`,
+      channel: "zendesk",
+      customerName: "Taylor Brooks",
+      customerEmail: "taylor@example.com",
+      location: "Chicago, US",
+      customerMsg: "My order says delivered but I never received it.",
+      assistantMsg:
+        "I'm checking carrier proof-of-delivery for order #77304. If the package was left at the wrong address, we can open a replacement claim.",
+      status: "handed_over",
+      hours: 24,
+      billable: true,
+      knowledgeGap: false,
+      systemMsg: "Handed over to Zendesk Support · missing delivery investigation",
+    },
+    {
+      id: `${prefix}-c-giftcard`,
+      channel: "web_chat",
+      customerName: "Casey Nguyen",
+      customerEmail: "casey@example.com",
+      location: "Berlin, DE",
+      customerMsg: "Do gift cards expire?",
+      assistantMsg:
+        "I couldn't find a clear gift card expiry policy in our help center.",
+      status: "ai_active",
+      hours: 30,
+      billable: true,
+      knowledgeGap: true,
+    },
+    {
+      id: `${prefix}-c-playground-1`,
+      channel: "playground",
+      customerName: "Test User",
+      customerEmail: "test@example.com",
+      location: null,
+      customerMsg: "What is your return window?",
+      assistantMsg: "Returns are accepted within 30 days of delivery for most items.",
+      status: "resolved",
+      hours: 36,
+      billable: false,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-playground-2`,
+      channel: "playground",
+      customerName: null,
+      customerEmail: null,
+      location: null,
+      customerMsg: "Can I change my shipping address after checkout?",
+      assistantMsg:
+        "Address changes are allowed until the order enters fulfillment, usually within 2 hours.",
+      status: "resolved",
+      hours: 40,
+      billable: false,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-tax`,
+      channel: "zendesk",
+      customerName: "Riley Morgan",
+      customerEmail: "riley@example.com",
+      location: "Paris, FR",
+      customerMsg: "Why was tax charged on my international order?",
+      assistantMsg:
+        "Import duties and VAT may apply depending on destination. Your receipt shows a $14.20 tax line for EU VAT.",
+      status: "resolved",
+      hours: 48,
+      billable: true,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-loyalty`,
+      channel: "web_chat",
+      customerName: "Drew Patel",
+      customerEmail: "drew@example.com",
+      location: "Austin, US",
+      customerMsg: "How many points do I have in the rewards program?",
+      assistantMsg:
+        "You currently have 1,240 points. That's enough for a $12 store credit.",
+      status: "resolved",
+      hours: 52,
+      billable: true,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-bulk`,
+      channel: "zendesk",
+      customerName: "Morgan Ellis",
+      customerEmail: "morgan@example.com",
+      location: null,
+      customerMsg: "Do you offer bulk pricing for 500+ units?",
+      assistantMsg:
+        "I don't have published bulk pricing tiers. I'll connect you with sales for a custom quote.",
+      status: "handed_over",
+      hours: 60,
+      billable: true,
+      knowledgeGap: true,
+      systemMsg: "Handed over to Sales · bulk pricing inquiry",
+    },
+    {
+      id: `${prefix}-c-localization`,
+      channel: "web_chat",
+      customerName: "Avery Kim",
+      customerEmail: "avery@example.com",
+      location: null,
+      customerMsg: "Is support available in French?",
+      assistantMsg: "Yes, live chat and email support are available in French 9am–6pm CET.",
+      status: "resolved",
+      hours: 72,
+      billable: false,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-api`,
+      channel: "playground",
+      customerName: "Dev Sandbox",
+      customerEmail: "dev@example.com",
+      location: null,
+      customerMsg: "Where do I find my API key?",
+      assistantMsg:
+        "API keys live under Settings → Developers. You'll need admin access to create one.",
+      status: "resolved",
+      hours: 80,
+      billable: false,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-escalation`,
+      channel: "zendesk",
+      customerName: "Quinn Adams",
+      customerEmail: "quinn@example.com",
+      location: "Seattle, US",
+      customerMsg: "I've been charged twice for the same order.",
+      assistantMsg:
+        "I see duplicate charges for order #90112. I'm escalating this to billing to reverse the extra charge.",
+      status: "handed_over",
+      hours: 96,
+      billable: true,
+      knowledgeGap: false,
+      systemMsg: "Handed over to Billing · duplicate charge review",
+    },
+    {
+      id: `${prefix}-c-stock`,
+      channel: "web_chat",
+      customerName: "Jamie Fox",
+      customerEmail: "jamie@example.com",
+      location: "Denver, US",
+      customerMsg: "When will the blue XL hoodie be back in stock?",
+      assistantMsg:
+        "The blue XL hoodie is expected to restock on Sep 15. I can notify you when it's available.",
+      status: "ai_active",
+      hours: 100,
+      billable: true,
+      knowledgeGap: false,
+    },
+    {
+      id: `${prefix}-c-privacy`,
+      channel: "zendesk",
+      customerName: "Robin Hayes",
+      customerEmail: "robin@example.com",
+      location: null,
+      customerMsg: "How do I request deletion of my personal data?",
+      assistantMsg:
+        "Submit a privacy request at privacy@example.com with the email on your account. We respond within 30 days.",
+      status: "resolved",
+      hours: 120,
+      billable: false,
+      knowledgeGap: false,
     },
   ];
+
+  return templates.map((template) => {
+    if (template.id === `${prefix}-c-refund`) {
+      return refundConversation(prefix);
+    }
+
+    const startedAt = hoursAgo(template.hours);
+    const messages: AgentWorkspace["conversations"][number]["messages"] = [
+      {
+        id: `${template.id}-m1`,
+        role: "customer",
+        content: template.customerMsg,
+        at: startedAt,
+      },
+      {
+        id: `${template.id}-m2`,
+        role: "assistant",
+        content: template.assistantMsg,
+        at: startedAt,
+      },
+    ];
+
+    if (template.systemMsg) {
+      messages.push({
+        id: `${template.id}-m3`,
+        role: "system",
+        content: template.systemMsg,
+        at: hoursAgo(template.hours - 0.1),
+      });
+    }
+
+    return {
+      id: template.id,
+      channel: template.channel,
+      customerName: template.customerName,
+      customerEmail: template.customerEmail,
+      location: template.location,
+      preview: template.customerMsg,
+      status: template.status,
+      startedAt,
+      messageCount: messages.length,
+      billable: template.billable,
+      knowledgeGap: template.knowledgeGap,
+      messages,
+    };
+  });
 }
 
 function createCustomerSupport(): AgentWorkspace {
@@ -637,7 +1001,7 @@ function createCustomerSupport(): AgentWorkspace {
       useChannel: true,
       routing: "inherit",
     },
-    conversations: conversations("cs", "zendesk"),
+    conversations: conversations("cs"),
     improve: improveItems("cs"),
     testCases: [
       {
@@ -755,7 +1119,7 @@ function createBillingSupport(): AgentWorkspace {
       useChannel: true,
       routing: "inherit",
     },
-    conversations: conversations("bs", "zendesk"),
+    conversations: conversations("bs"),
     improve: improveItems("bs"),
     testCases: [
       {
@@ -981,8 +1345,187 @@ export function getAgentHelpDesk(orgId: string, agentId: string) {
 }
 
 export function getAgentConversations(orgId: string, agentId: string) {
+  return queryAgentConversations(orgId, agentId, {
+    page: 1,
+    pageSize: 100,
+  });
+}
+
+function matchesConversation(
+  conversation: AgentWorkspace["conversations"][number],
+  params: ConversationQuery
+) {
+  if (params.channel && conversation.channel !== params.channel) {
+    return false;
+  }
+
+  if (params.status && conversation.status !== params.status) {
+    return false;
+  }
+
+  if (params.billable !== undefined && conversation.billable !== params.billable) {
+    return false;
+  }
+
+  if (
+    params.knowledgeGap !== undefined &&
+    conversation.knowledgeGap !== params.knowledgeGap
+  ) {
+    return false;
+  }
+
+  if (params.customer?.trim() || params.conversationId?.trim()) {
+    const customerQuery = params.customer?.trim().toLowerCase();
+    const conversationIdQuery = params.conversationId?.trim().toLowerCase();
+
+    const customerMatch = customerQuery
+      ? (conversation.customerName ?? "").toLowerCase().includes(customerQuery) ||
+        (conversation.customerEmail ?? "").toLowerCase().includes(customerQuery)
+      : false;
+
+    const conversationIdMatch = conversationIdQuery
+      ? conversation.id.toLowerCase().includes(conversationIdQuery)
+      : false;
+
+    if (customerQuery && conversationIdQuery) {
+      if (!customerMatch && !conversationIdMatch) {
+        return false;
+      }
+    } else if (customerQuery && !customerMatch) {
+      return false;
+    } else if (conversationIdQuery && !conversationIdMatch) {
+      return false;
+    }
+  }
+
+  if (params.dateFrom) {
+    const from = new Date(`${params.dateFrom}T00:00:00`);
+
+    if (new Date(conversation.startedAt) < from) {
+      return false;
+    }
+  }
+
+  if (params.dateTo) {
+    const to = new Date(`${params.dateTo}T23:59:59.999`);
+
+    if (new Date(conversation.startedAt) > to) {
+      return false;
+    }
+  }
+
+  if (params.location) {
+    if (params.location === CONVERSATION_LOCATION_NONE) {
+      if (conversation.location?.trim()) {
+        return false;
+      }
+    } else if (
+      (conversation.location ?? "").toLowerCase() !== params.location.toLowerCase()
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function filterConversations(
+  conversations: AgentWorkspace["conversations"],
+  params: ConversationQuery
+) {
+  return conversations
+    .filter((conversation) => matchesConversation(conversation, params))
+    .sort(
+      (left, right) =>
+        new Date(right.startedAt).getTime() - new Date(left.startedAt).getTime()
+    );
+}
+
+export function queryAgentConversations(
+  orgId: string,
+  agentId: string,
+  params: ConversationQuery
+) {
   const agent = findAgent(orgId, agentId);
-  return agent ? { conversations: cloneWorkspace(agent).conversations } : null;
+
+  if (!agent) {
+    return null;
+  }
+
+  const filtered = filterConversations(cloneWorkspace(agent).conversations, params);
+  const pageSize = params.pageSize ?? 20;
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const page = Math.min(params.page ?? 1, totalPages);
+  const pageStart = (page - 1) * pageSize;
+
+  return {
+    conversations: filtered.slice(pageStart, pageStart + pageSize),
+    pagination: {
+      page,
+      pageSize,
+      totalItems,
+      totalPages,
+    },
+  };
+}
+
+export function getAgentConversationLocations(orgId: string, agentId: string) {
+  const agent = findAgent(orgId, agentId);
+
+  if (!agent) {
+    return null;
+  }
+
+  const conversations = cloneWorkspace(agent).conversations;
+  const locationValues = new Set<string>();
+  let hasMissingLocation = false;
+
+  for (const conversation of conversations) {
+    const location = conversation.location?.trim();
+
+    if (location) {
+      locationValues.add(location);
+    } else {
+      hasMissingLocation = true;
+    }
+  }
+
+  const locations = [...locationValues]
+    .sort((left, right) => left.localeCompare(right))
+    .map((location) => ({
+      value: location,
+      label: location,
+    }));
+
+  if (hasMissingLocation) {
+    locations.push({
+      value: CONVERSATION_LOCATION_NONE,
+      label: "No location",
+    });
+  }
+
+  return { locations };
+}
+
+export function exportAgentConversations(
+  orgId: string,
+  agentId: string,
+  params: Omit<ConversationQuery, "page" | "pageSize">
+) {
+  const agent = findAgent(orgId, agentId);
+
+  if (!agent) {
+    return null;
+  }
+
+  return {
+    conversations: filterConversations(cloneWorkspace(agent).conversations, {
+      ...params,
+      page: 1,
+      pageSize: 100,
+    }),
+  };
 }
 
 export function getAgentImprove(

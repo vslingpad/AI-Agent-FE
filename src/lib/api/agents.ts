@@ -3,6 +3,7 @@ import {
   AgentActionsListSchema,
   AgentAnalyticsSchema,
   AgentConversationsListSchema,
+  AgentConversationLocationsSchema,
   AgentCoreSchema,
   AgentImproveListSchema,
   AgentKnowledgeSchema,
@@ -28,7 +29,9 @@ import {
   type AgentActionsList,
   type AgentAnalytics,
   type AgentConversationsList,
+  type AgentConversationLocations,
   type AgentCore,
+  type ConversationQuery,
   type AgentImproveList,
   type AgentKnowledge,
   type PlaygroundSession,
@@ -96,10 +99,65 @@ export async function getAgentHelpDesk(agentId: string): Promise<HelpDeskBinding
 }
 
 export async function getAgentConversations(
-  agentId: string
+  agentId: string,
+  params?: ConversationQuery
 ): Promise<AgentConversationsList> {
-  const json = await apiGet<unknown>(`/api/agents/${agentId}/conversations`);
+  const json = await apiGet<unknown>(`/api/agents/${agentId}/conversations`, {
+    customer: params?.customer,
+    conversationId: params?.conversationId,
+    dateFrom: params?.dateFrom,
+    dateTo: params?.dateTo,
+    location: params?.location,
+    channel: params?.channel,
+    status: params?.status,
+    billable:
+      params?.billable === undefined ? undefined : String(params.billable),
+    knowledgeGap:
+      params?.knowledgeGap === undefined
+        ? undefined
+        : String(params.knowledgeGap),
+    page: params?.page === undefined ? undefined : String(params.page),
+    pageSize: params?.pageSize === undefined ? undefined : String(params.pageSize),
+  });
   return AgentConversationsListSchema.parse(json);
+}
+
+export async function getAgentConversationLocations(
+  agentId: string
+): Promise<AgentConversationLocations> {
+  const json = await apiGet<unknown>(`/api/agents/${agentId}/conversations/locations`);
+  return AgentConversationLocationsSchema.parse(json);
+}
+
+export async function exportAgentConversations(
+  agentId: string,
+  params?: Omit<ConversationQuery, "page" | "pageSize">
+): Promise<Blob> {
+  const response = await fetch(
+    `/api/agents/${agentId}/conversations/export?${new URLSearchParams(
+      Object.entries({
+        customer: params?.customer,
+        conversationId: params?.conversationId,
+        dateFrom: params?.dateFrom,
+        dateTo: params?.dateTo,
+        location: params?.location,
+        channel: params?.channel,
+        status: params?.status,
+        billable:
+          params?.billable === undefined ? undefined : String(params.billable),
+        knowledgeGap:
+          params?.knowledgeGap === undefined
+            ? undefined
+            : String(params.knowledgeGap),
+      }).filter(([, value]) => value !== undefined) as [string, string][]
+    ).toString()}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to export conversations");
+  }
+
+  return response.blob();
 }
 
 export async function getAgentImprove(

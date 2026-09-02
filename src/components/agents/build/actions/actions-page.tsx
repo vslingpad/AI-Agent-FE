@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAgentActions } from "@/hooks/use-agents";
 import { useIntegrationsHub } from "@/hooks/use-integrations";
-import { hasActionCapability } from "@/lib/actions/action-utils";
+import { hasActionCapability, matchesCustomActionsSearch } from "@/lib/actions/action-utils";
 import type { AgentActionBinding } from "@/lib/schemas/agents";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
 import { cn } from "@/lib/utils";
@@ -118,6 +118,7 @@ function AgentActionsPageContent({ agentId }: { agentId: string }) {
         <h2 className="text-sm font-medium">Connect an action</h2>
         <ConnectActionRow
           catalog={filteredCatalog}
+          showCustomAction={matchesCustomActionsSearch(searchQuery)}
           onShowAll={() => setShowAllOpen(true)}
         />
       </section>

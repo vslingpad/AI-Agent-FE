@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomToolsHub } from "@/hooks/use-custom-tools";
 import { useIntegrationsHub } from "@/hooks/use-integrations";
-import { hasActionCapability } from "@/lib/actions/action-utils";
+import { hasActionCapability, matchesCustomActionsSearch } from "@/lib/actions/action-utils";
 import {
   getConnectorPath,
 } from "@/lib/integrations/connector-paths";
@@ -98,6 +98,7 @@ export function ActionsHubPage() {
         <h2 className="text-sm font-medium">Connect an action</h2>
         <ConnectActionRow
           catalog={filteredCatalog}
+          showCustomAction={matchesCustomActionsSearch(searchQuery)}
           onShowAll={() => setShowAllOpen(true)}
         />
       </section>
@@ -294,14 +295,4 @@ function filterConnectedActions(
       ...(catalogItem?.actionHighlights ?? []),
     ]);
   });
-}
-
-function matchesCustomActionsSearch(query: string) {
-  return matchesQuery(query, [
-    "custom actions",
-    "custom",
-    "http",
-    "api",
-    "org-defined",
-  ]);
 }

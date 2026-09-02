@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { LayoutGridIcon } from "lucide-react";
-import { ConnectActionTile } from "@/components/actions/connect-action-tile";
+import { ConnectActionTile, ConnectCustomActionTile } from "@/components/actions/connect-action-tile";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
 
 const TILE_WIDTH = 112;
@@ -10,7 +10,7 @@ const SHOW_ALL_WIDTH = 112;
 const TILE_GAP = 12;
 const ROW_WIDTH_BUFFER = 24;
 
-function countVisibleTiles(rowWidth: number, catalogLength: number) {
+function countVisibleTiles(rowWidth: number, tileCount: number) {
   const available = rowWidth - SHOW_ALL_WIDTH - ROW_WIDTH_BUFFER;
 
   if (available <= 0) {
@@ -18,18 +18,21 @@ function countVisibleTiles(rowWidth: number, catalogLength: number) {
   }
 
   const maxTiles = Math.floor(available / (TILE_WIDTH + TILE_GAP));
-  return Math.max(1, Math.min(catalogLength, maxTiles));
+  return Math.max(1, Math.min(tileCount, maxTiles));
 }
 
 export function ConnectActionRow({
   catalog,
   onShowAll,
+  showCustomAction = true,
 }: {
   catalog: IntegrationCatalogItem[];
   onShowAll: () => void;
+  showCustomAction?: boolean;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(4);
+  const tileCount = catalog.length + (showCustomAction ? 1 : 0);
 
   useEffect(() => {
     const node = rowRef.current;
@@ -39,7 +42,7 @@ export function ConnectActionRow({
     }
 
     const update = () => {
-      setVisibleCount(countVisibleTiles(node.clientWidth, catalog.length));
+      setVisibleCount(countVisibleTiles(node.clientWidth, tileCount));
     };
 
     update();
@@ -47,14 +50,19 @@ export function ConnectActionRow({
     observer.observe(node);
 
     return () => observer.disconnect();
-  }, [catalog.length]);
+  }, [tileCount]);
 
-  const visible = catalog.slice(0, visibleCount);
-  const remaining = Math.max(0, catalog.length - visible.length);
+  const catalogVisibleCount = Math.max(
+    0,
+    visibleCount - (showCustomAction ? 1 : 0)
+  );
+  const visibleCatalog = catalog.slice(0, catalogVisibleCount);
+  const remaining = Math.max(0, catalog.length - visibleCatalog.length);
 
   return (
     <div ref={rowRef} className="flex w-full min-w-0 items-stretch gap-3 overflow-hidden">
-      {visible.map((item) => (
+      {showCustomAction ? <ConnectCustomActionTile /> : null}
+      {visibleCatalog.map((item) => (
         <ConnectActionTile key={item.slug} item={item} />
       ))}
 

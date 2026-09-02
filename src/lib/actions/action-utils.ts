@@ -12,6 +12,22 @@ export function isActionConnectorAvailable(
   return isIntegrationAvailable(slug, catalog);
 }
 
+export function matchesCustomActionsSearch(query: string) {
+  if (!query.trim()) {
+    return true;
+  }
+
+  const normalized = query.trim().toLowerCase();
+
+  return [
+    "custom actions",
+    "custom",
+    "http",
+    "api",
+    "org-defined",
+  ].some((value) => value.includes(normalized) || normalized.includes(value));
+}
+
 export const CUSTOM_TOOL_AUTH_LABELS: Record<string, string> = {
   none: "None",
   api_key: "API key",

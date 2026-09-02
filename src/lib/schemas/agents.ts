@@ -115,6 +115,7 @@ export const KnowledgeResourceSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("qna"),
     id: z.string(),
+    title: z.string(),
     question: z.string(),
     questions: z.array(z.string()).optional(),
     answer: z.string(),

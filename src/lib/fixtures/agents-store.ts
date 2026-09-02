@@ -122,7 +122,9 @@ function knowledgeSources(options: {
     {
       type: "qna",
       id: "qna_1",
+      title: "Refund timing",
       question: "How long do refunds take?",
+      questions: ["How long do refunds take?"],
       answer: "Refunds are issued within 5–7 business days after approval.",
       updatedAt: daysAgo(2),
       addedBy: "Sam Patel",
@@ -131,7 +133,9 @@ function knowledgeSources(options: {
     {
       type: "qna",
       id: "qna_2",
+      title: "International shipping",
       question: "Do you ship internationally?",
+      questions: ["Do you ship internationally?"],
       answer: "Yes, to 32 countries. Delivery is 5–12 business days.",
       updatedAt: daysAgo(3),
       addedBy: "Sam Patel",
@@ -1909,6 +1913,7 @@ export function updateAgentKnowledge(
       qna.resources.unshift({
         type: "qna",
         id: `qna_${Date.now()}`,
+        title: input.addQna.title,
         question: input.addQna.questions[0],
         questions: input.addQna.questions,
         answer: input.addQna.answer,

@@ -26,6 +26,9 @@ import type {
   KnowledgeSource,
 } from "@/lib/schemas/agents";
 import { cn } from "@/lib/utils";
+import { ViewKnowledgeQnaDialog } from "@/components/agents/build/knowledge/dialogs/view-knowledge-qna-dialog";
+
+type QnaResource = Extract<KnowledgeResource, { type: "qna" }>;
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50] as const;
 const STATUS_FILTER_OPTIONS = [
@@ -61,6 +64,8 @@ export function KnowledgeSourceDetail({
     source.kind === "website" ||
     source.kind === "files" ||
     source.kind === "qna";
+  const isQnaSource = source.kind === "qna";
+  const [viewingQna, setViewingQna] = useState<QnaResource | null>(null);
 
   const rows = useMemo(
     () => source.resources.map((resource) => normalizeResource(resource)),
@@ -79,7 +84,7 @@ export function KnowledgeSourceDetail({
         return true;
       }
 
-      return [row.name, row.subtitle, row.addedBy]
+      return [row.name, row.subtitle, row.addedBy, row.searchText]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalized));
     });
@@ -202,7 +207,9 @@ export function KnowledgeSourceDetail({
                 <table className="w-full min-w-[640px] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                      <th className="pb-3 pr-4 font-medium">Name</th>
+                      <th className="pb-3 pr-4 font-medium">
+                        {isQnaSource ? "Topic" : "Name"}
+                      </th>
                       <th className="pb-3 pr-4 font-medium">Status</th>
                       <th className="pb-3 pr-4 font-medium">Last updated</th>
                       {isNative ? (
@@ -240,6 +247,7 @@ export function KnowledgeSourceDetail({
                             status={row.status}
                             isNative={isNative}
                             pending={updateKnowledge.isPending}
+                            onView={getResourceViewAction(row.resource, setViewingQna)}
                             onTrain={() => runAction([row.id], "train")}
                             onUntrain={() => runAction([row.id], "untrain")}
                             onRemove={() => runAction([row.id], "remove")}
@@ -267,6 +275,15 @@ export function KnowledgeSourceDetail({
           </CardContent>
         </Card>
       )}
+
+      <ViewKnowledgeQnaDialog
+        resource={viewingQna}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewingQna(null);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -275,6 +292,7 @@ function ResourceActionsMenu({
   status,
   isNative,
   pending,
+  onView,
   onTrain,
   onUntrain,
   onRemove,
@@ -282,6 +300,7 @@ function ResourceActionsMenu({
   status: TrainingStatus;
   isNative: boolean;
   pending: boolean;
+  onView?: () => void;
   onTrain: () => void;
   onUntrain: () => void;
   onRemove: () => void;
@@ -305,6 +324,15 @@ function ResourceActionsMenu({
         <EllipsisVerticalIcon className="size-4" />
       </PopoverTrigger>
       <PopoverContent align="end" className="w-40 gap-0.5 p-1">
+        {onView ? (
+          <ActionMenuItem
+            label="View"
+            onClick={() => {
+              close();
+              onView();
+            }}
+          />
+        ) : null}
         {status === "trained" ? (
           <ActionMenuItem
             label="Untrain"
@@ -441,9 +469,11 @@ type NormalizedResourceRow = {
   id: string;
   name: string;
   subtitle: string | null;
+  searchText: string | null;
   status: TrainingStatus;
   updatedAt: string;
   addedBy: string | null;
+  resource: KnowledgeResource;
 };
 
 function normalizeResource(resource: KnowledgeResource): NormalizedResourceRow {
@@ -455,33 +485,37 @@ function normalizeResource(resource: KnowledgeResource): NormalizedResourceRow {
         id: resource.id,
         name: resource.title,
         subtitle: resource.url,
+        searchText: null,
         status,
         updatedAt: resource.updatedAt,
         addedBy: resource.addedBy,
+        resource,
       };
     case "file":
       return {
         id: resource.id,
         name: resource.name,
         subtitle: resource.sizeLabel,
+        searchText: null,
         status,
         updatedAt: resource.updatedAt,
         addedBy: resource.addedBy,
+        resource,
       };
     case "qna": {
-      const questionCount = resource.questions?.length ?? 1;
-      const primaryQuestion = resource.questions?.[0] ?? resource.question;
+      const questions = resource.questions?.length
+        ? resource.questions
+        : [resource.question];
 
       return {
         id: resource.id,
-        name:
-          questionCount > 1
-            ? `${primaryQuestion} (+${questionCount - 1} more)`
-            : primaryQuestion,
-        subtitle: resource.answer,
+        name: resource.title,
+        subtitle: `${questions.length} ${questions.length === 1 ? "question" : "questions"}`,
+        searchText: questions.join(" "),
         status,
         updatedAt: resource.updatedAt,
         addedBy: resource.addedBy,
+        resource,
       };
     }
     case "article":
@@ -489,19 +523,35 @@ function normalizeResource(resource: KnowledgeResource): NormalizedResourceRow {
         id: resource.id,
         name: resource.title,
         subtitle: resource.collection,
+        searchText: null,
         status,
         updatedAt: resource.updatedAt,
         addedBy: null,
+        resource,
       };
     case "ticket":
       return {
         id: resource.id,
         name: resource.subject,
         subtitle: null,
+        searchText: null,
         status,
         updatedAt: resource.updatedAt,
         addedBy: null,
+        resource,
       };
+  }
+}
+
+function getResourceViewAction(
+  resource: KnowledgeResource,
+  onViewQna: (resource: QnaResource) => void
+): (() => void) | undefined {
+  switch (resource.type) {
+    case "qna":
+      return () => onViewQna(resource);
+    default:
+      return undefined;
   }
 }
 

@@ -1,15 +1,15 @@
+import { isIntegrationAvailable } from "@/lib/integrations/availability";
+import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
+
 export function hasActionCapability(capabilities: string[]) {
   return capabilities.includes("action");
 }
 
-export const AVAILABLE_ACTION_CONNECTOR_SLUGS = [
-  "zendesk",
-  "calendly",
-  "stripe",
-] as const;
-
-export function isActionConnectorAvailable(slug: string) {
-  return (AVAILABLE_ACTION_CONNECTOR_SLUGS as readonly string[]).includes(slug);
+export function isActionConnectorAvailable(
+  slug: string,
+  catalog?: IntegrationCatalogItem[]
+) {
+  return isIntegrationAvailable(slug, catalog);
 }
 
 export const CUSTOM_TOOL_AUTH_LABELS: Record<string, string> = {

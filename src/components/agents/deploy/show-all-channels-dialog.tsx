@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SearchIcon, XIcon } from "lucide-react";
+import {
+  type DeployChannelTile,
+} from "@/components/agents/deploy/connect-channel-tile";
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,33 +16,36 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import type { DeployChannelDefinition } from "@/lib/deploy/channels-catalog";
 import { getConnectWizardPath } from "@/lib/integrations/connector-paths";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
 import { cn } from "@/lib/utils";
 
-type ShowAllActionsDialogProps = {
+type ShowAllChannelsDialogProps = {
   catalog: IntegrationCatalogItem[];
+  extraChannels: DeployChannelDefinition[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-function matchesActionSearch(item: IntegrationCatalogItem, query: string) {
+function matchesChannelSearch(label: string, slug: string, query: string) {
   if (!query.trim()) {
     return true;
   }
 
   const normalized = query.trim().toLowerCase();
 
-  return [item.name, item.description, item.slug, ...item.actionHighlights]
-    .filter(Boolean)
-    .some((value) => value.toLowerCase().includes(normalized));
+  return (
+    label.toLowerCase().includes(normalized) || slug.toLowerCase().includes(normalized)
+  );
 }
 
-export function ShowAllActionsDialog({
+export function ShowAllChannelsDialog({
   catalog,
+  extraChannels,
   open,
   onOpenChange,
-}: ShowAllActionsDialogProps) {
+}: ShowAllChannelsDialogProps) {
   const [query, setQuery] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +55,12 @@ export function ShowAllActionsDialog({
     }
   }, [open]);
 
-  const filtered = catalog.filter((item) => matchesActionSearch(item, query));
+  const filteredCatalog = catalog.filter((item) =>
+    matchesChannelSearch(item.name, item.slug, query)
+  );
+  const filteredExtra = extraChannels.filter((channel) =>
+    matchesChannelSearch(channel.label, channel.iconSlug, query)
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -60,16 +71,16 @@ export function ShowAllActionsDialog({
         className="max-h-[min(85vh,720px)] overflow-y-auto sm:max-w-3xl"
       >
         <DialogHeader className="flex-row items-center gap-3">
-          <DialogTitle className="shrink-0">Connect an action</DialogTitle>
+          <DialogTitle className="shrink-0">Connect a channel</DialogTitle>
           <div className="relative ml-auto w-74">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search actions…"
+              placeholder="Search channels…"
               className="h-9 pl-8"
-              aria-label="Search actions"
+              aria-label="Search channels"
             />
           </div>
           <DialogClose
@@ -82,14 +93,17 @@ export function ShowAllActionsDialog({
           </DialogClose>
         </DialogHeader>
 
-        {filtered.length === 0 ? (
+        {filteredCatalog.length === 0 && filteredExtra.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            No actions match “{query.trim()}”.
+            No channels match “{query.trim()}”.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
-            {filtered.map((item) => (
-              <ShowAllActionItem key={item.slug} item={item} />
+            {filteredCatalog.map((item) => (
+              <ShowAllChannelItem key={item.slug} item={item} />
+            ))}
+            {filteredExtra.map((channel) => (
+              <ShowAllExtraChannelItem key={channel.id} channel={channel} />
             ))}
           </div>
         )}
@@ -98,19 +112,18 @@ export function ShowAllActionsDialog({
   );
 }
 
-function ShowAllActionItem({ item }: { item: IntegrationCatalogItem }) {
-  const available = item.available;
+function ShowAllChannelItem({ item }: { item: IntegrationCatalogItem }) {
   const className =
     "flex h-14 items-center justify-start gap-2 rounded-lg border border-border px-3 text-sm font-medium transition-colors";
 
-  if (available) {
+  if (item.available) {
     return (
       <Link
-        href={getConnectWizardPath(item.slug, { from: "actions" })}
+        href={getConnectWizardPath(item.slug, { from: "deploy" })}
         className={cn(className, "hover:bg-muted/50")}
       >
         <IntegrationBrandIcon slug={item.slug} size="sm" />
-        <span className="truncate">From {item.name}</span>
+        <span className="truncate">{item.name}</span>
       </Link>
     );
   }
@@ -118,8 +131,34 @@ function ShowAllActionItem({ item }: { item: IntegrationCatalogItem }) {
   return (
     <div className={cn(className, "opacity-80")}>
       <IntegrationBrandIcon slug={item.slug} size="sm" />
-      <span className="min-w-0 flex-1 truncate">From {item.name}</span>
+      <span className="min-w-0 flex-1 truncate">{item.name}</span>
       <span className="shrink-0 text-xs text-muted-foreground">Coming soon</span>
     </div>
   );
+}
+
+function ShowAllExtraChannelItem({ channel }: { channel: DeployChannelDefinition }) {
+  return (
+    <div className="flex h-14 items-center justify-start gap-2 rounded-lg border border-border px-3 text-sm font-medium opacity-80">
+      <IntegrationBrandIcon slug={channel.iconSlug} size="sm" />
+      <span className="min-w-0 flex-1 truncate">{channel.label}</span>
+      <span className="shrink-0 text-xs text-muted-foreground">Coming soon</span>
+    </div>
+  );
+}
+
+export function buildDeployChannelTiles(
+  catalog: IntegrationCatalogItem[],
+  extraChannels: DeployChannelDefinition[]
+): DeployChannelTile[] {
+  const catalogTiles: DeployChannelTile[] = catalog.map((item) => ({
+    kind: "catalog",
+    item,
+  }));
+  const extraTiles: DeployChannelTile[] = extraChannels.map((channel) => ({
+    kind: "extra",
+    channel,
+  }));
+
+  return [...catalogTiles, ...extraTiles];
 }

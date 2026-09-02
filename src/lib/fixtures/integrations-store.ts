@@ -18,6 +18,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["channel", "knowledge", "action"],
     knowledgeSubCapabilities: ["help_center", "tickets"],
     status: "active",
+    available: true,
     sortOrder: 10,
     configFields: [
       {
@@ -56,6 +57,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       "Let agents schedule meetings and look up availability via Calendly.",
     capabilities: ["action"],
     status: "active",
+    available: true,
     sortOrder: 20,
     configFields: [],
     oauthSteps: [
@@ -79,6 +81,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       "Enable subscription lookups, billing actions, and customer portal links.",
     capabilities: ["action"],
     status: "active",
+    available: true,
     sortOrder: 30,
     configFields: [
       {
@@ -114,6 +117,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       "Create and update tickets, search solution articles, and add internal notes.",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
+    available: false,
     sortOrder: 40,
     configFields: [
       {
@@ -145,6 +149,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       "Look up conversations, tag contacts, and assign Inbox threads.",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
+    available: false,
     sortOrder: 50,
     configFields: [],
     oauthSteps: [
@@ -168,6 +173,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       "Look up CRM records, update tickets, and share customer context.",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
+    available: false,
     sortOrder: 60,
     configFields: [],
     oauthSteps: [
@@ -191,6 +197,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       "Create tickets, update status, and search knowledge base articles.",
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
+    available: false,
     sortOrder: 70,
     configFields: [],
     oauthSteps: [
@@ -214,6 +221,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       "Look up orders, refunds, and fulfillment status from your store.",
     capabilities: ["action"],
     status: "active",
+    available: false,
     sortOrder: 80,
     configFields: [
       {
@@ -245,6 +253,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       "Create helpdesk tickets and add internal notes during conversations.",
     capabilities: ["channel", "action"],
     status: "active",
+    available: false,
     sortOrder: 90,
     configFields: [],
     oauthSteps: [

@@ -11,6 +11,8 @@ import shopify from "./shopify.svg";
 import stripe from "./stripe.svg";
 import zendesk from "./zendesk.svg";
 import zoho from "./zoho.svg";
+import whatsapp from "./whatsapp.svg";
+import instagram from "./instagram.svg";
 
 export type BrandIconSlug =
   | "zendesk"
@@ -24,7 +26,9 @@ export type BrandIconSlug =
   | "stripe"
   | "hubspot"
   | "shopify"
-  | "gorgias";
+  | "gorgias"
+  | "whatsapp"
+  | "instagram";
 
 export const NATIVE_KNOWLEDGE_ICON_SLUGS = new Set([
   "files",
@@ -48,6 +52,8 @@ const BRAND_ICON_ASSETS: Record<BrandIconSlug, StaticImageData> = {
   hubspot,
   shopify,
   gorgias,
+  whatsapp,
+  instagram,
 };
 
 const BRAND_ICON_ALIASES: Record<string, BrandIconSlug> = {

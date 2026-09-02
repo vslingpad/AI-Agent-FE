@@ -371,6 +371,7 @@ export const AgentWorkspaceSchema = AgentCoreSchema.extend({
   procedures: z.array(AgentProcedureBindingSchema),
   webChat: WebChatConfigSchema,
   helpDesk: HelpDeskBindingSchema,
+  deployChannels: z.record(z.string(), z.boolean()).default({}),
   conversations: z.array(AgentConversationSchema),
   improve: z.array(ImproveItemSchema),
   testCases: z.array(TestCaseSchema),
@@ -441,6 +442,34 @@ export const UpdateAgentHelpDeskInputSchema = z.object({
   useChannel: z.boolean(),
 });
 
+export const DeployChannelStatusSchema = z.enum([
+  "active",
+  "not_connected",
+  "reauth_required",
+  "coming_soon",
+]);
+
+export const DeployChannelSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  description: z.string(),
+  iconSlug: z.string(),
+  enabled: z.boolean(),
+  status: DeployChannelStatusSchema,
+  connectorId: z.string().nullable(),
+  connectSlug: z.string().nullable(),
+  available: z.boolean(),
+});
+
+export const AgentDeployChannelsSchema = z.object({
+  channels: z.array(DeployChannelSchema),
+});
+
+export const UpdateAgentDeployChannelInputSchema = z.object({
+  channelId: z.string(),
+  enabled: z.boolean(),
+});
+
 export type AgentStatus = z.infer<typeof AgentStatusSchema>;
 export type AgentIcon = z.infer<typeof AgentIconSchema>;
 export type ConversationChannel = z.infer<typeof ConversationChannelSchema>;
@@ -456,6 +485,11 @@ export type AgentActionBinding = z.infer<typeof AgentActionBindingSchema>;
 export type AgentProcedureBinding = z.infer<typeof AgentProcedureBindingSchema>;
 export type WebChatConfig = z.infer<typeof WebChatConfigSchema>;
 export type HelpDeskBinding = z.infer<typeof HelpDeskBindingSchema>;
+export type DeployChannel = z.infer<typeof DeployChannelSchema>;
+export type AgentDeployChannels = z.infer<typeof AgentDeployChannelsSchema>;
+export type UpdateAgentDeployChannelInput = z.infer<
+  typeof UpdateAgentDeployChannelInputSchema
+>;
 export type ConversationMessage = z.infer<typeof ConversationMessageSchema>;
 export type AgentConversation = z.infer<typeof AgentConversationSchema>;
 export type ConversationQuery = z.infer<typeof ConversationQuerySchema>;

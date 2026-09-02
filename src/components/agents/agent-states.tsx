@@ -168,6 +168,18 @@ export function AgentHelpDeskSkeleton() {
   );
 }
 
+export function AgentDeploySkeleton() {
+  return (
+    <AgentPageShell>
+      <div className="grid max-w-3xl gap-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Skeleton key={index} className="h-24 w-full rounded-xl" />
+        ))}
+      </div>
+    </AgentPageShell>
+  );
+}
+
 export function AgentConversationsSkeleton() {
   return (
     <div className="flex h-[calc(100svh-var(--notification-banner-height)-3.5rem)] min-h-[32rem] flex-col">

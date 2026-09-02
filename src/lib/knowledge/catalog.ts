@@ -1,3 +1,5 @@
+import { isIntegrationAvailable } from "@/lib/integrations/availability";
+
 export type KnowledgeOptionKind =
   | "website"
   | "files"
@@ -45,28 +47,28 @@ const HELP_CENTER_VENDORS: KnowledgeVendor[] = [
     label: "Zendesk",
     vendorSlug: "zendesk",
     connectSlug: "zendesk",
-    available: true,
+    available: isIntegrationAvailable("zendesk"),
   },
   {
     id: "intercom-help-center",
     label: "Intercom",
     vendorSlug: "intercom",
     connectSlug: "intercom",
-    available: false,
+    available: isIntegrationAvailable("intercom"),
   },
   {
     id: "freshdesk-help-center",
     label: "Freshdesk",
     vendorSlug: "freshdesk",
     connectSlug: "freshdesk",
-    available: false,
+    available: isIntegrationAvailable("freshdesk"),
   },
   {
     id: "zoho-help-center",
     label: "Zoho",
     vendorSlug: "zoho_desk",
     connectSlug: "zoho_desk",
-    available: false,
+    available: isIntegrationAvailable("zoho_desk"),
   },
 ];
 
@@ -76,28 +78,28 @@ const TICKET_VENDORS: KnowledgeVendor[] = [
     label: "Zendesk",
     vendorSlug: "zendesk",
     connectSlug: "zendesk",
-    available: true,
+    available: isIntegrationAvailable("zendesk"),
   },
   {
     id: "intercom-tickets",
     label: "Intercom",
     vendorSlug: "intercom",
     connectSlug: "intercom",
-    available: false,
+    available: isIntegrationAvailable("intercom"),
   },
   {
     id: "freshdesk-tickets",
     label: "Freshdesk",
     vendorSlug: "freshdesk",
     connectSlug: "freshdesk",
-    available: false,
+    available: isIntegrationAvailable("freshdesk"),
   },
   {
     id: "zoho-tickets",
     label: "Zoho",
     vendorSlug: "zoho_desk",
     connectSlug: "zoho_desk",
-    available: false,
+    available: isIntegrationAvailable("zoho_desk"),
   },
 ];
 
@@ -177,7 +179,7 @@ export const KNOWLEDGE_TILES: KnowledgeTile[] = [
     iconSlug: "notion",
     kind: "connector",
     interaction: "toggle",
-    available: false,
+    available: isIntegrationAvailable("notion"),
   },
   {
     id: "google_drive",
@@ -185,7 +187,7 @@ export const KNOWLEDGE_TILES: KnowledgeTile[] = [
     iconSlug: "google_drive",
     kind: "connector",
     interaction: "toggle",
-    available: false,
+    available: isIntegrationAvailable("google_drive"),
   },
   {
     id: "confluence",
@@ -193,7 +195,7 @@ export const KNOWLEDGE_TILES: KnowledgeTile[] = [
     iconSlug: "confluence",
     kind: "connector",
     interaction: "toggle",
-    available: false,
+    available: isIntegrationAvailable("confluence"),
   },
 ];
 

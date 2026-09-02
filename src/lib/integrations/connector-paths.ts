@@ -16,7 +16,7 @@ export function getConnectorPath(
 
 export function getConnectWizardPath(
   slug: string,
-  options?: { from?: "actions" }
+  options?: { from?: "actions" | "deploy" }
 ) {
   const path = `/integrations/new/${slug}`;
 
@@ -161,6 +161,14 @@ export const INTEGRATION_BRAND: Record<
   gorgias: {
     abbr: "GO",
     className: "bg-indigo-600 text-white",
+  },
+  whatsapp: {
+    abbr: "WA",
+    className: "bg-green-600 text-white",
+  },
+  instagram: {
+    abbr: "IG",
+    className: "bg-fuchsia-600 text-white",
   },
 };
 

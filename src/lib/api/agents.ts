@@ -5,6 +5,7 @@ import {
   AgentConversationsListSchema,
   AgentConversationLocationsSchema,
   AgentCoreSchema,
+  AgentDeployChannelsSchema,
   AgentImproveListSchema,
   AgentKnowledgeSchema,
   PlaygroundSessionSchema,
@@ -20,6 +21,7 @@ import {
   HelpDeskBindingSchema,
   UpdateAgentActionsInputSchema,
   UpdateAgentCoreInputSchema,
+  UpdateAgentDeployChannelInputSchema,
   UpdateAgentHelpDeskInputSchema,
   UpdateAgentKnowledgeInputSchema,
   UpdateAgentProceduresInputSchema,
@@ -31,6 +33,7 @@ import {
   type AgentConversationsList,
   type AgentConversationLocations,
   type AgentCore,
+  type AgentDeployChannels,
   type ConversationQuery,
   type AgentImproveList,
   type AgentKnowledge,
@@ -45,6 +48,7 @@ import {
   type ImproveKind,
   type UpdateAgentActionsInput,
   type UpdateAgentCoreInput,
+  type UpdateAgentDeployChannelInput,
   type UpdateAgentHelpDeskInput,
   type UpdateAgentKnowledgeInput,
   type UpdateAgentProceduresInput,
@@ -96,6 +100,25 @@ export async function getAgentWebChat(agentId: string): Promise<WebChatConfig> {
 export async function getAgentHelpDesk(agentId: string): Promise<HelpDeskBinding> {
   const json = await apiGet<unknown>(`/api/agents/${agentId}/deploy/help-desk`);
   return HelpDeskBindingSchema.parse(json);
+}
+
+export async function getAgentDeployChannels(
+  agentId: string
+): Promise<AgentDeployChannels> {
+  const json = await apiGet<unknown>(`/api/agents/${agentId}/deploy/channels`);
+  return AgentDeployChannelsSchema.parse(json);
+}
+
+export async function updateAgentDeployChannel(
+  agentId: string,
+  input: UpdateAgentDeployChannelInput
+): Promise<AgentDeployChannels> {
+  const parsed = UpdateAgentDeployChannelInputSchema.parse(input);
+  const json = await apiPatch<unknown>(
+    `/api/agents/${agentId}/deploy/channels`,
+    parsed
+  );
+  return AgentDeployChannelsSchema.parse(json);
 }
 
 export async function getAgentConversations(

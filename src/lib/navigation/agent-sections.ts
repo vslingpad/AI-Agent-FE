@@ -37,15 +37,7 @@ export const AGENT_NAV: AgentNavGroup[] = [
   {
     id: "deploy",
     label: "Deploy",
-    children: [
-      { id: "web-chat", label: "Web Chat", segment: "deploy/web-chat" },
-      {
-        id: "help-desk",
-        label: "Help Desk",
-        segment: "deploy/help-desk",
-        note: "Zendesk",
-      },
-    ],
+    href: "deploy",
   },
   {
     id: "conversations",

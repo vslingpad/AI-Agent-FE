@@ -10,6 +10,7 @@ import type {
   UpdateAgentSettingsInput,
 } from "@/lib/schemas/agents";
 import { CONVERSATION_LOCATION_NONE } from "@/lib/conversations/conversation-utils";
+import { buildDeployChannels, countEnabledDeployChannels } from "@/lib/deploy/deploy-channels";
 import { nativeSourceId } from "@/lib/knowledge/catalog";
 import { templateSubActions } from "@/lib/actions/agent-action-catalog";
 
@@ -1005,6 +1006,7 @@ function createCustomerSupport(): AgentWorkspace {
       useChannel: true,
       routing: "inherit",
     },
+    deployChannels: {},
     conversations: conversations("cs"),
     improve: improveItems("cs"),
     testCases: [
@@ -1123,6 +1125,7 @@ function createBillingSupport(): AgentWorkspace {
       useChannel: true,
       routing: "inherit",
     },
+    deployChannels: {},
     conversations: conversations("bs"),
     improve: improveItems("bs"),
     testCases: [
@@ -1223,6 +1226,7 @@ function createTechnicalSupport(): AgentWorkspace {
       useChannel: false,
       routing: "inherit",
     },
+    deployChannels: {},
     conversations: [],
     improve: [],
     testCases: [],
@@ -1260,8 +1264,7 @@ function toListItem(agent: AgentWorkspace): AgentListItem {
     knowledgeSourceCount: agent.knowledge.sources.filter(
       (source) => source.enabled && source.state === "connected"
     ).length,
-    liveChannelCount:
-      Number(agent.webChat.enabled) + Number(agent.helpDesk.useChannel),
+    liveChannelCount: countEnabledDeployChannels(agent),
     openImproveCount: agent.improve.filter((item) => item.status !== "resolved").length,
   };
 }
@@ -1346,6 +1349,42 @@ export function getAgentWebChat(orgId: string, agentId: string) {
 export function getAgentHelpDesk(orgId: string, agentId: string) {
   const agent = findAgent(orgId, agentId);
   return agent ? cloneWorkspace(agent).helpDesk : null;
+}
+
+export function getAgentDeployChannels(orgId: string, agentId: string) {
+  const agent = findAgent(orgId, agentId);
+
+  if (!agent) {
+    return null;
+  }
+
+  return { channels: buildDeployChannels(orgId, cloneWorkspace(agent)) };
+}
+
+export function updateAgentDeployChannel(
+  orgId: string,
+  agentId: string,
+  input: { channelId: string; enabled: boolean }
+) {
+  const index = findAgentIndex(orgId, agentId);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const agent = getOrgAgents(orgId)[index];
+
+  if (input.channelId === "zendesk") {
+    agent.helpDesk.useChannel = input.enabled;
+  } else {
+    agent.deployChannels = {
+      ...(agent.deployChannels ?? {}),
+      [input.channelId]: input.enabled,
+    };
+  }
+
+  touchAgent(agent);
+  return { channels: buildDeployChannels(orgId, cloneWorkspace(agent)) };
 }
 
 export function getAgentConversations(orgId: string, agentId: string) {

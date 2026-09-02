@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
-import { isActionConnectorAvailable } from "@/lib/actions/action-utils";
 import { getConnectWizardPath } from "@/lib/integrations/connector-paths";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
 import { cn } from "@/lib/utils";
 
 export function ConnectActionTile({ item }: { item: IntegrationCatalogItem }) {
-  const available = isActionConnectorAvailable(item.slug);
+  const available = item.available;
   const className =
     "flex w-28 shrink-0 flex-col items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-2 py-3 text-center";
 

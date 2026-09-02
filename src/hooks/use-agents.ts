@@ -11,6 +11,7 @@ import {
   getAgentAnalytics,
   getAgentConversations,
   getAgentConversationLocations,
+  getAgentDeployChannels,
   getAgentHelpDesk,
   getAgentImprove,
   getAgentKnowledge,
@@ -25,6 +26,7 @@ import {
   getAgentWebChat,
   updateAgent,
   updateAgentActions,
+  updateAgentDeployChannel,
   updateAgentHelpDesk,
   updateAgentKnowledge,
   updateAgentProcedures,
@@ -37,6 +39,7 @@ import type {
   ImproveKind,
   UpdateAgentActionsInput,
   UpdateAgentCoreInput,
+  UpdateAgentDeployChannelInput,
   UpdateAgentHelpDeskInput,
   UpdateAgentKnowledgeInput,
   UpdateAgentProceduresInput,
@@ -123,6 +126,12 @@ export function useAgentWebChat(agentId: string) {
 
 export function useAgentHelpDesk(agentId: string) {
   return useAgentSectionQuery(agentId, "help-desk", () => getAgentHelpDesk(agentId));
+}
+
+export function useAgentDeployChannels(agentId: string) {
+  return useAgentSectionQuery(agentId, "deploy-channels", () =>
+    getAgentDeployChannels(agentId)
+  );
 }
 
 export function useAgentConversations(agentId: string, params?: ConversationQuery) {
@@ -363,6 +372,23 @@ export function useUpdateAgentHelpDesk(agentId: string) {
       queryClient.setQueryData(
         agentSectionKey(organization?.id, agentId, "help-desk"),
         helpDesk
+      );
+      invalidateAgentCore(queryClient, organization?.id, agentId);
+    },
+  });
+}
+
+export function useUpdateAgentDeployChannel(agentId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: (input: UpdateAgentDeployChannelInput) =>
+      updateAgentDeployChannel(agentId, input),
+    onSuccess: (channels) => {
+      queryClient.setQueryData(
+        agentSectionKey(organization?.id, agentId, "deploy-channels"),
+        channels
       );
       invalidateAgentCore(queryClient, organization?.id, agentId);
     },

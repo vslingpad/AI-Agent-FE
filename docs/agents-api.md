@@ -355,8 +355,11 @@ Read-only. Returns `AgentAnalytics`:
 {
   "addQna": {
     "title": "Refund timing",
-    "question": "How long do refunds take?",
-    "answer": "5–7 business days."
+    "questions": [
+      "How long do refunds take?",
+      "When will my refund appear on my card?"
+    ],
+    "answer": "Refunds are issued within **5–7 business days** after approval."
   }
 }
 ```

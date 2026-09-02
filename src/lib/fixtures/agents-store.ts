@@ -1837,7 +1837,7 @@ export function updateAgentKnowledge(
     knowledgeEnabled?: boolean;
     addUrl?: string;
     addFile?: { name: string };
-    addQna?: { title: string; question: string; answer: string };
+    addQna?: { title: string; questions: string[]; answer: string };
     knowledgeResourceAction?: {
       sourceId: string;
       resourceIds: string[];
@@ -1909,7 +1909,8 @@ export function updateAgentKnowledge(
       qna.resources.unshift({
         type: "qna",
         id: `qna_${Date.now()}`,
-        question: input.addQna.question,
+        question: input.addQna.questions[0],
+        questions: input.addQna.questions,
         answer: input.addQna.answer,
         updatedAt: now,
         addedBy: "You",

@@ -119,7 +119,7 @@ export function AgentConversationsPage({ agentId }: { agentId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reviseDefaults, setReviseDefaults] = useState<{
     title: string;
-    question: string;
+    questions: string[];
     answer: string;
   } | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -233,7 +233,13 @@ export function AgentConversationsPage({ agentId }: { agentId: string }) {
             <ConversationDetailPanel
               conversation={selected}
               agentName={agent?.name}
-              onReviseAnswer={(defaults) => setReviseDefaults(defaults)}
+              onReviseAnswer={(defaults) =>
+                setReviseDefaults({
+                  title: defaults.title,
+                  questions: [defaults.question],
+                  answer: defaults.answer,
+                })
+              }
             />
           ) : null}
         </div>
@@ -256,7 +262,7 @@ export function AgentConversationsPage({ agentId }: { agentId: string }) {
       ) : null}
 
       <AddKnowledgeQnaDialog
-        key={reviseDefaults?.question ?? "closed"}
+        key={reviseDefaults?.questions.join("|") ?? "closed"}
         open={reviseDefaults !== null}
         onOpenChange={(open) => {
           if (!open) {

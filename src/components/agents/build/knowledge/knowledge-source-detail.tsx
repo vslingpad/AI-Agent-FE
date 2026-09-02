@@ -468,15 +468,22 @@ function normalizeResource(resource: KnowledgeResource): NormalizedResourceRow {
         updatedAt: resource.updatedAt,
         addedBy: resource.addedBy,
       };
-    case "qna":
+    case "qna": {
+      const questionCount = resource.questions?.length ?? 1;
+      const primaryQuestion = resource.questions?.[0] ?? resource.question;
+
       return {
         id: resource.id,
-        name: resource.question,
+        name:
+          questionCount > 1
+            ? `${primaryQuestion} (+${questionCount - 1} more)`
+            : primaryQuestion,
         subtitle: resource.answer,
         status,
         updatedAt: resource.updatedAt,
         addedBy: resource.addedBy,
       };
+    }
     case "article":
       return {
         id: resource.id,

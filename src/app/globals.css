@@ -128,3 +128,54 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  .tiptap {
+    @apply max-w-none px-3 py-2 text-sm leading-relaxed outline-none;
+  }
+
+  .tiptap :first-child {
+    @apply mt-0;
+  }
+
+  .tiptap p {
+    @apply my-1;
+  }
+
+  .tiptap h1 {
+    @apply my-2 text-xl font-semibold;
+  }
+
+  .tiptap h2 {
+    @apply my-2 text-lg font-semibold;
+  }
+
+  .tiptap h3 {
+    @apply my-1.5 text-base font-semibold;
+  }
+
+  .tiptap ul {
+    @apply my-1 list-disc pl-5;
+  }
+
+  .tiptap ol {
+    @apply my-1 list-decimal pl-5;
+  }
+
+  .tiptap li {
+    @apply my-0;
+  }
+
+  .tiptap li p {
+    @apply my-0;
+  }
+
+  .tiptap a {
+    @apply text-primary underline underline-offset-2;
+  }
+
+  .tiptap p.is-editor-empty:first-child::before {
+    @apply pointer-events-none float-left h-0 text-muted-foreground;
+    content: attr(data-placeholder);
+  }
+}

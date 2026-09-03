@@ -1,0 +1,434 @@
+"use client";
+
+import { useState } from "react";
+import { Show } from "@clerk/nextjs";
+import { ExternalLinkIcon, Loader2Icon } from "lucide-react";
+import { AgentPageFrame } from "@/components/agents/agent-page-frame";
+import { ConversationUsageChart } from "@/components/billing/conversation-usage-chart";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import {
+  useBillingOverview,
+  useBillingPortalSession,
+  useUpdateBillingSettings,
+} from "@/hooks/use-billing";
+import { ApiError } from "@/lib/api/client";
+import { formatCurrency, formatLimitValue } from "@/lib/billing/plans";
+import type { BillingOverview } from "@/lib/schemas/billing";
+import { SUPPORT_EMAIL } from "@/lib/constants/support";
+import { cn } from "@/lib/utils";
+
+export function BillingPage() {
+  return (
+    <Show
+      when={{ role: "org:admin" }}
+      fallback={
+        <AgentPageFrame
+          title="Billing"
+          description="Manage your subscription, usage, and plan limits."
+        >
+          <div className="rounded-xl border border-dashed border-border px-6 py-12 text-center">
+            <p className="text-sm font-medium">Admin access required</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Only organization admins can view billing and subscription settings.
+            </p>
+          </div>
+        </AgentPageFrame>
+      }
+    >
+      <BillingPageContent />
+    </Show>
+  );
+}
+
+function BillingPageContent() {
+  const { data, isLoading, isError, refetch } = useBillingOverview();
+  const updateSettings = useUpdateBillingSettings();
+  const portalSession = useBillingPortalSession();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  if (isLoading) {
+    return <BillingPageSkeleton />;
+  }
+
+  if (isError || !data) {
+    return (
+      <AgentPageFrame
+        title="Billing"
+        description="Manage your subscription, usage, and plan limits."
+      >
+        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border px-6 py-12 text-center">
+          <p className="text-sm text-muted-foreground">Unable to load billing details.</p>
+          <Button variant="outline" onClick={() => void refetch()}>
+            Try again
+          </Button>
+        </div>
+      </AgentPageFrame>
+    );
+  }
+
+  const handleOverageToggle = async (allowOverage: boolean) => {
+    setActionError(null);
+
+    try {
+      await updateSettings.mutateAsync({ allowOverage });
+    } catch (error) {
+      setActionError(getErrorMessage(error));
+    }
+  };
+
+  const handleManageBilling = async () => {
+    setActionError(null);
+
+    try {
+      const session = await portalSession.mutateAsync();
+      window.open(session.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      setActionError(getErrorMessage(error));
+    }
+  };
+
+  return (
+    <AgentPageFrame
+      title="Billing"
+      description="Review your plan, conversation usage, and overage settings."
+      actions={
+        <Button
+          variant="outline"
+          disabled={portalSession.isPending}
+          onClick={() => void handleManageBilling()}
+        >
+          {portalSession.isPending ? (
+            <Loader2Icon className="size-4 animate-spin" />
+          ) : (
+            <ExternalLinkIcon className="size-4" />
+          )}
+          Manage in Stripe
+        </Button>
+      }
+    >
+      {actionError ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {actionError}
+        </div>
+      ) : null}
+
+      <div className="flex max-w-5xl flex-col gap-6">
+        <CurrentPlanSection data={data} />
+        <UsageSection
+          data={data}
+          pending={updateSettings.isPending}
+          onOverageToggle={(value) => void handleOverageToggle(value)}
+        />
+        <LimitsSection data={data} />
+        <ConversationUsageChart points={data.monthlyUsage.points} />
+        <UpgradeSection currentTier={data.subscription.tier} />
+      </div>
+    </AgentPageFrame>
+  );
+}
+
+function CurrentPlanSection({ data }: { data: BillingOverview }) {
+  const { subscription } = data;
+
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            <CardTitle>{subscription.planName}</CardTitle>
+            <CardDescription>
+              {subscription.monthlyBaseLabel} per month · Renews{" "}
+              {formatBillingDate(subscription.currentPeriodEnd)}
+            </CardDescription>
+          </div>
+          <Badge variant={subscription.status === "active" ? "default" : "muted"}>
+            {formatSubscriptionStatus(subscription.status)}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-3">
+        <Metric label="Included conversations" value={String(data.usage.conversationsIncluded)} />
+        <Metric
+          label="Additional conversation cost"
+          value={
+            data.usage.additionalConversationCost === null
+              ? "Not available"
+              : formatCurrency(data.usage.additionalConversationCost)
+          }
+        />
+        <Metric
+          label="Max overage"
+          value={
+            data.usage.overageCap === null
+              ? "Not available"
+              : `${data.usage.overageCap} / period`
+          }
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+function UsageSection({
+  data,
+  pending,
+  onOverageToggle,
+}: {
+  data: BillingOverview;
+  pending: boolean;
+  onOverageToggle: (allowOverage: boolean) => void;
+}) {
+  const { usage, settings } = data;
+  const isFreePlan = data.subscription.tier === "free";
+  const includedAllowance = usage.conversationsIncluded + usage.freeRolloverRemaining;
+  const includedProgress = Math.min((usage.conversationsUsed / includedAllowance) * 100, 100);
+  const showOverage =
+    usage.overageUsed > 0 || (settings.allowOverage && usage.overageCap !== null);
+
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <CardTitle>Conversation usage</CardTitle>
+        <CardDescription>
+          Billable AI-handled conversations for this billing period.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <UsageMeter
+          label="Included usage"
+          used={usage.conversationsUsed}
+          limit={includedAllowance}
+          progress={includedProgress}
+          tone="default"
+        />
+
+        {usage.freeRolloverRemaining > 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Free rollover remaining: {usage.freeRolloverRemaining} conversations
+          </p>
+        ) : null}
+
+        <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Allow overage beyond included credits</p>
+            <p className="text-sm text-muted-foreground">
+              {isFreePlan
+                ? "Free plan does not support overage. Upgrade to a paid plan to enable it."
+                : `Maximum overage matches your plan included quota (${usage.overageCap ?? 0} conversations).`}
+            </p>
+          </div>
+          <Switch
+            checked={settings.allowOverage}
+            disabled={pending || isFreePlan}
+            onCheckedChange={onOverageToggle}
+            aria-label="Allow overage beyond included credits"
+          />
+        </div>
+
+        {showOverage ? (
+          <UsageMeter
+            label="Overage"
+            used={usage.overageUsed}
+            limit={usage.overageCap ?? 0}
+            progress={
+              usage.overageCap
+                ? Math.min((usage.overageUsed / usage.overageCap) * 100, 100)
+                : 0
+            }
+            tone="warning"
+            footer={
+              usage.estimatedOverageCost > 0
+                ? `Estimated overage this period: ${formatCurrency(usage.estimatedOverageCost)} (charged on next invoice)`
+                : "Overage is charged on your next invoice with the plan fee."
+            }
+          />
+        ) : null}
+
+        <p className="text-sm text-muted-foreground">
+          Resets on {formatBillingDate(usage.resetsAt)} · {usage.usagePercent}% of included
+          credits used
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LimitsSection({ data }: { data: BillingOverview }) {
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <CardTitle>Plan limits</CardTitle>
+        <CardDescription>Resource usage included with your current plan.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2">
+        <LimitMeter
+          label="AI agents"
+          used={data.limits.agents.used}
+          limit={data.limits.agents.limit}
+        />
+        <LimitMeter
+          label="Integrations"
+          used={data.limits.integrations.used}
+          limit={data.limits.integrations.limit}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+function UpgradeSection({ currentTier }: { currentTier: BillingOverview["subscription"]["tier"] }) {
+  if (currentTier !== "free") {
+    return null;
+  }
+
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <CardTitle>Need more conversations?</CardTitle>
+        <CardDescription>
+          Free plan includes 50 conversations with no overage. Upgrade to continue after the
+          free pool is used.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button
+          render={
+            <a
+              href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Upgrade plan request")}`}
+            />
+          }
+        >
+          Contact support to upgrade
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function UsageMeter({
+  label,
+  used,
+  limit,
+  progress,
+  tone,
+  footer,
+}: {
+  label: string;
+  used: number;
+  limit: number;
+  progress: number;
+  tone: "default" | "warning";
+  footer?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between text-sm">
+        <span className={tone === "warning" ? "text-yellow-600" : undefined}>{label}</span>
+        <span className={cn("tabular-nums", tone === "warning" && "font-medium text-yellow-600")}>
+          {used} / {limit}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn(
+            "h-full rounded-full",
+            tone === "warning" ? "bg-yellow-600" : "bg-primary"
+          )}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      {footer ? <p className="text-sm text-muted-foreground">{footer}</p> : null}
+    </div>
+  );
+}
+
+function LimitMeter({
+  label,
+  used,
+  limit,
+}: {
+  label: string;
+  used: number;
+  limit: number | null;
+}) {
+  const limitLabel = formatLimitValue(limit);
+  const progress =
+    limit === null ? 35 : limit === 0 ? 0 : Math.min((used / limit) * 100, 100);
+
+  return (
+    <div className="space-y-2 rounded-lg border border-border p-4">
+      <div className="flex items-center justify-between text-sm">
+        <span>{label}</span>
+        <span className="tabular-nums">
+          {used} / {limitLabel}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border p-4">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function BillingPageSkeleton() {
+  return (
+    <AgentPageFrame
+      title="Billing"
+      description="Manage your subscription, usage, and plan limits."
+    >
+      <div className="flex max-w-5xl flex-col gap-6">
+        <Skeleton className="h-44 w-full rounded-xl" />
+        <Skeleton className="h-56 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+      </div>
+    </AgentPageFrame>
+  );
+}
+
+function formatBillingDate(value: string) {
+  return new Date(value).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatSubscriptionStatus(status: BillingOverview["subscription"]["status"]) {
+  switch (status) {
+    case "active":
+      return "Active";
+    case "trialing":
+      return "Trialing";
+    case "past_due":
+      return "Past due";
+    case "canceled":
+      return "Canceled";
+    default:
+      return "Free";
+  }
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    return error.message;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "Something went wrong";
+}

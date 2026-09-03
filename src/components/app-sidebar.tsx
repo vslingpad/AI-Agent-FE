@@ -27,7 +27,7 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { BillingUsageCard } from "@/components/billing-usage-card";
+import { SidebarBillingUsageCard } from "@/components/billing/sidebar-billing-usage-card";
 import { OrgSwitcherHeader } from "@/components/org-switcher-header";
 import { SidebarUserFooter } from "@/components/sidebar-user-footer";
 
@@ -140,7 +140,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <BillingUsageCard />
+        <SidebarBillingUsageCard />
         <SidebarSeparator />
         <SidebarUserFooter />
       </SidebarFooter>

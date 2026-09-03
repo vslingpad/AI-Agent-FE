@@ -13,7 +13,7 @@ export function AgentPageFrame({
 }) {
   return (
     <div className="flex flex-1 flex-col gap-6 px-6 pb-8 pt-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between max-w-5xl">
         <div className="space-y-1">
           <h1 className="font-heading text-2xl font-semibold tracking-tight">
             {title}

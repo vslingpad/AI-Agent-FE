@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const SUPPORT_EMAIL = "support@lingpad.com";
+import { SUPPORT_EMAIL } from "@/lib/constants/support";
 
 function UserAvatar({
   name,

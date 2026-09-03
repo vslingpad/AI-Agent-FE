@@ -37,10 +37,9 @@ const buildItems = [
   { title: "Actions", href: "/actions", icon: ZapIcon },
 ];
 
-const accountItems = [
+const adminAccountItems = [
   { title: "Billing", href: "/billing", icon: CreditCardIcon },
   { title: "Team", href: "/team", icon: UsersIcon },
-  { title: "Settings", href: "/settings", icon: SettingsIcon },
 ];
 
 function NavItem({
@@ -117,12 +116,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <SidebarGroup>
+          <SidebarGroupLabel>Organization</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <NavItem title="Settings" href="/settings" icon={SettingsIcon} />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <Show when={{ role: "org:admin" }}>
           <SidebarGroup>
             <SidebarGroupLabel>Account</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {accountItems.map((item) => (
+                {adminAccountItems.map((item) => (
                   <NavItem key={item.href} {...item} />
                 ))}
               </SidebarMenu>

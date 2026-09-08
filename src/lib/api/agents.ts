@@ -13,6 +13,7 @@ import {
   SendPlaygroundMessageResponseSchema,
   UpdatePlaygroundSessionInputSchema,
   AgentProceduresListSchema,
+  AgentProcedureBindingSchema,
   AgentSettingsSchema,
   AgentTestCasesListSchema,
   AgentTestRunsListSchema,
@@ -41,6 +42,7 @@ import {
   type SendPlaygroundMessageInput,
   type UpdatePlaygroundSessionInput,
   type AgentProceduresList,
+  type AgentProcedureBinding,
   type AgentSettings,
   type AgentsList,
   type CreateAgentInput,
@@ -56,6 +58,22 @@ import {
   type UpdateAgentWebChatInput,
   type WebChatConfig,
 } from "@/lib/schemas/agents";
+import {
+  CreateAgentProcedureInputSchema,
+  UpdateAgentProcedureInputSchema,
+  type CreateAgentProcedureInput,
+  type UpdateAgentProcedureInput,
+  ProcedureTemplatesListSchema,
+  ProcedureTriggerWarningsListSchema,
+  ProcedureExamplesListSchema,
+  ProcedureExampleSchema,
+  ProcedureAnalyticsSchema,
+  ProcedureSimulationsListSchema,
+  RunProcedureSimulationInputSchema,
+  RunProcedureSimulationResponseSchema,
+  type RunProcedureSimulationInput,
+} from "@/lib/schemas/procedures";
+import { serializeProcedureBody } from "@/lib/procedures/step-utils";
 
 export async function getAgentsList(): Promise<AgentsList> {
   const json = await apiGet<unknown>("/api/agents");
@@ -90,6 +108,115 @@ export async function getAgentActions(agentId: string): Promise<AgentActionsList
 export async function getAgentProcedures(agentId: string): Promise<AgentProceduresList> {
   const json = await apiGet<unknown>(`/api/agents/${agentId}/procedures`);
   return AgentProceduresListSchema.parse(json);
+}
+
+export async function createAgentProcedure(
+  agentId: string,
+  input: CreateAgentProcedureInput
+): Promise<AgentProcedureBinding> {
+  const parsed = CreateAgentProcedureInputSchema.parse(input);
+  const json = await apiPost<unknown>(`/api/agents/${agentId}/procedures`, {
+    ...parsed,
+    body: serializeProcedureBody(parsed.body),
+  });
+  return AgentProcedureBindingSchema.parse(json);
+}
+
+export async function updateAgentProcedure(
+  agentId: string,
+  procedureId: string,
+  input: UpdateAgentProcedureInput
+): Promise<AgentProcedureBinding> {
+  const parsed = UpdateAgentProcedureInputSchema.parse(input);
+  const payload = {
+    ...parsed,
+    ...(parsed.body ? { body: serializeProcedureBody(parsed.body) } : {}),
+  };
+  const json = await apiPatch<unknown>(
+    `/api/agents/${agentId}/procedures/${procedureId}`,
+    payload
+  );
+  return AgentProcedureBindingSchema.parse(json);
+}
+
+export async function deleteAgentProcedure(
+  agentId: string,
+  procedureId: string
+): Promise<void> {
+  await apiDelete(`/api/agents/${agentId}/procedures/${procedureId}`);
+}
+
+export async function getProcedureTemplates(agentId: string) {
+  const json = await apiGet<unknown>(`/api/agents/${agentId}/procedures/templates`);
+  return ProcedureTemplatesListSchema.parse(json);
+}
+
+export async function createProcedureFromTemplate(agentId: string, templateId: string) {
+  const json = await apiPost<unknown>(`/api/agents/${agentId}/procedures/from-template`, {
+    templateId,
+  });
+  return AgentProcedureBindingSchema.parse(json);
+}
+
+export async function getProcedureTriggerWarnings(agentId: string) {
+  const json = await apiGet<unknown>(`/api/agents/${agentId}/procedures/trigger-warnings`);
+  return ProcedureTriggerWarningsListSchema.parse(json);
+}
+
+export async function getProcedureExamples(agentId: string, procedureId: string) {
+  const json = await apiGet<unknown>(
+    `/api/agents/${agentId}/procedures/${procedureId}/examples`
+  );
+  return ProcedureExamplesListSchema.parse(json);
+}
+
+export async function createProcedureExample(
+  agentId: string,
+  procedureId: string,
+  input: { kind: "include" | "exclude"; text: string }
+) {
+  const json = await apiPost<unknown>(
+    `/api/agents/${agentId}/procedures/${procedureId}/examples`,
+    input
+  );
+  return ProcedureExampleSchema.parse(json);
+}
+
+export async function deleteProcedureExample(
+  agentId: string,
+  procedureId: string,
+  exampleId: string
+) {
+  await apiDelete(
+    `/api/agents/${agentId}/procedures/${procedureId}/examples/${exampleId}`
+  );
+}
+
+export async function getProcedureAnalytics(agentId: string, procedureId: string) {
+  const json = await apiGet<unknown>(
+    `/api/agents/${agentId}/procedures/${procedureId}/analytics`
+  );
+  return ProcedureAnalyticsSchema.parse(json);
+}
+
+export async function getProcedureSimulations(agentId: string, procedureId: string) {
+  const json = await apiGet<unknown>(
+    `/api/agents/${agentId}/procedures/${procedureId}/simulations`
+  );
+  return ProcedureSimulationsListSchema.parse(json);
+}
+
+export async function runProcedureSimulation(
+  agentId: string,
+  procedureId: string,
+  input: RunProcedureSimulationInput
+) {
+  const parsed = RunProcedureSimulationInputSchema.parse(input);
+  const json = await apiPost<unknown>(
+    `/api/agents/${agentId}/procedures/${procedureId}/simulate`,
+    parsed
+  );
+  return RunProcedureSimulationResponseSchema.parse(json);
 }
 
 export async function getAgentWebChat(agentId: string): Promise<WebChatConfig> {

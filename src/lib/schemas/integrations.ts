@@ -104,7 +104,7 @@ export const ConnectorActionSchema = z.object({
   name: z.string(),
   description: z.string(),
   permissionGranted: z.boolean(),
-  requiredScope: z.string().optional(),
+  requiredScope: z.string().nullish(),
 });
 
 export const KnowledgeArticleSchema = z.object({
@@ -151,9 +151,9 @@ export const ConnectorDetailSchema = OrgConnectorSchema.extend({
       totalArticles: z.number(),
       indexedArticles: z.number(),
     })
-    .optional(),
-  channel: ChannelConfigSchema.optional(),
-  actions: z.array(ConnectorActionSchema).optional(),
+    .nullish(),
+  channel: ChannelConfigSchema.nullish(),
+  actions: z.array(ConnectorActionSchema).nullish(),
 });
 
 export const ConnectSessionSchema = z.object({

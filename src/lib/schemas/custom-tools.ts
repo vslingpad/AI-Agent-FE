@@ -24,11 +24,11 @@ export const ResponseMappingSchema = z.object({
 });
 
 export const AuthPublicSchema = z.object({
-  headerName: z.string().optional(),
-  username: z.string().optional(),
-  tokenUrl: z.string().optional(),
-  clientId: z.string().optional(),
-  scope: z.string().optional(),
+  headerName: z.string().nullish(),
+  username: z.string().nullish(),
+  tokenUrl: z.string().nullish(),
+  clientId: z.string().nullish(),
+  scope: z.string().nullish(),
   hasSecret: z.boolean(),
 });
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChatMessageContent } from "@/components/agents/test/playground/chat-message-content";
+import { ProcedureDebugPanel } from "@/components/agents/test/playground/procedure-debug-panel";
 import {
   BotIcon,
   LoaderCircleIcon,
@@ -145,6 +146,7 @@ function PlaygroundWorkspace({
         <PromptPanel
           agentId={agentId}
           sessionId={session.id}
+          messages={session.messages}
           productionPrompt={session.productionPrompt}
           promptOverride={session.promptOverride}
           onSessionUpdate={setSession}
@@ -297,12 +299,14 @@ function TypingIndicator({ agentName }: { agentName: string }) {
 function PromptPanel({
   agentId,
   sessionId,
+  messages,
   productionPrompt,
   promptOverride,
   onSessionUpdate,
 }: {
   agentId: string;
   sessionId: string;
+  messages: PlaygroundSession["messages"];
   productionPrompt: string;
   promptOverride: string | null;
   onSessionUpdate: (session: PlaygroundSession) => void;
@@ -387,6 +391,10 @@ function PromptPanel({
           >
             {updateSession.isPending ? "Saving…" : "Apply prompt"}
           </Button>
+        </div>
+
+        <div className="shrink-0 border-t border-border pt-3">
+          <ProcedureDebugPanel messages={messages} />
         </div>
       </div>
     </aside>

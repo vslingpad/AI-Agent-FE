@@ -4,8 +4,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@clerk/nextjs";
 import {
   createAgent,
+  createAgentProcedure,
   createPlaygroundSession,
+  createProcedureExample,
+  createProcedureFromTemplate,
   deleteAgent,
+  deleteAgentProcedure,
+  deleteProcedureExample,
+  getProcedureAnalytics,
+  getProcedureExamples,
+  getProcedureSimulations,
+  getProcedureTemplates,
+  getProcedureTriggerWarnings,
+  runProcedureSimulation,
+  updateAgentProcedure,
   getAgent,
   getAgentActions,
   getAgentAnalytics,
@@ -34,6 +46,7 @@ import {
   updateAgentWebChat,
 } from "@/lib/api/agents";
 import type {
+  AgentProceduresList,
   ConversationQuery,
   CreateAgentInput,
   ImproveKind,
@@ -48,6 +61,11 @@ import type {
   UpdatePlaygroundSessionInput,
   SendPlaygroundMessageInput,
 } from "@/lib/schemas/agents";
+import type {
+  CreateAgentProcedureInput,
+  UpdateAgentProcedureInput,
+  RunProcedureSimulationInput,
+} from "@/lib/schemas/procedures";
 
 function agentsKey(orgId?: string) {
   return ["agents", orgId] as const;
@@ -340,6 +358,178 @@ export function useUpdateAgentProcedures(agentId: string) {
         procedures
       );
       invalidateAgentCore(queryClient, organization?.id, agentId);
+    },
+  });
+}
+
+export function useCreateAgentProcedure(agentId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: (input: CreateAgentProcedureInput) =>
+      createAgentProcedure(agentId, input),
+    onSuccess: (created) => {
+      queryClient.setQueryData(
+        agentSectionKey(organization?.id, agentId, "procedures"),
+        (current: AgentProceduresList | undefined) => ({
+          procedures: [...(current?.procedures ?? []), created],
+        })
+      );
+      invalidateAgentCore(queryClient, organization?.id, agentId);
+    },
+  });
+}
+
+export function useUpdateAgentProcedure(agentId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: ({
+      procedureId,
+      input,
+    }: {
+      procedureId: string;
+      input: UpdateAgentProcedureInput;
+    }) => updateAgentProcedure(agentId, procedureId, input),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(
+        agentSectionKey(organization?.id, agentId, "procedures"),
+        (current: AgentProceduresList | undefined) => ({
+          procedures: (current?.procedures ?? []).map((item) =>
+            item.id === updated.id ? updated : item
+          ),
+        })
+      );
+      invalidateAgentCore(queryClient, organization?.id, agentId);
+    },
+  });
+}
+
+export function useDeleteAgentProcedure(agentId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: (procedureId: string) =>
+      deleteAgentProcedure(agentId, procedureId),
+    onSuccess: (_result, procedureId) => {
+      queryClient.setQueryData(
+        agentSectionKey(organization?.id, agentId, "procedures"),
+        (current: AgentProceduresList | undefined) => ({
+          procedures: (current?.procedures ?? []).filter(
+            (item) => item.id !== procedureId
+          ),
+        })
+      );
+      invalidateAgentCore(queryClient, organization?.id, agentId);
+    },
+  });
+}
+
+export function useProcedureTemplates(agentId: string) {
+  const { organization } = useOrganization();
+  return useQuery({
+    queryKey: [organization?.id, agentId, "procedure-templates"],
+    queryFn: () => getProcedureTemplates(agentId),
+    enabled: Boolean(organization?.id && agentId),
+  });
+}
+
+export function useCreateProcedureFromTemplate(agentId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+  return useMutation({
+    mutationFn: (templateId: string) => createProcedureFromTemplate(agentId, templateId),
+    onSuccess: (created) => {
+      queryClient.setQueryData(
+        agentSectionKey(organization?.id, agentId, "procedures"),
+        (current: AgentProceduresList | undefined) => ({
+          procedures: [...(current?.procedures ?? []), created],
+        })
+      );
+    },
+  });
+}
+
+export function useProcedureTriggerWarnings(agentId: string) {
+  const { organization } = useOrganization();
+  return useQuery({
+    queryKey: [organization?.id, agentId, "procedure-trigger-warnings"],
+    queryFn: () => getProcedureTriggerWarnings(agentId),
+    enabled: Boolean(organization?.id && agentId),
+  });
+}
+
+export function useProcedureExamples(agentId: string, procedureId: string) {
+  const { organization } = useOrganization();
+  return useQuery({
+    queryKey: [organization?.id, agentId, "procedure-examples", procedureId],
+    queryFn: () => getProcedureExamples(agentId, procedureId),
+    enabled: Boolean(organization?.id && agentId && procedureId),
+  });
+}
+
+export function useCreateProcedureExample(agentId: string, procedureId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+  return useMutation({
+    mutationFn: (input: { kind: "include" | "exclude"; text: string }) =>
+      createProcedureExample(agentId, procedureId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [organization?.id, agentId, "procedure-examples", procedureId],
+      });
+    },
+  });
+}
+
+export function useDeleteProcedureExample(agentId: string, procedureId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+  return useMutation({
+    mutationFn: (exampleId: string) =>
+      deleteProcedureExample(agentId, procedureId, exampleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [organization?.id, agentId, "procedure-examples", procedureId],
+      });
+    },
+  });
+}
+
+export function useProcedureAnalytics(agentId: string, procedureId: string) {
+  const { organization } = useOrganization();
+  return useQuery({
+    queryKey: [organization?.id, agentId, "procedure-analytics", procedureId],
+    queryFn: () => getProcedureAnalytics(agentId, procedureId),
+    enabled: Boolean(organization?.id && agentId && procedureId),
+  });
+}
+
+export function useProcedureSimulations(agentId: string, procedureId: string) {
+  const { organization } = useOrganization();
+  return useQuery({
+    queryKey: [organization?.id, agentId, "procedure-simulations", procedureId],
+    queryFn: () => getProcedureSimulations(agentId, procedureId),
+    enabled: Boolean(organization?.id && agentId && procedureId),
+  });
+}
+
+export function useRunProcedureSimulation(agentId: string, procedureId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+  return useMutation({
+    mutationFn: (input: RunProcedureSimulationInput) =>
+      runProcedureSimulation(agentId, procedureId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [organization?.id, agentId, "procedure-simulations", procedureId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: agentSectionKey(organization?.id, agentId, "procedures"),
+      });
     },
   });
 }

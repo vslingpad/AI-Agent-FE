@@ -171,6 +171,7 @@ export const AgentActionSubActionSchema = z.object({
   name: z.string(),
   description: z.string(),
   enabled: z.boolean(),
+  slug: z.string().nullish(),
 });
 
 export const AgentActionBindingSchema = z.object({
@@ -193,6 +194,7 @@ export const AgentProcedureBindingSchema = z.object({
   enabled: z.boolean(),
   stepCount: z.number(),
   lastSimulatedAt: z.string().nullable(),
+  body: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
 export const WebChatConfigSchema = z.object({
@@ -336,6 +338,7 @@ export const PlaygroundMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string(),
   at: z.string(),
+  procedureDebug: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 export const PlaygroundSessionSchema = z.object({

@@ -41,6 +41,7 @@ export function formatConnectorIdentifier(
     case "calendly":
       return (config.accountEmail as string | undefined) ?? externalInstanceId ?? "—";
     case "stripe":
+    case "stripe_subscriptions":
       return (config.accountId as string | undefined) ?? externalInstanceId ?? "—";
     case "freshdesk":
       return subdomain ? `${subdomain}.freshdesk.com` : "—";
@@ -103,6 +104,10 @@ export const INTEGRATION_BRAND: Record<
     className: "bg-blue-600 text-white",
   },
   stripe: {
+    abbr: "ST",
+    className: "bg-violet-600 text-white",
+  },
+  stripe_subscriptions: {
     abbr: "ST",
     className: "bg-violet-600 text-white",
   },

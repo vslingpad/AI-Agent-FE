@@ -126,7 +126,8 @@ export function OverviewTab({
               mono
             />
           )}
-          {connector.integrationSlug === "stripe" && (
+          {(connector.integrationSlug === "stripe" ||
+            connector.integrationSlug === "stripe_subscriptions") && (
             <DetailRow
               label="Environment"
               value={String(connector.config.mode ?? "live")}

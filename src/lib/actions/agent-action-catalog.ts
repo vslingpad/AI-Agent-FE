@@ -46,23 +46,30 @@ export const CONNECTOR_ACTION_TEMPLATES: Record<string, AgentActionTemplate[]> =
   ],
   stripe: [
     {
-      id: "stripe_lookup_sub",
-      name: "Lookup subscription",
-      description: "Retrieve subscription status and plan details.",
+      id: "get_subscription_details",
+      name: "Get subscription details",
+      description: "Look up plan, status, billing amount, and renewal date.",
     },
     {
-      id: "stripe_portal_link",
-      name: "Customer portal link",
-      description: "Generate a Stripe Customer Portal session link.",
+      id: "cancel_subscription",
+      name: "Cancel subscription",
+      description: "Schedule cancellation at the end of the current billing period.",
     },
     {
-      id: "stripe_refund",
-      name: "Issue refund",
-      description:
-        "Process a refund — requires policy approval and confirmation.",
+      id: "pause_subscription",
+      name: "Pause subscription",
+      description: "Pause billing for a preset or custom duration.",
+    },
+    {
+      id: "resume_subscription",
+      name: "Resume subscription",
+      description: "Resume a paused subscription immediately.",
     },
   ],
 };
+
+CONNECTOR_ACTION_TEMPLATES.stripe_subscriptions =
+  CONNECTOR_ACTION_TEMPLATES.stripe;
 
 export function templateSubActions(
   slug: string,

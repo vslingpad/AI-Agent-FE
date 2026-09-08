@@ -58,6 +58,7 @@ const BRAND_ICON_ASSETS: Record<BrandIconSlug, StaticImageData> = {
 
 const BRAND_ICON_ALIASES: Record<string, BrandIconSlug> = {
   zoho_desk: "zoho",
+  stripe_subscriptions: "stripe",
 };
 
 export function normalizeIconSlug(slug: string) {

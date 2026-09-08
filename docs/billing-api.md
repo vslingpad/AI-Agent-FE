@@ -1,10 +1,9 @@
 # Billing API
 
-Backend contract for the `/billing` page. The frontend calls these endpoints via Next.js route handlers (`src/app/api/billing/route.ts`) backed by an in-memory fixture store. Implement the same shapes on your real Control Plane / Stripe integration.
+Backend contract for the `/billing` page. The frontend BFF (`src/app/api/billing/route.ts`) composes Control Plane responses into the overview shape below.
 
-**Plan source of truth:** `src/lib/billing/plans.ts` (from product launch docs)  
-**Types:** `src/lib/schemas/billing.ts`  
-**Mock store:** `src/lib/fixtures/billing-store.ts`
+**Control Plane:** `GET /billing/usage`, `GET /billing/plans`, `GET /agents`, `GET /orgs/me/connectors`, `PATCH /billing/settings`, `POST /billing/portal`  
+**Types:** `src/lib/schemas/billing.ts`
 
 ---
 
@@ -28,7 +27,7 @@ Billing is **not** handled by Clerk. Stripe + Control Plane own subscription sta
 
 ## GET /api/billing
 
-Returns the billing overview for the active organization.
+Returns the billing overview for the active organization, composed from Control Plane usage, plans, agents, and connectors.
 
 ### Response
 
@@ -38,7 +37,7 @@ Returns the billing overview for the active organization.
     "tier": "growth",
     "planName": "Growth",
     "status": "active",
-    "monthlyBaseLabel": "Contact sales",
+    "monthlyBaseLabel": "$149",
     "hasActiveSubscription": true,
     "currentPeriodEnd": "2026-09-01T00:00:00.000Z"
   },
@@ -75,13 +74,13 @@ Returns the billing overview for the active organization.
 }
 ```
 
-`monthlyUsage.points` powers the **Monthly conversation usage** bar chart on `/billing` (included vs overage stacked bars, last 6 months).
+`monthlyUsage.points` comes from Control Plane `GET /billing/usage` (`monthly_usage`), grouped from `conversation_billing_events`.
 
 ---
 
 ## PATCH /api/billing
 
-Updates org billing settings.
+Updates org billing settings via `PATCH /billing/settings`.
 
 ### Body
 
@@ -91,7 +90,7 @@ Updates org billing settings.
 }
 ```
 
-Free plan returns `400` if overage is requested.
+Free plan returns `409` if overage is requested.
 
 ### Response
 
@@ -101,7 +100,7 @@ Same shape as `GET /api/billing`.
 
 ## POST /api/billing
 
-Creates a Stripe Customer Portal session.
+Creates a Stripe Customer Portal session via `POST /billing/portal`.
 
 ### Response
 
@@ -111,17 +110,4 @@ Creates a Stripe Customer Portal session.
 }
 ```
 
-The console opens this URL for payment method updates, invoices, and plan changes.
-
----
-
-## Plan tiers (reference)
-
-| Plan | Included conversations/mo | Additional cost | Max overage | Agents | Integrations |
-|------|-------------------------|-----------------|-------------|--------|--------------|
-| Free | 50 | N/A | — | 1 | 2 |
-| Starter | 250 | $0.20 | 250 | 3 | 5 |
-| Growth | 1,000 | $0.15 | 1,000 | 5 | 10 |
-| Scale | 5,000 | $0.10 | 5,000 | 10 | Unlimited |
-
-See `docs/product-launch/06-billing-stripe-metering.md` in the backend repo for the full feature matrix and metering rules.
+The console opens this URL for payment method updates, invoices, and plan changes. Returns `409` if the organization has no Stripe customer yet.

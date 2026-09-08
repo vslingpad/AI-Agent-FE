@@ -1,4 +1,10 @@
-export const BILLING_PLAN_TIERS = ["free", "starter", "growth", "scale"] as const;
+export const BILLING_PLAN_TIERS = [
+  "free",
+  "starter",
+  "growth",
+  "scale",
+  "enterprise",
+] as const;
 
 export type BillingPlanTier = (typeof BILLING_PLAN_TIERS)[number];
 
@@ -131,6 +137,31 @@ export const PLAN_DEFINITIONS: Record<BillingPlanTier, PlanDefinition> = {
     additionalConversationCost: 0.1,
     maxOverage: 5000,
     agentLimit: 10,
+    integrationLimit: null,
+    features: {
+      analytics: "Advanced",
+      autoRetrainAgents: true,
+      detectContentGap: true,
+      detectContentConflict: true,
+      trainingPastTickets: true,
+      trainOnMacros: true,
+      trainingHelpCenter: true,
+      helpdeskIntegration: true,
+      aiActions: true,
+      multilingual: true,
+      whiteGloveSetup: true,
+      dedicatedSuccessManager: true,
+      monthlyAccountAudit: true,
+    },
+  },
+  enterprise: {
+    tier: "enterprise",
+    name: "Enterprise",
+    monthlyBaseLabel: "Contact sales",
+    includedConversations: 0,
+    additionalConversationCost: null,
+    maxOverage: null,
+    agentLimit: 0,
     integrationLimit: null,
     features: {
       analytics: "Advanced",

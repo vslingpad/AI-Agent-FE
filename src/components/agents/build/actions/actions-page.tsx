@@ -239,7 +239,7 @@ function filterActionCatalog(
   query: string
 ) {
   return catalog.filter((item) =>
-    matchesQuery(query, [item.name, item.description, item.slug, ...item.actionHighlights])
+    matchesQuery(query, [item.name, item.description, item.slug, ...(item.actionHighlights ?? [])])
   );
 }
 

@@ -1,27 +1,15 @@
-import { NextResponse } from "next/server";
-import { apiError, requireOrgId } from "@/lib/api/auth";
-import { startReauth } from "@/lib/fixtures/integrations-store";
+import {
+  adaptConnectorPayload,
+  proxyControlPlane,
+} from "@/lib/api/control-plane";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function POST(_request: Request, context: RouteContext) {
-  const authResult = await requireOrgId();
-
-  if ("error" in authResult) {
-    return authResult.error;
-  }
-
+export async function POST(request: Request, context: RouteContext) {
   const { id } = await context.params;
-
-  try {
-    const session = startReauth(authResult.orgId, id);
-    return NextResponse.json(session);
-  } catch (error) {
-    return apiError(
-      error instanceof Error ? error.message : "Failed to start reauth",
-      404
-    );
-  }
+  return proxyControlPlane(request, `/orgs/me/connectors/${id}/reauth`, {
+    transformJson: adaptConnectorPayload,
+  });
 }

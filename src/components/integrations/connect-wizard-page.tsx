@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useCompleteOAuthStep,
+  useConnectStatus,
   useCreateConnector,
   useIntegrationsHub,
 } from "@/hooks/use-integrations";
@@ -58,6 +59,17 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
   const [session, setSession] = useState<ConnectSession | null>(null);
   const [connectorId, setConnectorId] = useState<string | null>(null);
   const completeOAuth = useCompleteOAuthStep(connectorId ?? "");
+  const connectStatus = useConnectStatus(
+    connectorId ?? "",
+    session?.connectSessionId ?? null,
+    step === "authorize" && Boolean(connectorId && session?.connectSessionId)
+  );
+
+  useEffect(() => {
+    if (connectStatus.data) {
+      setSession(connectStatus.data);
+    }
+  }, [connectStatus.data]);
 
   if (isLoading) {
     return <ConnectWizardSkeleton />;
@@ -104,9 +116,29 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
     return [...catalogItem.capabilities];
   };
 
+  const goToConnector = (id: string, integrationSlug = catalogItem.slug) => {
+    router.push(
+      getConnectorPath(
+        integrationSlug,
+        id,
+        from === "actions" ? { tab: "actions" } : undefined
+      )
+    );
+  };
+
+  const startVendorAuthorization = (authorizeUrl: string) => {
+    window.location.assign(authorizeUrl);
+  };
+
   const handleDetailsNext = async () => {
     if (connectorId && session) {
-      setStep("authorize");
+      if (session.status === "active") {
+        goToConnector(connectorId);
+      } else if (session.authorizeUrl) {
+        startVendorAuthorization(session.authorizeUrl);
+      } else {
+        setStep("authorize");
+      }
       return;
     }
 
@@ -120,11 +152,37 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
 
     setSession(result.session);
     setConnectorId(result.connector.id);
+
+    if (result.session.status === "active") {
+      goToConnector(result.connector.id, result.connector.integrationSlug);
+      return;
+    }
+
+    if (result.session.authorizeUrl) {
+      setStep("authorize");
+      startVendorAuthorization(result.session.authorizeUrl);
+      return;
+    }
+
     setStep("authorize");
   };
 
   const handleAuthorize = async () => {
-    if (!session || !connectorId || !session.wizard.currentStep) {
+    if (!session || !connectorId) {
+      return;
+    }
+
+    if (session.status === "active") {
+      goToConnector(connectorId, catalogItem.slug);
+      return;
+    }
+
+    if (session.authorizeUrl) {
+      startVendorAuthorization(session.authorizeUrl);
+      return;
+    }
+
+    if (!session.wizard.currentStep) {
       return;
     }
 
@@ -135,15 +193,11 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
 
     setSession(result.session);
 
-    if (result.session.status === "active") {
-      router.push(
-        getConnectorPath(
-          result.connector.integrationSlug,
-          result.connector.id,
-          from === "actions" ? { tab: "actions" } : undefined
-        )
-      );
+    if (result.session.status !== "active") {
+      return;
     }
+
+    goToConnector(result.connector.id, result.connector.integrationSlug);
   };
 
   const detailsValid =
@@ -333,7 +387,8 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
                 <Button
                   onClick={handleAuthorize}
                   disabled={
-                    !session.wizard.currentStep || completeOAuth.isPending
+                    completeOAuth.isPending ||
+                    (session.status !== "active" && !session.wizard.currentStep)
                   }
                 >
                   {completeOAuth.isPending

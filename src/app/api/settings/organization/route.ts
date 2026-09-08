@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, requireOrgAdmin, requireOrgId } from "@/lib/api/auth";
 import { clerkErrorResponse } from "@/lib/api/clerk-errors";
+import { controlPlaneFetch } from "@/lib/api/control-plane";
 import { getOrganizationSettings, updateOrganizationName } from "@/lib/org/clerk-org-settings";
 import { UpdateOrganizationSettingsInputSchema } from "@/lib/schemas/org-settings";
 
@@ -35,6 +36,16 @@ export async function PATCH(request: Request) {
 
   try {
     const settings = await updateOrganizationName(authResult.orgId, parsed.data.name);
+
+    try {
+      await controlPlaneFetch("/orgs/me", {
+        method: "PATCH",
+        body: JSON.stringify({ name: parsed.data.name }),
+      });
+    } catch (error) {
+      console.error("Control plane organization name sync failed", error);
+    }
+
     return NextResponse.json(settings);
   } catch (error) {
     return clerkErrorResponse(error);

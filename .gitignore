@@ -16,6 +16,11 @@
 # next.js
 /.next/
 /out/
+/.open-next/
+
+# sst
+.sst/
+sst-env.d.ts
 
 # production
 /build
@@ -42,3 +47,5 @@ next-env.d.ts
 
 
 .claude
+# clerk configuration (can include secrets)
+/.clerk/

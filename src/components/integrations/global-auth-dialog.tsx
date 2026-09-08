@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ExternalLinkIcon } from "lucide-react";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   useCompleteOAuthStep,
+  useConnectStatus,
   useStartOAuthStep,
 } from "@/hooks/use-integrations";
 import type {
@@ -38,6 +39,17 @@ export function GlobalAuthDialog({
   const startOAuth = useStartOAuthStep(connectorId);
   const completeOAuth = useCompleteOAuthStep(connectorId);
   const [session, setSession] = useState<ConnectSession | null>(null);
+  const connectStatus = useConnectStatus(
+    connectorId,
+    session?.connectSessionId ?? null,
+    open && Boolean(session?.connectSessionId)
+  );
+
+  useEffect(() => {
+    if (connectStatus.data) {
+      setSession(connectStatus.data);
+    }
+  }, [connectStatus.data]);
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {
@@ -53,14 +65,41 @@ export function GlobalAuthDialog({
   };
 
   const handleAuthorize = async () => {
-    if (!session?.wizard.currentStep || !pendingCapability) {
+    if (!session || !pendingCapability) {
       return;
     }
 
-    await completeOAuth.mutateAsync({
+    const alreadyDone =
+      session.status === "active" ||
+      session.wizard.steps.some(
+        (item) => item.id === "global_auth" && item.status === "complete"
+      );
+
+    if (alreadyDone) {
+      onAuthorized(pendingCapability);
+      setSession(null);
+      onOpenChange(false);
+      return;
+    }
+
+    if (!session.wizard.currentStep) {
+      return;
+    }
+
+    const result = await completeOAuth.mutateAsync({
       connectSessionId: session.connectSessionId,
       stepId: session.wizard.currentStep,
     });
+    const nextSession = result.session;
+    setSession(nextSession);
+
+    const globalAuthDone = nextSession.wizard.steps.some(
+      (item) => item.id === "global_auth" && item.status === "complete"
+    );
+
+    if (!globalAuthDone && nextSession.status !== "active") {
+      return;
+    }
 
     onAuthorized(pendingCapability);
     setSession(null);

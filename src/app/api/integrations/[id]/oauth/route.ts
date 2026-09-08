@@ -1,11 +1,25 @@
 import { NextResponse } from "next/server";
 import { apiError, requireOrgId } from "@/lib/api/auth";
-import { completeOAuthStep } from "@/lib/fixtures/integrations-store";
-import { CompleteOAuthStepInputSchema } from "@/lib/schemas/integrations";
+import {
+  adaptConnectorPayload,
+  ControlPlaneAuthError,
+  controlPlaneFetch,
+  detailToError,
+  isPlainObject,
+  jsonFromResponse,
+} from "@/lib/api/control-plane";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+function backendError(status: number, body: unknown) {
+  if (isPlainObject(body) && "detail" in body) {
+    return apiError(detailToError(body.detail), status);
+  }
+
+  return apiError("Request failed", status);
+}
 
 export async function POST(request: Request, context: RouteContext) {
   const authResult = await requireOrgId();
@@ -15,26 +29,40 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const body = await request.json().catch(() => null);
-  const parsed = CompleteOAuthStepInputSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return apiError("Invalid request body");
-  }
-
-  await new Promise((resolve) => setTimeout(resolve, 600));
+  const body = (await request.json().catch(() => null)) as {
+    connectSessionId?: string;
+  } | null;
+  const connectSessionId = body?.connectSessionId;
+  const query = connectSessionId
+    ? `?connect_session_id=${encodeURIComponent(connectSessionId)}`
+    : "";
 
   try {
-    const result = completeOAuthStep(
-      authResult.orgId,
-      id,
-      parsed.data.connectSessionId,
-      parsed.data.stepId
-    );
-    return NextResponse.json(result);
+    const [sessionResponse, connectorResponse] = await Promise.all([
+      controlPlaneFetch(`/orgs/me/connectors/${id}/connect-status${query}`),
+      controlPlaneFetch(`/orgs/me/connectors/${id}`),
+    ]);
+
+    const sessionPayload = await jsonFromResponse(sessionResponse);
+    if (!sessionResponse.ok) {
+      return backendError(sessionResponse.status, sessionPayload);
+    }
+
+    const connectorPayload = await jsonFromResponse(connectorResponse);
+    if (!connectorResponse.ok) {
+      return backendError(connectorResponse.status, connectorPayload);
+    }
+
+    return NextResponse.json({
+      connector: adaptConnectorPayload(connectorPayload),
+      session: adaptConnectorPayload(sessionPayload),
+    });
   } catch (error) {
-    return apiError(
-      error instanceof Error ? error.message : "OAuth step failed"
-    );
+    if (error instanceof ControlPlaneAuthError) {
+      return apiError("Unauthorized", 401);
+    }
+
+    console.error("Connect status verify failed", error);
+    return apiError("Control plane unavailable", 502);
   }
 }

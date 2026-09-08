@@ -56,7 +56,7 @@ export const AgentKpiSchema = z.object({
   change: z.number(),
   changeLabel: z.string(),
   direction: z.enum(["up", "down", "neutral"]),
-  invert: z.boolean().optional(),
+  invert: z.boolean().nullish(),
   sparkline: z.array(z.number()),
 });
 

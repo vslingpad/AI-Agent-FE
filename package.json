@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "sst deploy",
+    "deploy:stage": "sst deploy --stage stage",
+    "deploy:prod": "sst deploy --stage prod"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -35,6 +38,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "sst": "^3.17.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

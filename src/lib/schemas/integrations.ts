@@ -44,7 +44,7 @@ export const IntegrationCatalogItemSchema = z.object({
   capabilities: z.array(ConnectorCapabilitySchema),
   knowledgeSubCapabilities: z.array(KnowledgeSubCapabilitySchema).optional(),
   status: z.enum(["active", "beta", "deprecated"]),
-  available: z.boolean(),
+  available: z.boolean().default(false),
   sortOrder: z.number(),
   configFields: z.array(
     z.object({

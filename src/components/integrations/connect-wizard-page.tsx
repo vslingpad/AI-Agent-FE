@@ -63,11 +63,13 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
     return <ConnectWizardSkeleton />;
   }
 
-  if (!catalogItem) {
+  if (!catalogItem || !catalogItem.available) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16">
         <p className="text-sm text-muted-foreground">
-          Unknown integration type.
+          {catalogItem
+            ? `${catalogItem.name} is coming soon.`
+            : "Unknown integration type."}
         </p>
         <Button variant="outline" render={<Link href="/integrations" />}>
           Back to integrations

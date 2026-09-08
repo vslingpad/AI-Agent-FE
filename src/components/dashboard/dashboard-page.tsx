@@ -18,7 +18,7 @@ import type { ChartPeriod } from "@/lib/schemas/dashboard";
 export function DashboardPage() {
   const [chartPeriod, setChartPeriod] = useState<ChartPeriod>("30d");
   const [isExporting, setIsExporting] = useState(false);
-  const { data, isLoading, isError, isFetching, refetch } = useDashboard({
+  const { data, isError, isFetching, refetch } = useDashboard({
     period: chartPeriod,
   });
 
@@ -36,21 +36,21 @@ export function DashboardPage() {
     }
   };
 
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
+  if (!data) {
+    if (isError) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16">
+          <p className="text-sm text-muted-foreground">
+            Unable to load dashboard data.
+          </p>
+          <Button variant="outline" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
+      );
+    }
 
-  if (isError || !data) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16">
-        <p className="text-sm text-muted-foreground">
-          Unable to load dashboard data.
-        </p>
-        <Button variant="outline" onClick={() => refetch()}>
-          Try again
-        </Button>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

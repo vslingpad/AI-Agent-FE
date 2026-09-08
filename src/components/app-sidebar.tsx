@@ -70,6 +70,11 @@ function NavItem({
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const isDashboard =
+    pathname === "/" ||
+    pathname.startsWith("/countries") ||
+    pathname.startsWith("/ai-quality") ||
+    pathname.startsWith("/activity");
 
   return (
     <Sidebar
@@ -93,7 +98,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive={pathname === "/"}
+                  isActive={isDashboard}
                   tooltip="Dashboard"
                   render={<Link href="/" />}
                 >

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 import { TrendIndicator } from "@/components/dashboard/trend-indicator";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,11 @@ export function CountryTicketsTable({
           </table>
         </div>
 
-        <Button variant="link" className="h-auto p-0 text-sm">
+        <Button
+          variant="link"
+          className="h-auto p-0 text-sm"
+          render={<Link href="/countries" />}
+        >
           View all countries
           <ArrowRightIcon className="size-4" />
         </Button>

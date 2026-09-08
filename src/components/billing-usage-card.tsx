@@ -57,14 +57,14 @@ function BillingUsageDetails({
       {hasOverage ? (
         <div>
           <div className="mb-1 flex items-center justify-between text-xs">
-            <span className="text-yellow-600">Overage</span>
-            <span className="font-medium tabular-nums text-yellow-600">
+            <span className="text-indigo-500">Overage</span>
+            <span className="font-medium tabular-nums text-indigo-500">
               {overageUsed} / {overageLimit}
             </span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-sidebar-accent">
             <div
-              className="h-full rounded-full bg-yellow-600"
+              className="h-full rounded-full bg-indigo-500"
               style={{
                 width: `${Math.min((overageUsed / overageLimit) * 100, 100)}%`,
               }}

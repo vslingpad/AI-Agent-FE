@@ -13,6 +13,7 @@ import {
   getCatalogItem,
 } from "@/components/integrations/integration-utils";
 import { IntegrationBrandIcon } from "@/components/integrations/integration-brand-icon";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -170,13 +171,17 @@ export function AvailableIntegrationCard({
         />
 
         <div className="mt-auto flex justify-end border-t border-border pt-3">
-          <Button
-            size="sm"
-            variant="outline"
-            render={<Link href={`/integrations/new/${item.slug}`} />}
-          >
-            Connect
-          </Button>
+          {item.available ? (
+            <Button
+              size="sm"
+              variant="outline"
+              render={<Link href={`/integrations/new/${item.slug}`} />}
+            >
+              Connect
+            </Button>
+          ) : (
+            <Badge variant="muted">Coming soon</Badge>
+          )}
         </div>
       </CardContent>
     </Card>

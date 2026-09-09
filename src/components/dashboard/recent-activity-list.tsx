@@ -1,20 +1,9 @@
-import {
-  ArrowRightIcon,
-  ClipboardListIcon,
-  FileTextIcon,
-  LightbulbIcon,
-  LinkIcon,
-} from "lucide-react";
+import Link from "next/link";
+import { ArrowRightIcon } from "lucide-react";
+import { ACTIVITY_ICONS } from "@/components/dashboard/activity-icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RecentActivityItem } from "@/lib/schemas/dashboard";
-
-const activityIcons = {
-  document: FileTextIcon,
-  lightbulb: LightbulbIcon,
-  link: LinkIcon,
-  clipboard: ClipboardListIcon,
-};
 
 type RecentActivityListProps = {
   items: RecentActivityItem[];
@@ -28,7 +17,7 @@ export function RecentActivityList({ items }: RecentActivityListProps) {
       </CardHeader>
       <CardContent className="flex flex-1 flex-col space-y-0 divide-y divide-border p-0 px-5 pb-2">
         {items.map((item) => {
-          const Icon = activityIcons[item.icon];
+          const Icon = ACTIVITY_ICONS[item.icon];
 
           return (
             <div key={item.id} className="flex gap-3 py-4 first:pt-0">
@@ -47,7 +36,12 @@ export function RecentActivityList({ items }: RecentActivityListProps) {
         })}
 
         <div className="py-4">
-          <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-muted-foreground"
+            render={<Link href="/activity" />}
+          >
             View all activity
             <ArrowRightIcon className="size-4" />
           </Button>

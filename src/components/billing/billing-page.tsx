@@ -327,8 +327,8 @@ function UsageMeter({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
-        <span className={tone === "warning" ? "text-yellow-600" : undefined}>{label}</span>
-        <span className={cn("tabular-nums", tone === "warning" && "font-medium text-yellow-600")}>
+        <span className={tone === "warning" ? "text-indigo-500" : undefined}>{label}</span>
+        <span className={cn("tabular-nums", tone === "warning" && "font-medium text-indigo-500")}>
           {used} / {limit}
         </span>
       </div>
@@ -336,7 +336,7 @@ function UsageMeter({
         <div
           className={cn(
             "h-full rounded-full",
-            tone === "warning" ? "bg-yellow-600" : "bg-primary"
+            tone === "warning" ? "bg-indigo-500" : "bg-primary"
           )}
           style={{ width: `${progress}%` }}
         />

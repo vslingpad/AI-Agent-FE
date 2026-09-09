@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 import { TrendIndicator } from "@/components/dashboard/trend-indicator";
 import { Button } from "@/components/ui/button";
@@ -78,7 +79,11 @@ export function AiQualityCard({ data }: AiQualityCardProps) {
           </div>
         </div>
 
-        <Button variant="link" className="h-auto p-0 text-sm">
+        <Button
+          variant="link"
+          className="h-auto p-0 text-sm"
+          render={<Link href="/ai-quality" />}
+        >
           {data.lowConfidenceConversationCount} low-confidence conversations
           <ArrowRightIcon className="size-4" />
         </Button>

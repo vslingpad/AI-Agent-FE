@@ -80,10 +80,10 @@ export const NeedsAttentionItemSchema = z.object({
     "integration",
     "usage",
   ]),
-  statusLabel: z.string().optional(),
-  status: AttentionStatusSchema.optional(),
-  metricValue: z.string().optional(),
-  metricDirection: TrendDirectionSchema.optional(),
+  statusLabel: z.string().nullish(),
+  status: AttentionStatusSchema.nullish(),
+  metricValue: z.string().nullish(),
+  metricDirection: TrendDirectionSchema.nullish(),
 });
 
 export const ActivityIconSchema = z.enum([

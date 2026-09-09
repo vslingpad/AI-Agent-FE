@@ -2,14 +2,17 @@ import posthog from "posthog-js";
 
 const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
 const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+const enabledInDev = process.env.NEXT_PUBLIC_POSTHOG_ENABLED === "true";
+const shouldInit =
+  Boolean(token) && (process.env.NODE_ENV === "production" || enabledInDev);
 
-if (!token) {
-  if (process.env.NODE_ENV !== "production") {
-    throw new Error(
-      "NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured"
-    );
-  }
-} else {
+if (enabledInDev && !token) {
+  throw new Error(
+    "NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN is configured"
+  );
+}
+
+if (shouldInit && token) {
   posthog.init(token, {
     api_host: "/ingest",
     ui_host: host,
@@ -21,6 +24,10 @@ if (!token) {
     debug: process.env.NODE_ENV === "development",
   });
 }
+
+// IMPORTANT: Never combine this approach with other client-side PostHog initialization approaches,
+// especially components like a PostHogProvider. instrumentation-client.ts is the correct solution
+// for initializing client-side PostHog in Next.js 15.3+ apps.
 
 // IMPORTANT: Never combine this approach with other client-side PostHog initialization approaches,
 // especially components like a PostHogProvider. instrumentation-client.ts is the correct solution

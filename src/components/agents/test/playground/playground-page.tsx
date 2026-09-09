@@ -17,6 +17,7 @@ import {
   useUpdatePlaygroundSession,
 } from "@/hooks/use-agents";
 import type { PlaygroundSession } from "@/lib/schemas/agents";
+import { detectBrowserLocation } from "@/lib/geo/detect-location";
 import { cn } from "@/lib/utils";
 
 const promptTextareaClassName =
@@ -104,7 +105,11 @@ function PlaygroundWorkspace({
 
     setInput("");
 
-    const updated = await sendMessage.mutateAsync({ content: text });
+    const geo = await detectBrowserLocation();
+    const updated = await sendMessage.mutateAsync({
+      content: text,
+      ...geo,
+    });
     setSession(updated);
   };
 

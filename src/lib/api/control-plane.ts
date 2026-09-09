@@ -234,9 +234,21 @@ async function getClerkAccessToken() {
   return getToken();
 }
 
+const GEO_HEADERS = [
+  "x-vercel-ip-city",
+  "x-vercel-ip-country",
+  "x-vercel-ip-country-region",
+  "cf-ipcity",
+  "cf-ipcountry",
+  "cf-region",
+  "x-appengine-city",
+  "x-appengine-country",
+];
+
 export async function controlPlaneFetch(
   path: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  incoming?: Request
 ): Promise<Response> {
   const token = await getClerkAccessToken();
 
@@ -251,6 +263,15 @@ export async function controlPlaneFetch(
 
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
+  }
+
+  if (incoming) {
+    for (const name of GEO_HEADERS) {
+      const value = incoming.headers.get(name);
+      if (value) {
+        headers.set(name, value);
+      }
+    }
   }
 
   return fetch(url, {
@@ -336,7 +357,7 @@ export async function proxyControlPlane(
       }
     }
 
-    const response = await controlPlaneFetch(path, init);
+    const response = await controlPlaneFetch(path, init, request);
 
     if (response.status === 204) {
       return new NextResponse(null, { status: 204 });

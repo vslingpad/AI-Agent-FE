@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   async rewrites() {
+    if (
+      process.env.NODE_ENV === "development" &&
+      process.env.NEXT_PUBLIC_POSTHOG_ENABLED !== "true"
+    ) {
+      return [];
+    }
+
     return [
       {
         source: "/ingest/static/:path*",

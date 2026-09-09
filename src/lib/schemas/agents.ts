@@ -359,6 +359,9 @@ export const UpdatePlaygroundSessionInputSchema = z.object({
 
 export const SendPlaygroundMessageInputSchema = z.object({
   content: z.string().min(1).max(4000),
+  location: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
 });
 
 export const SendPlaygroundMessageResponseSchema = z.object({

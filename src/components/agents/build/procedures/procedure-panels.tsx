@@ -202,7 +202,7 @@ export function ProcedureSimulationsPanel({
 }) {
   const { data, refetch } = useProcedureSimulations(agentId, procedureId);
   const runSimulation = useRunProcedureSimulation(agentId, procedureId);
-  const [openingMessage, setOpeningMessage] = useState("Where is my order 8842?");
+  const [openingMessage, setOpeningMessage] = useState("");
   const [lastTrace, setLastTrace] = useState<Record<string, unknown> | null>(null);
 
   const simulations = data?.simulations ?? [];
@@ -219,28 +219,15 @@ export function ProcedureSimulationsPanel({
             className="flex-1"
             value={openingMessage}
             onChange={(event) => setOpeningMessage(event.target.value)}
+            placeholder="What the customer says first"
           />
           <Button
             className="shrink-0"
             disabled={!openingMessage.trim() || runSimulation.isPending}
             onClick={async () => {
               const result = await runSimulation.mutateAsync({
-                scenario: {
-                  name: "Quick test",
-                  openingMessage,
-                  customerReplies: [],
-                  mockToolResponses: {
-                    get_order_details: { found: true, order_id: "8842" },
-                    get_order_status: {
-                      status: "shipped",
-                      tracking_url: "https://track.example/8842",
-                    },
-                    order_lookup: { found: true, status: "shipped" },
-                  },
-                  successCriteria: { minSteps: 1 },
-                },
+                scenario: { openingMessage: openingMessage.trim() },
                 save: true,
-                simulationName: "Quick test",
               });
               setLastTrace(result.trace);
               await refetch();

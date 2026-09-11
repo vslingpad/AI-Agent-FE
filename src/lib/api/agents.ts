@@ -67,11 +67,13 @@ import {
   ProcedureTriggerWarningsListSchema,
   ProcedureExamplesListSchema,
   ProcedureExampleSchema,
+  UpdateProcedureExampleInputSchema,
   ProcedureAnalyticsSchema,
   ProcedureSimulationsListSchema,
   RunProcedureSimulationInputSchema,
   RunProcedureSimulationResponseSchema,
   type RunProcedureSimulationInput,
+  type UpdateProcedureExampleInput,
 } from "@/lib/schemas/procedures";
 import { serializeProcedureBody } from "@/lib/procedures/step-utils";
 
@@ -178,6 +180,20 @@ export async function createProcedureExample(
   const json = await apiPost<unknown>(
     `/api/agents/${agentId}/procedures/${procedureId}/examples`,
     input
+  );
+  return ProcedureExampleSchema.parse(json);
+}
+
+export async function updateProcedureExample(
+  agentId: string,
+  procedureId: string,
+  exampleId: string,
+  input: UpdateProcedureExampleInput
+) {
+  const parsed = UpdateProcedureExampleInputSchema.parse(input);
+  const json = await apiPatch<unknown>(
+    `/api/agents/${agentId}/procedures/${procedureId}/examples/${exampleId}`,
+    parsed
   );
   return ProcedureExampleSchema.parse(json);
 }

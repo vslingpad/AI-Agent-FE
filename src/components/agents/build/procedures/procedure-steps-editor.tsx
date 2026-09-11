@@ -30,6 +30,7 @@ const STEP_TYPE_LABELS: Record<ProcedureStepType, string> = {
   condition: "Branch",
   end: "End",
   wait_for_reply: "Wait for reply",
+  handoff: "Handoff",
 };
 
 type ProcedureStepsEditorProps = {
@@ -37,6 +38,7 @@ type ProcedureStepsEditorProps = {
   availableTools: ProcedureToolOption[];
   onChange: (steps: ProcedureStep[]) => void;
   validation?: ProcedureStepValidation;
+  showErrors?: boolean;
 };
 
 export function ProcedureStepsEditor({
@@ -44,6 +46,7 @@ export function ProcedureStepsEditor({
   availableTools,
   onChange,
   validation,
+  showErrors = true,
 }: ProcedureStepsEditorProps) {
   const localValidation =
     validation ?? validateProcedureSteps(steps, availableTools);
@@ -89,6 +92,7 @@ export function ProcedureStepsEditor({
               "call_tool",
               "condition",
               "wait_for_reply",
+              "handoff",
               "end",
             ] as ProcedureStepType[]
           ).map((type) => (
@@ -178,7 +182,7 @@ export function ProcedureStepsEditor({
         </div>
       )}
 
-      {!localValidation.valid ? (
+      {showErrors && !localValidation.valid ? (
         <ul className="space-y-1 text-sm text-destructive" role="alert">
           {localValidation.errors.map((message) => (
             <li key={message}>{message}</li>
@@ -339,6 +343,14 @@ function StepFields({
           placeholder="Anything else I can help with?"
         />
       </div>
+    );
+  }
+
+  if (step.type === "handoff") {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Transfers the conversation to a human agent. No extra fields.
+      </p>
     );
   }
 

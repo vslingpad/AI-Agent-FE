@@ -18,6 +18,7 @@ import {
   getProcedureTriggerWarnings,
   runProcedureSimulation,
   updateAgentProcedure,
+  updateProcedureExample,
   getAgent,
   getAgentActions,
   getAgentAnalytics,
@@ -65,6 +66,7 @@ import type {
   CreateAgentProcedureInput,
   UpdateAgentProcedureInput,
   RunProcedureSimulationInput,
+  UpdateProcedureExampleInput,
 } from "@/lib/schemas/procedures";
 
 function agentsKey(orgId?: string) {
@@ -428,12 +430,12 @@ export function useDeleteAgentProcedure(agentId: string) {
   });
 }
 
-export function useProcedureTemplates(agentId: string) {
+export function useProcedureTemplates(agentId: string, enabled = true) {
   const { organization } = useOrganization();
   return useQuery({
     queryKey: [organization?.id, agentId, "procedure-templates"],
     queryFn: () => getProcedureTemplates(agentId),
-    enabled: Boolean(organization?.id && agentId),
+    enabled: enabled && Boolean(organization?.id && agentId),
   });
 }
 
@@ -477,6 +479,25 @@ export function useCreateProcedureExample(agentId: string, procedureId: string) 
   return useMutation({
     mutationFn: (input: { kind: "include" | "exclude"; text: string }) =>
       createProcedureExample(agentId, procedureId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [organization?.id, agentId, "procedure-examples", procedureId],
+      });
+    },
+  });
+}
+
+export function useUpdateProcedureExample(agentId: string, procedureId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+  return useMutation({
+    mutationFn: ({
+      exampleId,
+      input,
+    }: {
+      exampleId: string;
+      input: UpdateProcedureExampleInput;
+    }) => updateProcedureExample(agentId, procedureId, exampleId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [organization?.id, agentId, "procedure-examples", procedureId],

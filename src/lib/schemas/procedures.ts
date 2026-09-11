@@ -6,6 +6,7 @@ export const ProcedureStepTypeSchema = z.enum([
   "condition",
   "end",
   "wait_for_reply",
+  "handoff",
 ]);
 
 export const ProcedureArgMapSchema = z.record(z.string(), z.string());
@@ -50,12 +51,18 @@ export const ProcedureWaitForReplyStepSchema = z.object({
   message: z.string(),
 });
 
+export const ProcedureHandoffStepSchema = z.object({
+  id: z.string(),
+  type: z.literal("handoff"),
+});
+
 export const ProcedureStepSchema = z.discriminatedUnion("type", [
   ProcedureInstructionStepSchema,
   ProcedureCallToolStepSchema,
   ProcedureConditionStepSchema,
   ProcedureEndStepSchema,
   ProcedureWaitForReplyStepSchema,
+  ProcedureHandoffStepSchema,
 ]);
 
 export const ProcedureBodySchema = z.object({
@@ -84,6 +91,7 @@ export type ProcedureCallToolStep = z.infer<typeof ProcedureCallToolStepSchema>;
 export type ProcedureConditionStep = z.infer<typeof ProcedureConditionStepSchema>;
 export type ProcedureEndStep = z.infer<typeof ProcedureEndStepSchema>;
 export type ProcedureWaitForReplyStep = z.infer<typeof ProcedureWaitForReplyStepSchema>;
+export type ProcedureHandoffStep = z.infer<typeof ProcedureHandoffStepSchema>;
 export type ProcedureStep = z.infer<typeof ProcedureStepSchema>;
 export type ProcedureBody = z.infer<typeof ProcedureBodySchema>;
 export type CreateAgentProcedureInput = z.infer<typeof CreateAgentProcedureInputSchema>;
@@ -97,6 +105,7 @@ export const ProcedureTemplateSchema = z.object({
   typicalTools: z.array(z.string()).default([]),
   whenToUse: z.string(),
   stepCount: z.number(),
+  body: z.record(z.string(), z.unknown()).optional().default({}),
 });
 
 export const ProcedureTemplatesListSchema = z.object({
@@ -119,6 +128,11 @@ export const ProcedureExampleSchema = z.object({
   kind: z.enum(["include", "exclude"]),
   text: z.string(),
   createdAt: z.string().nullable().optional(),
+});
+
+export const UpdateProcedureExampleInputSchema = z.object({
+  kind: z.enum(["include", "exclude"]).optional(),
+  text: z.string().min(1).max(2000).optional(),
 });
 
 export const ProcedureExamplesListSchema = z.object({
@@ -170,6 +184,7 @@ export const RunProcedureSimulationResponseSchema = z.object({
 export type ProcedureTemplate = z.infer<typeof ProcedureTemplateSchema>;
 export type ProcedureTriggerWarning = z.infer<typeof ProcedureTriggerWarningSchema>;
 export type ProcedureExample = z.infer<typeof ProcedureExampleSchema>;
+export type UpdateProcedureExampleInput = z.infer<typeof UpdateProcedureExampleInputSchema>;
 export type ProcedureAnalytics = z.infer<typeof ProcedureAnalyticsSchema>;
 export type ProcedureSimulationRecord = z.infer<typeof ProcedureSimulationRecordSchema>;
 export type RunProcedureSimulationInput = z.infer<typeof RunProcedureSimulationInputSchema>;

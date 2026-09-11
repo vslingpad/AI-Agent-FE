@@ -4,6 +4,7 @@ import {
   type ProcedureCallToolStep,
   type ProcedureConditionStep,
   type ProcedureEndStep,
+  type ProcedureHandoffStep,
   type ProcedureInstructionStep,
   type ProcedureStep,
   type ProcedureStepType,
@@ -144,6 +145,8 @@ export function createEmptyStep(
       return { id, type, message: "Anything else I can help with?", action: "none" };
     case "wait_for_reply":
       return { id, type, message: "Please reply to continue." };
+    case "handoff":
+      return { id, type };
   }
 }
 
@@ -237,6 +240,8 @@ export function stepSummary(step: ProcedureStep): string {
       return step.message.trim() || "End";
     case "wait_for_reply":
       return step.message.trim() || "Wait for reply";
+    case "handoff":
+      return "Transfer to a human agent";
   }
 }
 
@@ -254,6 +259,10 @@ export function isConditionStep(step: ProcedureStep): step is ProcedureCondition
 
 export function isEndStep(step: ProcedureStep): step is ProcedureEndStep {
   return step.type === "end";
+}
+
+export function isHandoffStep(step: ProcedureStep): step is ProcedureHandoffStep {
+  return step.type === "handoff";
 }
 
 export const ORDER_STATUS_TEMPLATE: ProcedureBody = {

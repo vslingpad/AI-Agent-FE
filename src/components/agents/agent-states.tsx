@@ -142,8 +142,9 @@ export function AgentActionsSkeleton() {
 
 export function AgentProceduresSkeleton() {
   return (
-    <AgentPageShell>
-      <CardListSkeleton count={3} />
+    <AgentPageShell withAction>
+      <Skeleton className="h-10 w-full max-w-64" />
+      <Skeleton className="h-80 w-full rounded-xl" />
     </AgentPageShell>
   );
 }

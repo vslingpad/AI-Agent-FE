@@ -17,7 +17,9 @@ import {
 import { cn } from "@/lib/utils";
 
 function isActiveSegment(pathname: string, segment: string) {
-  return pathname.endsWith(`/${segment}`);
+  return (
+    pathname.endsWith(`/${segment}`) || pathname.includes(`/${segment}/`)
+  );
 }
 
 function sectionContainsPath(group: AgentNavGroup, pathname: string) {

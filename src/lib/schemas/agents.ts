@@ -154,6 +154,7 @@ export const KnowledgeSourceSchema = z.object({
   name: z.string(),
   kind: KnowledgeOptionKindSchema,
   vendorSlug: z.string().nullable(),
+  connectorId: z.string().nullable().optional(),
   state: KnowledgeSourceStateSchema,
   enabled: z.boolean(),
   instanceName: z.string().nullable(),
@@ -321,8 +322,21 @@ export const AgentConversationLocationsSchema = z.object({
   locations: z.array(ConversationLocationOptionSchema),
 });
 
+export const ImproveQuerySchema = z.object({
+  kind: ImproveKindSchema.optional(),
+  status: z.enum(["open", "resolved"]).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export const AgentImproveListSchema = z.object({
   items: z.array(ImproveItemSchema),
+  pagination: z.object({
+    page: z.number(),
+    pageSize: z.number(),
+    totalItems: z.number(),
+    totalPages: z.number(),
+  }),
 });
 
 export const AgentTestCasesListSchema = z.object({
@@ -500,6 +514,7 @@ export type ConversationMessage = z.infer<typeof ConversationMessageSchema>;
 export type AgentConversation = z.infer<typeof AgentConversationSchema>;
 export type ConversationQuery = z.infer<typeof ConversationQuerySchema>;
 export type ImproveItem = z.infer<typeof ImproveItemSchema>;
+export type ImproveQuery = z.infer<typeof ImproveQuerySchema>;
 export type ImproveKind = z.infer<typeof ImproveKindSchema>;
 export type ImproveStatus = z.infer<typeof ImproveStatusSchema>;
 export type TestCase = z.infer<typeof TestCaseSchema>;

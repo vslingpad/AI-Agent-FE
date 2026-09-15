@@ -285,7 +285,9 @@ export function tileSourceId(tile: KnowledgeTile) {
 
 export function connectorSourceId(
   optionKind: KnowledgeOptionKind,
-  vendorSlug: string
+  vendorSlug: string,
+  connectorId?: string | number
 ) {
-  return `src_${vendorSlug}_${optionKind}`;
+  const base = `src_${vendorSlug}_${optionKind}`;
+  return connectorId == null ? base : `${base}_${connectorId}`;
 }

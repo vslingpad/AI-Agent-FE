@@ -23,6 +23,8 @@ All requests require a signed-in user with an active organization (Clerk).
 
 Scope all operations to `(orgId, agentId)`.
 
+`:agentId` is the assistant’s **numeric primary key** as a string (e.g. `"17"`), not the `agt-*` slug. Slugs still work in URLs for backward compatibility when resolving an agent.
+
 ---
 
 ## Endpoint overview
@@ -313,6 +315,7 @@ Read-only. Returns `AgentAnalytics`:
       "name": "Website",
       "kind": "website",
       "vendorSlug": null,
+      "connectorId": null,
       "state": "connected",
       "enabled": true,
       "instanceName": null,
@@ -329,7 +332,7 @@ Read-only. Returns `AgentAnalytics`:
 | Source | Pattern | Example |
 |--------|---------|---------|
 | Native | `src_{kind}` | `src_website`, `src_files`, `src_qna` |
-| Connector | `src_{vendorSlug}_{kind}` | `src_zendesk_help_center` |
+| Connector | `src_{vendorSlug}_{kind}_{connectorId}` | `src_zendesk_help_center_42` |
 
 **Resource types** (discriminated union on `type`): `url`, `file`, `qna`, `article`, `ticket` — see `KnowledgeResourceSchema` in `src/lib/schemas/agents.ts`.
 
@@ -337,7 +340,7 @@ Read-only. Returns `AgentAnalytics`:
 
 **Toggle source**
 ```json
-{ "knowledgeSourceId": "src_zendesk_help_center", "knowledgeEnabled": true }
+{ "knowledgeSourceId": "src_zendesk_help_center_42", "knowledgeEnabled": true }
 ```
 
 **Add website**
@@ -620,6 +623,14 @@ Optional query: `?kind=knowledge-gap`
 ```
 
 Improve empty-state also uses `GET /api/agents/:agentId` for `status === "draft"`.
+
+Improve items with `kind: "knowledge-gap"` may include optional `minConfidence` (0–1).
+
+---
+
+## `POST /api/agents/:agentId/conversations/:conversationId/knowledge-gap/resolve`
+
+Marks a flagged knowledge-gap conversation as resolved (after KB updates). Returns `204 No Content`.
 
 ---
 

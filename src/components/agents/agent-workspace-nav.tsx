@@ -28,9 +28,15 @@ function sectionContainsPath(group: AgentNavGroup, pathname: string) {
   );
 }
 
+function defaultOpenSections(): Record<string, boolean> {
+  return Object.fromEntries(
+    AGENT_NAV.filter((group) => group.children).map((group) => [group.id, true])
+  );
+}
+
 export function AgentWorkspaceNav({ agentId }: { agentId: string }) {
   const pathname = usePathname();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [openSections, setOpenSections] = useState(defaultOpenSections);
 
   useEffect(() => {
     const next: Record<string, boolean> = {};
@@ -76,8 +82,7 @@ export function AgentWorkspaceNav({ agentId }: { agentId: string }) {
             );
           }
 
-          const open =
-            openSections[group.id] ?? sectionContainsPath(group, pathname);
+          const open = openSections[group.id] ?? true;
 
           return (
             <li key={group.id}>

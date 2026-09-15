@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex min-h-0 w-full flex-1 overflow-hidden">
           <AppSidebar />
           <SidebarInset className="relative overflow-y-auto">
-            <SidebarTrigger className="absolute left-2 top-2 z-20" />
+            <SidebarTrigger className="mt-2 md:hidden" />
             <div className="flex flex-1 flex-col">{children}</div>
           </SidebarInset>
         </div>

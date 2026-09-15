@@ -190,7 +190,7 @@ export function OrgSwitcherHeader({ collapsed = false }: OrgSwitcherHeaderProps)
       <button
         type="button"
         aria-label="Switch organization"
-        className="flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-sidebar-accent data-popup-open:bg-sidebar-accent"
+        className="flex w-full min-w-0 items-center gap-2 rounded-md border border-sidebar-border px-2 py-1.5 text-left transition-colors hover:bg-sidebar-accent data-popup-open:bg-sidebar-accent"
       >
         <OrgAvatar
           name={organization?.name}

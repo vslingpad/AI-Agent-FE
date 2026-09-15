@@ -43,7 +43,7 @@ export function DashboardHeader({
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div className="space-y-1 pl-4">
+      <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           {getGreeting()}, {firstName} 👋
         </h1>

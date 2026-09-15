@@ -26,6 +26,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { SidebarBillingUsageCard } from "@/components/billing/sidebar-billing-usage-card";
 import { OrgSwitcherHeader } from "@/components/org-switcher-header";
@@ -82,15 +83,22 @@ export function AppSidebar() {
       className="top-(--notification-banner-height)! h-[calc(100svh-var(--notification-banner-height))]!"
     >
       <SidebarHeader className="p-2">
-        <div className="group-data-[collapsible=icon]:hidden">
+        <div className="flex items-center gap-1 py-1 pl-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+          <Link
+            href="/"
+            className="min-w-0 flex-1 truncate text-xl font-semibold tracking-tight text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+          >
+            Nelto
+          </Link>
+          <SidebarTrigger className="shrink-0" />
+        </div>
+        <div className="mt-1 group-data-[collapsible=icon]:hidden">
           <OrgSwitcherHeader />
         </div>
         <div className="hidden group-data-[collapsible=icon]:flex justify-center">
           <OrgSwitcherHeader collapsed />
         </div>
       </SidebarHeader>
-
-      <SidebarSeparator />
 
       <SidebarContent>
         <SidebarGroup>

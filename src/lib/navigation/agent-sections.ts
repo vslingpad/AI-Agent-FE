@@ -53,16 +53,16 @@ export const AGENT_NAV: AgentNavGroup[] = [
         label: "Knowledge Gap",
         segment: "improve/knowledge-gap",
       },
-      {
-        id: "knowledge-conflict",
-        label: "Knowledge Conflict",
-        segment: "improve/knowledge-conflict",
-      },
-      {
-        id: "duplicate-content",
-        label: "Duplicate Content",
-        segment: "improve/duplicate-content",
-      },
+      // {
+      //   id: "knowledge-conflict",
+      //   label: "Knowledge Conflict",
+      //   segment: "improve/knowledge-conflict",
+      // },
+      // {
+      //   id: "duplicate-content",
+      //   label: "Duplicate Content",
+      //   segment: "improve/duplicate-content",
+      // },
     ],
   },
   {

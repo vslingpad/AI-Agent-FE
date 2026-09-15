@@ -1,8 +1,8 @@
-import { AgentImprovePage } from "@/components/agents/improve/improve-page";
+import { AgentKnowledgeGapPage } from "@/components/agents/improve/knowledge-gap-page";
 
 export default async function Page({
   params,
 }: PageProps<"/agents/[agentId]/improve/knowledge-gap">) {
   const { agentId } = await params;
-  return <AgentImprovePage agentId={agentId} kind="knowledge-gap" />;
+  return <AgentKnowledgeGapPage agentId={agentId} />;
 }

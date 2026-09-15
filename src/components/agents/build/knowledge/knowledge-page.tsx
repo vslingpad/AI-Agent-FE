@@ -439,9 +439,14 @@ function KnowledgeOptionCard({
   onToggle: (sourceId: string, enabled: boolean) => void;
   onComingSoon: (label: string) => void;
 }) {
-  const sourceId = tileSourceId(tile);
-  const source = sourceId ? sources.find((item) => item.id === sourceId) : null;
   const vendor = tile.kind === "group" ? primaryVendor(tile) : null;
+  const sourceId = tileSourceId(tile);
+  const source = sources.find((item) => {
+    if (tile.kind === "group" && tile.optionKind && vendor) {
+      return item.kind === tile.optionKind && item.vendorSlug === vendor.vendorSlug;
+    }
+    return sourceId ? item.id === sourceId : false;
+  }) ?? null;
   const connected = source?.state === "connected";
   const canToggle = tile.interaction === "toggle" && tile.available && connected && source;
   const showConnect = tile.interaction === "toggle" && tile.available && !connected && vendor;

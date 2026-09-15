@@ -48,6 +48,7 @@ import {
   type CreateAgentInput,
   type HelpDeskBinding,
   type ImproveKind,
+  type ImproveQuery,
   type UpdateAgentActionsInput,
   type UpdateAgentCoreInput,
   type UpdateAgentDeployChannelInput,
@@ -328,13 +329,26 @@ export async function exportAgentConversations(
 
 export async function getAgentImprove(
   agentId: string,
-  kind?: ImproveKind
+  query: ImproveQuery
 ): Promise<AgentImproveList> {
-  const json = await apiGet<unknown>(
-    `/api/agents/${agentId}/improve`,
-    kind ? { kind } : undefined
-  );
+  const json = await apiGet<unknown>(`/api/agents/${agentId}/improve`, {
+    kind: query.kind,
+    status: query.status,
+    page: query.page === undefined ? undefined : String(query.page),
+    pageSize:
+      query.pageSize === undefined ? undefined : String(query.pageSize),
+  });
   return AgentImproveListSchema.parse(json);
+}
+
+export async function resolveAgentKnowledgeGap(
+  agentId: string,
+  conversationId: string
+): Promise<void> {
+  await apiPost(
+    `/api/agents/${agentId}/conversations/${encodeURIComponent(conversationId)}/knowledge-gap/resolve`,
+    {}
+  );
 }
 
 export async function getAgentTestCases(agentId: string) {

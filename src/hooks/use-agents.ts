@@ -27,6 +27,7 @@ import {
   getAgentDeployChannels,
   getAgentHelpDesk,
   getAgentImprove,
+  resolveAgentKnowledgeGap,
   getAgentKnowledge,
   getPlaygroundSession,
   sendPlaygroundMessage,
@@ -50,7 +51,7 @@ import type {
   AgentProceduresList,
   ConversationQuery,
   CreateAgentInput,
-  ImproveKind,
+  ImproveQuery,
   UpdateAgentActionsInput,
   UpdateAgentCoreInput,
   UpdateAgentDeployChannelInput,
@@ -154,13 +155,21 @@ export function useAgentDeployChannels(agentId: string) {
   );
 }
 
-export function useAgentConversations(agentId: string, params?: ConversationQuery) {
+export function useAgentConversations(
+  agentId: string,
+  params?: ConversationQuery,
+  options?: { enabled?: boolean }
+) {
   const { organization, isLoaded } = useOrganization();
 
   return useQuery({
     queryKey: [...agentSectionKey(organization?.id, agentId, "conversations"), params],
     queryFn: () => getAgentConversations(agentId, params),
-    enabled: isLoaded && Boolean(organization?.id) && Boolean(agentId),
+    enabled:
+      (options?.enabled ?? true) &&
+      isLoaded &&
+      Boolean(organization?.id) &&
+      Boolean(agentId),
   });
 }
 
@@ -170,13 +179,31 @@ export function useAgentConversationLocations(agentId: string) {
   );
 }
 
-export function useAgentImprove(agentId: string, kind: ImproveKind) {
+export function useAgentImprove(agentId: string, query: ImproveQuery) {
   const { organization, isLoaded } = useOrganization();
 
   return useQuery({
-    queryKey: [...agentSectionKey(organization?.id, agentId, "improve"), kind],
-    queryFn: () => getAgentImprove(agentId, kind),
+    queryKey: [...agentSectionKey(organization?.id, agentId, "improve"), query],
+    queryFn: () => getAgentImprove(agentId, query),
     enabled: isLoaded && Boolean(organization?.id) && Boolean(agentId),
+  });
+}
+
+export function useResolveKnowledgeGap(agentId: string) {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: (conversationId: string) =>
+      resolveAgentKnowledgeGap(agentId, conversationId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: agentSectionKey(organization?.id, agentId, "improve"),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: agentSectionKey(organization?.id, agentId, "conversations"),
+      });
+    },
   });
 }
 

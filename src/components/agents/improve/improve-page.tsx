@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
 import { AgentErrorState, AgentImproveSkeleton } from "@/components/agents/agent-states";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { useAgent, useAgentImprove } from "@/hooks/use-agents";
 import { formatLastSyncAttempt } from "@/lib/integrations/connector-paths";
 import type { ImproveKind, ImproveStatus } from "@/lib/schemas/agents";
@@ -39,6 +41,8 @@ const COPY: Record<
   },
 };
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
+
 const STATUS_VARIANT: Record<ImproveStatus, "warning" | "muted" | "success"> = {
   open: "warning",
   reviewing: "muted",
@@ -52,6 +56,9 @@ export function AgentImprovePage({
   agentId: string;
   kind: ImproveKind;
 }) {
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] =
+    useState<(typeof PAGE_SIZE_OPTIONS)[number]>(20);
   const {
     data: agent,
     isLoading: agentLoading,
@@ -63,7 +70,7 @@ export function AgentImprovePage({
     isLoading: improveLoading,
     isError: improveError,
     refetch: refetchImprove,
-  } = useAgentImprove(agentId, kind);
+  } = useAgentImprove(agentId, { kind, page, pageSize });
   const copy = COPY[kind];
 
   if (agentLoading || improveLoading) {
@@ -80,10 +87,12 @@ export function AgentImprovePage({
   }
 
   const items = improve.items;
+  const { pagination } = improve;
+  const pageStart = (pagination.page - 1) * pagination.pageSize;
 
   return (
     <AgentPageFrame title={copy.title} description={copy.description}>
-      {items.length === 0 ? (
+      {pagination.totalItems === 0 ? (
         <div className="rounded-xl border border-dashed border-border px-6 py-16 text-center">
           <p className="text-sm font-medium">Nothing to review</p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -116,6 +125,21 @@ export function AgentImprovePage({
               </CardContent>
             </Card>
           ))}
+          {pagination.totalItems > 0 ? (
+            <TablePagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.totalItems}
+              pageStart={pageStart}
+              pageSize={pagination.pageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageChange={setPage}
+              onPageSizeChange={(nextPageSize) => {
+                setPageSize(nextPageSize as (typeof PAGE_SIZE_OPTIONS)[number]);
+                setPage(1);
+              }}
+            />
+          ) : null}
         </div>
       )}
     </AgentPageFrame>

@@ -11,7 +11,7 @@ import type {
 } from "@/lib/schemas/agents";
 import { CONVERSATION_LOCATION_NONE } from "@/lib/conversations/conversation-utils";
 import { buildDeployChannels, countEnabledDeployChannels } from "@/lib/deploy/deploy-channels";
-import { nativeSourceId } from "@/lib/knowledge/catalog";
+import { connectorSourceId, nativeSourceId } from "@/lib/knowledge/catalog";
 import { templateSubActions } from "@/lib/actions/agent-action-catalog";
 
 const DEFAULT_ORG_ID = "org_demo";
@@ -242,11 +242,12 @@ function knowledgeSources(options: {
       resources: qna,
     },
     {
-      id: "src_zendesk_help_center",
+      id: connectorSourceId("help_center", "zendesk", "conn_zd_us"),
       slug: "zendesk-help-center",
       name: "Zendesk Help Center",
       kind: "help_center",
       vendorSlug: "zendesk",
+      connectorId: "conn_zd_us",
       state: "connected",
       enabled: options.zendeskHelpCenter,
       instanceName: "US Support",
@@ -258,11 +259,12 @@ function knowledgeSources(options: {
       resources: articles,
     },
     {
-      id: "src_zendesk_tickets",
+      id: connectorSourceId("tickets", "zendesk", "conn_zd_us"),
       slug: "zendesk-tickets",
       name: "Zendesk Tickets",
       kind: "tickets",
       vendorSlug: "zendesk",
+      connectorId: "conn_zd_us",
       state: "connected",
       enabled: options.zendeskTickets,
       instanceName: "US Support",
@@ -1574,7 +1576,12 @@ export function exportAgentConversations(
 export function getAgentImprove(
   orgId: string,
   agentId: string,
-  kind?: ImproveItem["kind"]
+  options?: {
+    kind?: ImproveItem["kind"];
+    status?: "open" | "resolved";
+    page?: number;
+    pageSize?: number;
+  }
 ) {
   const agent = findAgent(orgId, agentId);
 
@@ -1582,11 +1589,32 @@ export function getAgentImprove(
     return null;
   }
 
-  const items = kind
-    ? agent.improve.filter((item) => item.kind === kind)
+  let items = options?.kind
+    ? agent.improve.filter((item) => item.kind === options.kind)
     : agent.improve;
 
-  return { items: structuredClone(items) };
+  if (options?.status === "open") {
+    items = items.filter((item) => item.status !== "resolved");
+  } else if (options?.status === "resolved") {
+    items = items.filter((item) => item.status === "resolved");
+  }
+
+  const pageSize = options?.pageSize ?? 20;
+  const page = options?.page ?? 1;
+  const totalItems = items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const start = (safePage - 1) * pageSize;
+
+  return {
+    items: structuredClone(items.slice(start, start + pageSize)),
+    pagination: {
+      page: safePage,
+      pageSize,
+      totalItems,
+      totalPages,
+    },
+  };
 }
 
 export function getAgentTestCases(orgId: string, agentId: string) {

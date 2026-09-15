@@ -598,11 +598,14 @@ Same filter query params as the list endpoint (`customer`, `conversationId`, `da
 
 ## `GET /api/agents/:agentId/improve`
 
-Optional query: `?kind=knowledge-gap`
+Query params:
 
-| `kind` values |
-|---------------|
-| `knowledge-gap`, `knowledge-conflict`, `duplicate-content`, `missing-action`, `missing-procedure` |
+| Param | Description |
+|-------|-------------|
+| `kind` | Optional. One of `knowledge-gap`, `knowledge-conflict`, `duplicate-content`, `missing-action`, `missing-procedure`. |
+| `status` | Optional. `open` or `resolved`. For knowledge gaps, `open` means not yet marked resolved; for conflicts, `open` includes `reviewing`. |
+| `page` | Page number (default `1`). |
+| `pageSize` | Page size (default `20`, max `100`). |
 
 ```json
 {
@@ -618,7 +621,13 @@ Optional query: `?kind=knowledge-gap`
       "suggestedAction": "Add a Q&A or Help Center article…",
       "createdAt": "2026-08-31T06:00:00.000Z"
     }
-  ]
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "totalItems": 1,
+    "totalPages": 1
+  }
 }
 ```
 
@@ -785,7 +794,7 @@ Send a customer message and receive an AI reply
 | `useAgentHelpDesk(id)` | `GET/PATCH …/deploy/help-desk` |
 | `useAgentConversations(id, params?)` | `GET …/conversations`, `GET …/conversations/export` |
 | `useAgentConversationLocations(id)` | `GET …/conversations/locations` |
-| `useAgentImprove(id, kind)` | `GET …/improve?kind=` |
+| `useAgentImprove(id, query)` | `GET …/improve?kind=&status=&page=&pageSize=` |
 | `useAgentTestCases(id)` | `GET …/test/cases` |
 | `useAgentTestRuns(id)` | `GET …/test/runs` |
 | `useCreatePlaygroundSession(id)` | `POST …/test/playground` |

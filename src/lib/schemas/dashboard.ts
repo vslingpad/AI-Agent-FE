@@ -156,7 +156,7 @@ export const LowConfidenceConversationSchema = z.object({
   id: z.string(),
   agentId: z.string(),
   agentName: z.string(),
-  customerName: z.string().nullable(),
+  customerName: z.string().nullish(),
   preview: z.string(),
   confidence: z.number(),
   startedAt: z.string(),

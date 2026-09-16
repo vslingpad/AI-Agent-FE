@@ -10,7 +10,6 @@ import {
   DashboardCountriesResponseSchema,
   DashboardDataSchema,
   DashboardQueryParamsSchema,
-  type ChartPeriod,
   type DashboardActivityQuery,
   type DashboardActivityResponse,
   type DashboardAiQualityConversationsQuery,
@@ -20,14 +19,20 @@ import {
   type DashboardCountriesQuery,
   type DashboardCountriesResponse,
   type DashboardData,
+  type DashboardQueryParams,
 } from "@/lib/schemas/dashboard";
 
 function toQueryParams(
   params: Record<string, string | number | undefined>
 ): Record<string, string | undefined> {
   const query: Record<string, string | undefined> = {};
+  const hasCustomRange = Boolean(params.dateFrom || params.dateTo);
 
   for (const [key, value] of Object.entries(params)) {
+    if (hasCustomRange && key === "period") {
+      continue;
+    }
+
     if (value !== undefined && value !== "") {
       query[key] = String(value);
     }
@@ -37,7 +42,7 @@ function toQueryParams(
 }
 
 export async function getDashboard(
-  params: { period?: ChartPeriod; agentId?: string } = {}
+  params: DashboardQueryParams = {}
 ): Promise<DashboardData> {
   const parsedParams = DashboardQueryParamsSchema.parse(params);
   const json = await apiGet<unknown>(
@@ -45,6 +50,8 @@ export async function getDashboard(
     toQueryParams({
       period: parsedParams.period,
       agentId: parsedParams.agentId,
+      dateFrom: parsedParams.dateFrom,
+      dateTo: parsedParams.dateTo,
     })
   );
 

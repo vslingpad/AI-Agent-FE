@@ -20,6 +20,20 @@ export const KpiMetricSchema = z.object({
 
 export const ChartPeriodSchema = z.enum(["7d", "30d", "90d"]);
 
+export const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export const DashboardDateSchema = z.string().refine(
+  (value) => DATE_ONLY_RE.test(value) || !Number.isNaN(Date.parse(value)),
+  { message: "Expected a UTC date or ISO datetime" }
+);
+
+export const DashboardScopeQuerySchema = z.object({
+  period: ChartPeriodSchema.optional(),
+  agentId: z.string().min(1).optional(),
+  dateFrom: DashboardDateSchema.optional(),
+  dateTo: DashboardDateSchema.optional(),
+});
+
 export const TimeSeriesPointSchema = z.object({
   date: z.string(),
   label: z.string(),
@@ -111,8 +125,7 @@ export const DashboardPaginationSchema = z.object({
 export const CountrySortBySchema = z.enum(["country", "tickets", "changePercent"]);
 export const SortDirectionSchema = z.enum(["asc", "desc"]);
 
-export const DashboardCountriesQuerySchema = z.object({
-  period: ChartPeriodSchema.optional(),
+export const DashboardCountriesQuerySchema = DashboardScopeQuerySchema.extend({
   query: z.string().trim().optional(),
   sortBy: CountrySortBySchema.default("tickets"),
   sortDir: SortDirectionSchema.default("desc"),
@@ -132,9 +145,7 @@ export const DashboardCountriesResponseSchema = z.object({
   pagination: DashboardPaginationSchema,
 });
 
-export const DashboardAiQualityQuerySchema = z.object({
-  period: ChartPeriodSchema.optional(),
-});
+export const DashboardAiQualityQuerySchema = DashboardScopeQuerySchema;
 
 export const DashboardAiQualityResponseSchema = z.object({
   comparisonLabel: z.string(),
@@ -153,18 +164,18 @@ export const LowConfidenceConversationSchema = z.object({
   channel: ConversationChannelSchema,
 });
 
-export const DashboardAiQualityConversationsQuerySchema = z.object({
-  period: ChartPeriodSchema.optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(20),
-});
+export const DashboardAiQualityConversationsQuerySchema =
+  DashboardScopeQuerySchema.extend({
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  });
 
 export const DashboardAiQualityConversationsResponseSchema = z.object({
   conversations: z.array(LowConfidenceConversationSchema),
   pagination: DashboardPaginationSchema,
 });
 
-export const DashboardActivityQuerySchema = z.object({
+export const DashboardActivityQuerySchema = DashboardScopeQuerySchema.extend({
   query: z.string().trim().optional(),
   icon: ActivityIconSchema.optional(),
   page: z.coerce.number().int().min(1).default(1),
@@ -240,9 +251,7 @@ export type DashboardActivityResponse = z.infer<
   typeof DashboardActivityResponseSchema
 >;
 
-export const DashboardQueryParamsSchema = z.object({
-  period: ChartPeriodSchema.optional(),
-  agentId: z.string().optional(),
-});
+export const DashboardQueryParamsSchema = DashboardScopeQuerySchema;
 
 export type DashboardQueryParams = z.infer<typeof DashboardQueryParamsSchema>;
+export type DashboardScopeQuery = z.infer<typeof DashboardScopeQuerySchema>;

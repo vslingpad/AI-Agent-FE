@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AgentPerformanceTable } from "@/components/dashboard/agent-performance-table";
 import { AiQualityCard } from "@/components/dashboard/ai-quality-card";
 import { CountryTicketsTable } from "@/components/dashboard/country-tickets-table";
@@ -13,14 +14,28 @@ import { TicketsOverTimeChart } from "@/components/dashboard/tickets-over-time-c
 import { Button } from "@/components/ui/button";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { exportDashboardToCsv } from "@/lib/dashboard/export-dashboard";
-import type { ChartPeriod } from "@/lib/schemas/dashboard";
+import {
+  DEFAULT_DASHBOARD_PERIOD,
+  dashboardHref,
+  isCustomDashboardRange,
+  parseDashboardScope,
+  toDashboardSearchParams,
+} from "@/lib/dashboard/query";
+import type { ChartPeriod, DashboardQueryParams } from "@/lib/schemas/dashboard";
 
 export function DashboardPage() {
-  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>("30d");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = useMemo(() => parseDashboardScope(searchParams), [searchParams]);
   const [isExporting, setIsExporting] = useState(false);
-  const { data, isError, isFetching, refetch } = useDashboard({
-    period: chartPeriod,
-  });
+  const { data, isError, isFetching, refetch } = useDashboard(query);
+
+  const updateQuery = (next: DashboardQueryParams) => {
+    const params = toDashboardSearchParams(next);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  };
 
   const handleExport = () => {
     if (!data) {
@@ -53,10 +68,16 @@ export function DashboardPage() {
     return <DashboardSkeleton />;
   }
 
+  const selectedPeriod = isCustomDashboardRange(query)
+    ? null
+    : (query.period ?? DEFAULT_DASHBOARD_PERIOD);
+
   return (
     <div className="flex flex-1 flex-col gap-6 px-6 pb-8 pt-2">
       <DashboardHeader
         filters={data.filters}
+        query={query}
+        onFiltersChange={updateQuery}
         notificationCount={data.notificationCount}
         onExport={handleExport}
         isExporting={isExporting}
@@ -69,8 +90,15 @@ export function DashboardPage() {
           <TicketsOverTimeChart
             data={data.ticketsOverTime}
             comparisonLabel={data.filters.comparisonLabel}
-            selectedPeriod={chartPeriod}
-            onPeriodChange={setChartPeriod}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={(period: ChartPeriod) =>
+              updateQuery({
+                ...query,
+                period,
+                dateFrom: undefined,
+                dateTo: undefined,
+              })
+            }
             isFetching={isFetching}
             className="h-full"
           />
@@ -78,6 +106,7 @@ export function DashboardPage() {
         <CountryTicketsTable
           rows={data.countryTickets}
           comparisonLabel={data.filters.comparisonLabel}
+          href={dashboardHref("/countries", query)}
         />
       </div>
 
@@ -85,12 +114,18 @@ export function DashboardPage() {
         <div className="xl:col-span-2">
           <AgentPerformanceTable rows={data.agentPerformance} />
         </div>
-        <AiQualityCard data={data.aiQuality} />
+        <AiQualityCard
+          data={data.aiQuality}
+          href={dashboardHref("/ai-quality", query)}
+        />
       </div>
 
       <div className="grid items-stretch gap-4 xl:grid-cols-2">
         <NeedsAttentionList items={data.needsAttention} />
-        <RecentActivityList items={data.recentActivity} />
+        <RecentActivityList
+          items={data.recentActivity}
+          href={dashboardHref("/activity", query)}
+        />
       </div>
     </div>
   );

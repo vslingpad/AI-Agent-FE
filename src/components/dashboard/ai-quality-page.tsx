@@ -6,10 +6,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowRightIcon } from "lucide-react";
 import { TrendIndicator } from "@/components/dashboard/trend-indicator";
 import {
-  DashboardPeriodToggle,
   DashboardSubpageError,
   DashboardSubpageHeader,
 } from "@/components/dashboard/dashboard-subpage-header";
+import {
+  DashboardFilterControls,
+  useDashboardAgentLabel,
+} from "@/components/dashboard/dashboard-filters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,22 +26,25 @@ import { CHANNEL_LABEL } from "@/components/agents/conversations/conversation-la
 import { formatLastSyncAttempt } from "@/lib/integrations/connector-paths";
 import { agentPath } from "@/lib/navigation/agent-sections";
 import {
-  ChartPeriodSchema,
+  applyDashboardScope,
+  dashboardDateButtonLabel,
+  parseDashboardScope,
+} from "@/lib/dashboard/query";
+import {
   DASHBOARD_PAGE_SIZE_OPTIONS,
-  type ChartPeriod,
   type DashboardAiQualityConversationsQuery,
 } from "@/lib/schemas/dashboard";
 import { cn } from "@/lib/utils";
 
 function parseQuery(
   searchParams: URLSearchParams
-): { period: ChartPeriod } & DashboardAiQualityConversationsQuery {
-  const period = ChartPeriodSchema.safeParse(searchParams.get("period") ?? "30d");
+): DashboardAiQualityConversationsQuery {
+  const scope = parseDashboardScope(searchParams);
   const pageParam = Number(searchParams.get("page"));
   const pageSizeParam = Number(searchParams.get("pageSize"));
 
   return {
-    period: period.success ? period.data : "30d",
+    ...scope,
     page: Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1,
     pageSize: DASHBOARD_PAGE_SIZE_OPTIONS.includes(
       pageSizeParam as (typeof DASHBOARD_PAGE_SIZE_OPTIONS)[number]
@@ -48,16 +54,9 @@ function parseQuery(
   };
 }
 
-function toSearchParams(query: {
-  period: ChartPeriod;
-  page: number;
-  pageSize: number;
-}) {
+function toSearchParams(query: DashboardAiQualityConversationsQuery) {
   const params = new URLSearchParams();
-
-  if (query.period !== "30d") {
-    params.set("period", query.period);
-  }
+  applyDashboardScope(params, query);
 
   if (query.page > 1) {
     params.set("page", String(query.page));
@@ -75,8 +74,9 @@ export function AiQualityPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const query = useMemo(() => parseQuery(searchParams), [searchParams]);
-  const qualityQuery = useDashboardAiQuality({ period: query.period });
+  const qualityQuery = useDashboardAiQuality(query);
   const conversationsQuery = useDashboardAiQualityConversations(query);
+  const agentLabel = useDashboardAgentLabel(query.agentId);
 
   const updateQuery = (next: typeof query) => {
     const params = toSearchParams(next);
@@ -111,9 +111,11 @@ export function AiQualityPage() {
         title="AI quality"
         description="Answer confidence, knowledge grounding, and the conversations that need review."
         actions={
-          <DashboardPeriodToggle
-            value={query.period}
-            onChange={(period) => updateQuery({ ...query, period, page: 1 })}
+          <DashboardFilterControls
+            query={query}
+            dateLabel={dashboardDateButtonLabel(query)}
+            agentLabel={agentLabel}
+            onChange={(scope) => updateQuery({ ...query, ...scope, page: 1 })}
           />
         }
       />

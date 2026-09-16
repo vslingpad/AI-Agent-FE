@@ -29,7 +29,7 @@ const chartConfig = {
 type TicketsOverTimeChartProps = {
   data: DashboardData["ticketsOverTime"];
   comparisonLabel: string;
-  selectedPeriod: ChartPeriod;
+  selectedPeriod: ChartPeriod | null;
   onPeriodChange: (period: ChartPeriod) => void;
   isFetching?: boolean;
   className?: string;

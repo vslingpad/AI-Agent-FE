@@ -8,11 +8,13 @@ import type { CountryTicketRow } from "@/lib/schemas/dashboard";
 type CountryTicketsTableProps = {
   rows: CountryTicketRow[];
   comparisonLabel: string;
+  href?: string;
 };
 
 export function CountryTicketsTable({
   rows,
   comparisonLabel,
+  href = "/countries",
 }: CountryTicketsTableProps) {
   return (
     <Card className="flex h-full flex-col">
@@ -50,7 +52,7 @@ export function CountryTicketsTable({
         <Button
           variant="link"
           className="h-auto p-0 text-sm"
-          render={<Link href="/countries" />}
+          render={<Link href={href} />}
         >
           View all countries
           <ArrowRightIcon className="size-4" />

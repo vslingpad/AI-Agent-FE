@@ -7,9 +7,13 @@ import type { RecentActivityItem } from "@/lib/schemas/dashboard";
 
 type RecentActivityListProps = {
   items: RecentActivityItem[];
+  href?: string;
 };
 
-export function RecentActivityList({ items }: RecentActivityListProps) {
+export function RecentActivityList({
+  items,
+  href = "/activity",
+}: RecentActivityListProps) {
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
@@ -40,7 +44,7 @@ export function RecentActivityList({ items }: RecentActivityListProps) {
             variant="ghost"
             size="sm"
             className="gap-1 text-muted-foreground"
-            render={<Link href="/activity" />}
+            render={<Link href={href} />}
           >
             View all activity
             <ArrowRightIcon className="size-4" />

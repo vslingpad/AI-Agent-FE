@@ -7,6 +7,10 @@ import {
   ACTIVITY_ICON_LABELS,
 } from "@/components/dashboard/activity-icons";
 import {
+  DashboardFilterControls,
+  useDashboardAgentLabel,
+} from "@/components/dashboard/dashboard-filters";
+import {
   DashboardSubpageError,
   DashboardSubpageHeader,
 } from "@/components/dashboard/dashboard-subpage-header";
@@ -16,6 +20,11 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useDashboardActivity } from "@/hooks/use-dashboard";
+import {
+  applyDashboardScope,
+  dashboardDateButtonLabel,
+  parseDashboardScope,
+} from "@/lib/dashboard/query";
 import {
   ActivityIconSchema,
   DASHBOARD_PAGE_SIZE_OPTIONS,
@@ -33,11 +42,13 @@ const FILTERS: { value: ActivityIcon | undefined; label: string }[] = [
 ];
 
 function parseQuery(searchParams: URLSearchParams): DashboardActivityQuery {
+  const scope = parseDashboardScope(searchParams);
   const icon = ActivityIconSchema.safeParse(searchParams.get("icon"));
   const pageParam = Number(searchParams.get("page"));
   const pageSizeParam = Number(searchParams.get("pageSize"));
 
   return {
+    ...scope,
     query: searchParams.get("query") ?? undefined,
     icon: icon.success ? icon.data : undefined,
     page: Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1,
@@ -51,6 +62,7 @@ function parseQuery(searchParams: URLSearchParams): DashboardActivityQuery {
 
 function toSearchParams(query: DashboardActivityQuery) {
   const params = new URLSearchParams();
+  applyDashboardScope(params, query);
 
   if (query.query) {
     params.set("query", query.query);
@@ -78,6 +90,7 @@ export function ActivityPage() {
   const query = useMemo(() => parseQuery(searchParams), [searchParams]);
   const [searchValue, setSearchValue] = useState(query.query ?? "");
   const { data, isError, isFetching, refetch } = useDashboardActivity(query);
+  const agentLabel = useDashboardAgentLabel(query.agentId);
 
   const updateQuery = (next: DashboardActivityQuery) => {
     const params = toSearchParams(next);
@@ -105,6 +118,14 @@ export function ActivityPage() {
       <DashboardSubpageHeader
         title="Activity"
         description="Procedures, knowledge suggestions, integrations, and test runs across your agents."
+        actions={
+          <DashboardFilterControls
+            query={query}
+            dateLabel={dashboardDateButtonLabel(query)}
+            agentLabel={agentLabel}
+            onChange={(scope) => updateQuery({ ...query, ...scope, page: 1 })}
+          />
+        }
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

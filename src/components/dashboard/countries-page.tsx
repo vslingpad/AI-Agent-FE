@@ -4,10 +4,13 @@ import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import {
-  DashboardPeriodToggle,
   DashboardSubpageError,
   DashboardSubpageHeader,
 } from "@/components/dashboard/dashboard-subpage-header";
+import {
+  DashboardFilterControls,
+  useDashboardAgentLabel,
+} from "@/components/dashboard/dashboard-filters";
 import { TrendIndicator } from "@/components/dashboard/trend-indicator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,11 +18,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { useDashboardCountries } from "@/hooks/use-dashboard";
 import {
-  ChartPeriodSchema,
+  applyDashboardScope,
+  dashboardDateButtonLabel,
+  parseDashboardScope,
+} from "@/lib/dashboard/query";
+import {
   CountrySortBySchema,
   DASHBOARD_PAGE_SIZE_OPTIONS,
   SortDirectionSchema,
-  type ChartPeriod,
   type CountrySortBy,
   type DashboardCountriesQuery,
   type SortDirection,
@@ -27,7 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 
 function parseQuery(searchParams: URLSearchParams): DashboardCountriesQuery {
-  const period = ChartPeriodSchema.safeParse(searchParams.get("period") ?? "30d");
+  const scope = parseDashboardScope(searchParams);
   const sortBy = CountrySortBySchema.safeParse(
     searchParams.get("sortBy") ?? "tickets"
   );
@@ -38,7 +44,7 @@ function parseQuery(searchParams: URLSearchParams): DashboardCountriesQuery {
   const pageSizeParam = Number(searchParams.get("pageSize"));
 
   return {
-    period: period.success ? period.data : "30d",
+    ...scope,
     query: searchParams.get("query") ?? undefined,
     sortBy: sortBy.success ? sortBy.data : "tickets",
     sortDir: sortDir.success ? sortDir.data : "desc",
@@ -53,10 +59,7 @@ function parseQuery(searchParams: URLSearchParams): DashboardCountriesQuery {
 
 function toSearchParams(query: DashboardCountriesQuery) {
   const params = new URLSearchParams();
-
-  if (query.period && query.period !== "30d") {
-    params.set("period", query.period);
-  }
+  applyDashboardScope(params, query);
 
   if (query.query) {
     params.set("query", query.query);
@@ -126,6 +129,7 @@ export function CountriesPage() {
   const query = useMemo(() => parseQuery(searchParams), [searchParams]);
   const [searchValue, setSearchValue] = useState(query.query ?? "");
   const { data, isError, isFetching, refetch } = useDashboardCountries(query);
+  const agentLabel = useDashboardAgentLabel(query.agentId);
 
   const updateQuery = (next: DashboardCountriesQuery) => {
     const params = toSearchParams(next);
@@ -155,11 +159,11 @@ export function CountriesPage() {
         title="AI-handled tickets by country"
         description="Every country with AI-handled tickets in the selected period, including share of volume and change versus the comparison window."
         actions={
-          <DashboardPeriodToggle
-            value={query.period ?? "30d"}
-            onChange={(period: ChartPeriod) =>
-              updateQuery({ ...query, period, page: 1 })
-            }
+          <DashboardFilterControls
+            query={query}
+            dateLabel={dashboardDateButtonLabel(query)}
+            agentLabel={agentLabel}
+            onChange={(scope) => updateQuery({ ...query, ...scope, page: 1 })}
           />
         }
       />

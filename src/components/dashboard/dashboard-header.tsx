@@ -3,13 +3,12 @@
 import { useUser } from "@clerk/nextjs";
 import {
   BellIcon,
-  CalendarIcon,
-  ChevronDownIcon,
   DownloadIcon,
   HelpCircleIcon,
 } from "lucide-react";
+import { DashboardFilterControls } from "@/components/dashboard/dashboard-filters";
 import { Button } from "@/components/ui/button";
-import type { DashboardData } from "@/lib/schemas/dashboard";
+import type { DashboardData, DashboardQueryParams } from "@/lib/schemas/dashboard";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -27,6 +26,8 @@ function getGreeting() {
 
 type DashboardHeaderProps = {
   filters: DashboardData["filters"];
+  query: DashboardQueryParams;
+  onFiltersChange: (query: DashboardQueryParams) => void;
   notificationCount: number;
   onExport: () => void;
   isExporting?: boolean;
@@ -34,6 +35,8 @@ type DashboardHeaderProps = {
 
 export function DashboardHeader({
   filters,
+  query,
+  onFiltersChange,
   notificationCount,
   onExport,
   isExporting = false,
@@ -53,18 +56,12 @@ export function DashboardHeader({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" className="gap-2">
-          <CalendarIcon className="size-4" />
-          {filters.dateRangeLabel}
-          <ChevronDownIcon className="size-4 text-muted-foreground" />
-        </Button>
-
-        <Button variant="outline" size="sm" className="gap-2">
-          AI Agent
-          <span className="text-muted-foreground">·</span>
-          {filters.selectedAgentLabel}
-          <ChevronDownIcon className="size-4 text-muted-foreground" />
-        </Button>
+        <DashboardFilterControls
+          query={query}
+          dateLabel={filters.dateRangeLabel}
+          agentLabel={filters.selectedAgentLabel}
+          onChange={onFiltersChange}
+        />
 
         <Button
           variant="outline"

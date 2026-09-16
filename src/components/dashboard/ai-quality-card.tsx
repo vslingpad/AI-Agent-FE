@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 
 type AiQualityCardProps = {
   data: AiQuality;
+  href?: string;
 };
 
-export function AiQualityCard({ data }: AiQualityCardProps) {
+export function AiQualityCard({ data, href = "/ai-quality" }: AiQualityCardProps) {
   const { confidenceDistribution: dist } = data;
 
   return (
@@ -82,7 +83,7 @@ export function AiQualityCard({ data }: AiQualityCardProps) {
         <Button
           variant="link"
           className="h-auto p-0 text-sm"
-          render={<Link href="/ai-quality" />}
+          render={<Link href={href} />}
         >
           {data.lowConfidenceConversationCount} low-confidence conversations
           <ArrowRightIcon className="size-4" />

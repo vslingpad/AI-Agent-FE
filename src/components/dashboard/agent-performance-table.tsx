@@ -6,7 +6,7 @@ import {
   WrenchIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { agentPath } from "@/lib/navigation/agent-sections";
 import type { AgentPerformanceRow } from "@/lib/schemas/dashboard";
 import { cn } from "@/lib/utils";
@@ -61,17 +61,19 @@ type AgentPerformanceTableProps = {
 export function AgentPerformanceTable({ rows }: AgentPerformanceTableProps) {
   return (
     <Card className="flex h-full flex-col">
-      <CardHeader className="flex-row items-center justify-between space-y-0">
+      <CardHeader className="items-center">
         <CardTitle>AI agent performance</CardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-1 text-muted-foreground"
-          render={<Link href="/agents" />}
-        >
-          View all agents
-          <ArrowRightIcon className="size-4" />
-        </Button>
+        <CardAction className="self-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1 text-muted-foreground"
+            render={<Link href="/agents" />}
+          >
+            View all agents
+            <ArrowRightIcon className="size-4" />
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent className="flex-1">
         <div className="overflow-x-auto">

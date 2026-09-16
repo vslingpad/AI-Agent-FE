@@ -3,7 +3,7 @@
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { TrendIndicator } from "@/components/dashboard/trend-indicator";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
@@ -51,20 +51,22 @@ export function TicketsOverTimeChart({
         className
       )}
     >
-      <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
+      <CardHeader className="items-center">
         <CardTitle>AI-handled tickets over time</CardTitle>
-        <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
-          {periods.map((period) => (
-            <Button
-              key={period.value}
-              variant={selectedPeriod === period.value ? "secondary" : "ghost"}
-              size="xs"
-              onClick={() => onPeriodChange(period.value)}
-            >
-              {period.label}
-            </Button>
-          ))}
-        </div>
+        <CardAction className="self-center">
+          <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
+            {periods.map((period) => (
+              <Button
+                key={period.value}
+                variant={selectedPeriod === period.value ? "secondary" : "ghost"}
+                size="xs"
+                onClick={() => onPeriodChange(period.value)}
+              >
+                {period.label}
+              </Button>
+            ))}
+          </div>
+        </CardAction>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col space-y-4">

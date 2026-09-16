@@ -1,11 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import {
-  BellIcon,
-  DownloadIcon,
-  HelpCircleIcon,
-} from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import { DashboardFilterControls } from "@/components/dashboard/dashboard-filters";
 import { Button } from "@/components/ui/button";
 import type { DashboardData, DashboardQueryParams } from "@/lib/schemas/dashboard";
@@ -28,7 +24,6 @@ type DashboardHeaderProps = {
   filters: DashboardData["filters"];
   query: DashboardQueryParams;
   onFiltersChange: (query: DashboardQueryParams) => void;
-  notificationCount: number;
   onExport: () => void;
   isExporting?: boolean;
 };
@@ -37,7 +32,6 @@ export function DashboardHeader({
   filters,
   query,
   onFiltersChange,
-  notificationCount,
   onExport,
   isExporting = false,
 }: DashboardHeaderProps) {
@@ -45,7 +39,7 @@ export function DashboardHeader({
   const firstName = user?.firstName ?? "there";
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div className="pt-2 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           {getGreeting()}, {firstName} 👋
@@ -62,24 +56,6 @@ export function DashboardHeader({
           agentLabel={filters.selectedAgentLabel}
           onChange={onFiltersChange}
         />
-
-        <Button
-          variant="outline"
-          size="icon-sm"
-          className="relative"
-          aria-label="Notifications"
-        >
-          <BellIcon />
-          {notificationCount > 0 ? (
-            <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
-              {notificationCount}
-            </span>
-          ) : null}
-        </Button>
-
-        <Button variant="outline" size="icon-sm" aria-label="Help">
-          <HelpCircleIcon />
-        </Button>
 
         <Button
           variant="outline"

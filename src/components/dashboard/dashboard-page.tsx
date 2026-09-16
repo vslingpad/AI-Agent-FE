@@ -78,7 +78,6 @@ export function DashboardPage() {
         filters={data.filters}
         query={query}
         onFiltersChange={updateQuery}
-        notificationCount={data.notificationCount}
         onExport={handleExport}
         isExporting={isExporting}
       />

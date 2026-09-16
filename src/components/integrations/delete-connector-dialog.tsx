@@ -50,7 +50,7 @@ export function DeleteConnectorDialog({
           <DialogDescription>
             This will revoke access and disconnect{" "}
             <span className="font-medium text-foreground">
-              {connector?.displayName}
+              {connector?.display_name}
             </span>
             . Agents using this connector will stop receiving channel messages,
             knowledge, or actions from it.

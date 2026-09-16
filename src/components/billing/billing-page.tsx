@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Show } from "@clerk/nextjs";
 import { ExternalLinkIcon, Loader2Icon } from "lucide-react";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
@@ -15,7 +14,6 @@ import {
   useBillingPortalSession,
   useUpdateBillingSettings,
 } from "@/hooks/use-billing";
-import { ApiError } from "@/lib/api/client";
 import { formatCurrency, formatLimitValue } from "@/lib/billing/plans";
 import type { BillingOverview } from "@/lib/schemas/billing";
 import { SUPPORT_EMAIL } from "@/lib/constants/support";
@@ -48,7 +46,6 @@ function BillingPageContent() {
   const { data, isLoading, isError, refetch } = useBillingOverview();
   const updateSettings = useUpdateBillingSettings();
   const portalSession = useBillingPortalSession();
-  const [actionError, setActionError] = useState<string | null>(null);
 
   if (isLoading) {
     return <BillingPageSkeleton />;
@@ -70,24 +67,16 @@ function BillingPageContent() {
     );
   }
 
-  const handleOverageToggle = async (allowOverage: boolean) => {
-    setActionError(null);
-
-    try {
-      await updateSettings.mutateAsync({ allowOverage });
-    } catch (error) {
-      setActionError(getErrorMessage(error));
-    }
+  const handleOverageToggle = (allowOverage: boolean) => {
+    void updateSettings.mutateAsync({ allowOverage });
   };
 
   const handleManageBilling = async () => {
-    setActionError(null);
-
     try {
       const session = await portalSession.mutateAsync();
       window.open(session.url, "_blank", "noopener,noreferrer");
-    } catch (error) {
-      setActionError(getErrorMessage(error));
+    } catch {
+      // Mutation toast is shown globally.
     }
   };
 
@@ -110,12 +99,6 @@ function BillingPageContent() {
         </Button>
       }
     >
-      {actionError ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {actionError}
-        </div>
-      ) : null}
-
       <div className="flex max-w-5xl flex-col gap-6">
         <CurrentPlanSection data={data} />
         <UsageSection
@@ -419,16 +402,4 @@ function formatSubscriptionStatus(status: BillingOverview["subscription"]["statu
     default:
       return "Free";
   }
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return "Something went wrong";
 }

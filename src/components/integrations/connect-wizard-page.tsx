@@ -61,8 +61,8 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
   const completeOAuth = useCompleteOAuthStep(connectorId ?? "");
   const connectStatus = useConnectStatus(
     connectorId ?? "",
-    session?.connectSessionId ?? null,
-    step === "authorize" && Boolean(connectorId && session?.connectSessionId)
+    session?.connect_session_id ?? null,
+    step === "authorize" && Boolean(connectorId && session?.connect_session_id)
   );
 
   useEffect(() => {
@@ -136,8 +136,8 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
     if (connectorId && session) {
       if (session.status === "active") {
         goToConnector(connectorId);
-      } else if (session.authorizeUrl) {
-        startVendorAuthorization(session.authorizeUrl);
+      } else if (session.authorize_url) {
+        startVendorAuthorization(session.authorize_url);
       } else {
         setStep("authorize");
       }
@@ -145,9 +145,9 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
     }
 
     const result = await createConnector.mutateAsync({
-      integrationSlug: slug,
-      displayName: defaultDisplayName,
-      externalInstanceId: configValues.subdomain,
+      integration_slug: slug,
+      display_name: defaultDisplayName,
+      external_instance_id: configValues.subdomain,
       capabilities: [...getDefaultCapabilities()],
       config: configValues,
     });
@@ -156,13 +156,13 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
     setConnectorId(result.connector.id);
 
     if (result.session.status === "active") {
-      goToConnector(result.connector.id, result.connector.integrationSlug);
+      goToConnector(result.connector.id, result.connector.integration_slug);
       return;
     }
 
-    if (result.session.authorizeUrl) {
+    if (result.session.authorize_url) {
       setStep("authorize");
-      startVendorAuthorization(result.session.authorizeUrl);
+      startVendorAuthorization(result.session.authorize_url);
       return;
     }
 
@@ -179,18 +179,18 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
       return;
     }
 
-    if (session.authorizeUrl) {
-      startVendorAuthorization(session.authorizeUrl);
+    if (session.authorize_url) {
+      startVendorAuthorization(session.authorize_url);
       return;
     }
 
-    if (!session.wizard.currentStep) {
+    if (!session.wizard.current_step) {
       return;
     }
 
     const result = await completeOAuth.mutateAsync({
-      connectSessionId: session.connectSessionId,
-      stepId: session.wizard.currentStep,
+      connect_session_id: session.connect_session_id,
+      step_id: session.wizard.current_step,
     });
 
     setSession(result.session);
@@ -199,17 +199,17 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
       return;
     }
 
-    goToConnector(result.connector.id, result.connector.integrationSlug);
+    goToConnector(result.connector.id, result.connector.integration_slug);
   };
 
   const detailsValid =
-    (displayName.trim() || catalogItem.configFields.some((f) => f.key === "subdomain" && configValues.subdomain?.trim()) || catalogItem.configFields.length === 0) &&
-    catalogItem.configFields.every(
+    (displayName.trim() || catalogItem.config_fields.some((f) => f.key === "subdomain" && configValues.subdomain?.trim()) || catalogItem.config_fields.length === 0) &&
+    catalogItem.config_fields.every(
       (field) => !field.required || configValues[field.key]?.trim()
     );
 
   const currentOAuthStep = session?.wizard.steps.find(
-    (item) => item.id === session.wizard.currentStep
+    (item) => item.id === session.wizard.current_step
   );
 
   return (
@@ -259,7 +259,7 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
               </p>
             </div>
 
-            {catalogItem.configFields.map((field) => (
+            {catalogItem.config_fields.map((field) => (
               <div key={field.key} className="space-y-2">
                 <Label htmlFor={field.key}>{field.label}</Label>
                 {field.type === "select" ? (
@@ -354,7 +354,7 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
               ))}
             </div>
 
-            {currentOAuthStep && session.authorizeUrl && (
+            {currentOAuthStep && session.authorize_url && (
               <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
                 <p className="text-sm font-medium">
                   {currentOAuthStep.label}
@@ -371,12 +371,12 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
                 Back
               </Button>
               <div className="flex gap-2">
-                {session.authorizeUrl && session.status !== "active" && (
+                {session.authorize_url && session.status !== "active" && (
                   <Button
                     variant="outline"
                     render={
                       <a
-                        href={session.authorizeUrl}
+                        href={session.authorize_url}
                         target="_blank"
                         rel="noreferrer"
                       />
@@ -390,7 +390,7 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
                   onClick={handleAuthorize}
                   disabled={
                     completeOAuth.isPending ||
-                    (session.status !== "active" && !session.wizard.currentStep)
+                    (session.status !== "active" && !session.wizard.current_step)
                   }
                 >
                   {completeOAuth.isPending

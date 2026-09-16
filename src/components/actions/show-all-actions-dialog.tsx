@@ -30,7 +30,7 @@ function matchesActionSearch(item: IntegrationCatalogItem, query: string) {
 
   const normalized = query.trim().toLowerCase();
 
-  return [item.name, item.description, item.slug, ...item.actionHighlights]
+  return [item.name, item.description, item.slug, ...item.action_highlights]
     .filter(Boolean)
     .some((value) => value.toLowerCase().includes(normalized));
 }

@@ -31,7 +31,7 @@ export function RenameConnectorDialog({
 
   useEffect(() => {
     if (connector) {
-      setDisplayName(connector.displayName);
+      setDisplayName(connector.display_name);
     }
   }, [connector]);
 
@@ -40,7 +40,7 @@ export function RenameConnectorDialog({
       return;
     }
 
-    await updateConnector.mutateAsync({ displayName: displayName.trim() });
+    await updateConnector.mutateAsync({ display_name: displayName.trim() });
     onOpenChange(false);
   };
 

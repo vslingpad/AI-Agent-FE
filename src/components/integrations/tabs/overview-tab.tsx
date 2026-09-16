@@ -18,8 +18,8 @@ import type {
 type OverviewTabProps = {
   connector: ConnectorDetail;
   catalogItem: IntegrationCatalogItem | undefined;
-  enabledCapabilities: ConnectorCapability[];
-  enabledKnowledgeSubCapabilities: KnowledgeSubCapability[];
+  enabled_capabilities: ConnectorCapability[];
+  enabled_knowledge_sub_capabilities: KnowledgeSubCapability[];
   onToggleCapability: (capability: ConnectorCapability) => void;
   onToggleKnowledgeSubCapability: (capability: KnowledgeSubCapability) => void;
 };
@@ -27,8 +27,8 @@ type OverviewTabProps = {
 export function OverviewTab({
   connector,
   catalogItem,
-  enabledCapabilities,
-  enabledKnowledgeSubCapabilities,
+  enabled_capabilities,
+  enabled_knowledge_sub_capabilities,
   onToggleCapability,
   onToggleKnowledgeSubCapability,
 }: OverviewTabProps) {
@@ -47,10 +47,10 @@ export function OverviewTab({
         </CardHeader>
         <CardContent className="gap-0 space-y-4">
           {catalogItem?.capabilities.map((capability) => {
-            const enabled = enabledCapabilities.includes(capability);
+            const enabled = enabled_capabilities.includes(capability);
             const knowledgeSubs =
               capability === "knowledge"
-                ? catalogItem.knowledgeSubCapabilities ?? []
+                ? catalogItem.knowledge_sub_capabilities ?? []
                 : [];
 
             return (
@@ -72,7 +72,7 @@ export function OverviewTab({
                     {knowledgeSubs.map((subCapability) => {
                       const subEnabled =
                         enabled &&
-                        enabledKnowledgeSubCapabilities.includes(subCapability);
+                        enabled_knowledge_sub_capabilities.includes(subCapability);
 
                       return (
                         <div
@@ -109,31 +109,31 @@ export function OverviewTab({
           <CardTitle>Connection details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <DetailRow label="Display name" value={connector.displayName} />
+          <DetailRow label="Display name" value={connector.display_name} />
           <DetailRow label="Account" value={connector.identifier} />
           <DetailRow
             label="Connected by"
-            value={`${connector.connectedBy.name} on ${formatConnectedDate(connector.connectedBy.connectedAt)}`}
+            value={`${connector.connected_by.name} on ${formatConnectedDate(connector.connected_by.connected_at)}`}
           />
           <DetailRow
             label="Status"
             value={connector.status.replaceAll("_", " ")}
           />
-          {connector.externalInstanceId && (
+          {connector.external_instance_id && (
             <DetailRow
               label="Instance ID"
-              value={connector.externalInstanceId}
+              value={connector.external_instance_id}
               mono
             />
           )}
-          {(connector.integrationSlug === "stripe" ||
-            connector.integrationSlug === "stripe_subscriptions") && (
+          {(connector.integration_slug === "stripe" ||
+            connector.integration_slug === "stripe_subscriptions") && (
             <DetailRow
               label="Environment"
               value={String(connector.config.mode ?? "live")}
             />
           )}
-          {connector.integrationSlug === "zendesk" && (
+          {connector.integration_slug === "zendesk" && (
             <>
               <DetailRow
                 label="Sunshine auth"
@@ -156,7 +156,7 @@ export function OverviewTab({
         </CardContent>
       </Card>
 
-      {connector.integrationSlug === "zendesk" &&
+      {connector.integration_slug === "zendesk" &&
         !getZendeskAuthStatus(connector.config).globalAuth && (
           <Card className="lg:col-span-2">
             <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">

@@ -90,7 +90,7 @@ export function ConnectorDetailPage({
         ? {
             breadcrumbs: [
               { label: "Integrations", href: "/integrations" },
-              { label: connector.displayName },
+              { label: connector.display_name },
             ],
             enableSearch: false,
           }
@@ -105,16 +105,16 @@ export function ConnectorDetailPage({
       return;
     }
 
-    if (connector.integrationSlug !== type) {
+    if (connector.integration_slug !== type) {
       router.replace(
-        getConnectorPath(connector.integrationSlug, connector.id)
+        getConnectorPath(connector.integration_slug, connector.id)
       );
       return;
     }
 
-    setEnabledCapabilities(connector.enabledCapabilities);
+    setEnabledCapabilities(connector.enabled_capabilities);
     setEnabledKnowledgeSubCapabilities(
-      connector.enabledKnowledgeSubCapabilities ?? []
+      connector.enabled_knowledge_sub_capabilities ?? []
     );
   }, [connector, type, router]);
 
@@ -135,14 +135,14 @@ export function ConnectorDetailPage({
     );
   }
 
-  const catalogItem = getCatalogItem(INTEGRATION_CATALOG, connector.integrationSlug);
+  const catalogItem = getCatalogItem(INTEGRATION_CATALOG, connector.integration_slug);
 
   const toggleCapability = async (capability: ConnectorCapability) => {
     const isEnabling = !enabledCapabilities.includes(capability);
 
     if (
       isEnabling &&
-      connector.integrationSlug === "zendesk" &&
+      connector.integration_slug === "zendesk" &&
       capabilityRequiresGlobalAuth(capability) &&
       !getZendeskAuthStatus(connector.config).globalAuth
     ) {
@@ -160,23 +160,23 @@ export function ConnectorDetailPage({
     if (capability === "knowledge" && !isEnabling) {
       setEnabledKnowledgeSubCapabilities([]);
       await updateConnector.mutateAsync({
-        enabledCapabilities: next,
-        enabledKnowledgeSubCapabilities: [],
+        enabled_capabilities: next,
+        enabled_knowledge_sub_capabilities: [],
       });
       return;
     }
 
-    if (capability === "knowledge" && isEnabling && catalogItem?.knowledgeSubCapabilities) {
-      const subs = [...catalogItem.knowledgeSubCapabilities];
+    if (capability === "knowledge" && isEnabling && catalogItem?.knowledge_sub_capabilities) {
+      const subs = [...catalogItem.knowledge_sub_capabilities];
       setEnabledKnowledgeSubCapabilities(subs);
       await updateConnector.mutateAsync({
-        enabledCapabilities: next,
-        enabledKnowledgeSubCapabilities: subs,
+        enabled_capabilities: next,
+        enabled_knowledge_sub_capabilities: subs,
       });
       return;
     }
 
-    await updateConnector.mutateAsync({ enabledCapabilities: next });
+    await updateConnector.mutateAsync({ enabled_capabilities: next });
   };
 
   const toggleKnowledgeSubCapability = async (
@@ -190,7 +190,7 @@ export function ConnectorDetailPage({
 
     if (
       isEnabling &&
-      connector.integrationSlug === "zendesk" &&
+      connector.integration_slug === "zendesk" &&
       !getZendeskAuthStatus(connector.config).globalAuth
     ) {
       setPendingCapability("knowledge");
@@ -203,30 +203,30 @@ export function ConnectorDetailPage({
       : enabledKnowledgeSubCapabilities.filter((item) => item !== subCapability);
 
     setEnabledKnowledgeSubCapabilities(next);
-    await updateConnector.mutateAsync({ enabledKnowledgeSubCapabilities: next });
+    await updateConnector.mutateAsync({ enabled_knowledge_sub_capabilities: next });
   };
 
   const handleGlobalAuthComplete = async (capability: ConnectorCapability) => {
     const next = [...new Set([...enabledCapabilities, capability])];
     setEnabledCapabilities(next);
 
-    if (capability === "knowledge" && catalogItem?.knowledgeSubCapabilities) {
-      const subs = [...catalogItem.knowledgeSubCapabilities];
+    if (capability === "knowledge" && catalogItem?.knowledge_sub_capabilities) {
+      const subs = [...catalogItem.knowledge_sub_capabilities];
       setEnabledKnowledgeSubCapabilities(subs);
       await updateConnector.mutateAsync({
-        enabledCapabilities: next,
-        enabledKnowledgeSubCapabilities: subs,
+        enabled_capabilities: next,
+        enabled_knowledge_sub_capabilities: subs,
       });
       return;
     }
 
-    await updateConnector.mutateAsync({ enabledCapabilities: next });
+    await updateConnector.mutateAsync({ enabled_capabilities: next });
   };
 
   const handleReconnect = async () => {
     const session = await startReauth.mutateAsync();
     router.push(
-      `/integrations/new/${connector.integrationSlug}?reauth=${connector.id}&session=${session.connectSessionId}`
+      `/integrations/new/${connector.integration_slug}?reauth=${connector.id}&session=${session.connect_session_id}`
     );
   };
 
@@ -257,14 +257,14 @@ export function ConnectorDetailPage({
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-heading text-2xl font-semibold tracking-tight">
-              {connector.displayName}
+              {connector.display_name}
             </h1>
             <ConnectorStatusBadge status={connector.status} />
           </div>
           <p className="text-sm text-muted-foreground">
             {connector.identifier} · connected by{" "}
-            {connector.connectedBy.name} on{" "}
-            {formatConnectedDate(connector.connectedBy.connectedAt)}
+            {connector.connected_by.name} on{" "}
+            {formatConnectedDate(connector.connected_by.connected_at)}
           </p>
         </div>
 
@@ -278,7 +278,7 @@ export function ConnectorDetailPage({
               variant="outline"
               size="sm"
               render={
-                <Link href={`/integrations/new/${connector.integrationSlug}`} />
+                <Link href={`/integrations/new/${connector.integration_slug}`} />
               }
             >
               <PlusIcon />
@@ -300,7 +300,7 @@ export function ConnectorDetailPage({
         <NotificationBanner notification={connector.notification} />
       )}
 
-      {connector.reauthRequired && !connector.notification && (
+      {connector.reauth_required && !connector.notification && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950/30">
           <div className="flex items-start gap-2">
             <AlertTriangleIcon className="mt-0.5 size-4 text-amber-600" />
@@ -353,8 +353,8 @@ export function ConnectorDetailPage({
           <OverviewTab
             connector={connector}
             catalogItem={catalogItem}
-            enabledCapabilities={enabledCapabilities}
-            enabledKnowledgeSubCapabilities={enabledKnowledgeSubCapabilities}
+            enabled_capabilities={enabledCapabilities}
+            enabled_knowledge_sub_capabilities={enabledKnowledgeSubCapabilities}
             onToggleCapability={toggleCapability}
             onToggleKnowledgeSubCapability={toggleKnowledgeSubCapability}
           />
@@ -363,7 +363,7 @@ export function ConnectorDetailPage({
         <TabsContent value="actions" className="w-full max-w-6xl">
           <ActionsTab
             connector={connector}
-            enabledCapabilities={enabledCapabilities}
+            enabled_capabilities={enabledCapabilities}
             searchQuery={actionsSearchQuery}
             onFixPermission={handleFixPermission}
             isFixPending={isFixPending}

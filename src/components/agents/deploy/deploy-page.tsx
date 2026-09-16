@@ -43,7 +43,7 @@ export function AgentDeployPage({ agentId }: { agentId: string }) {
     () =>
       (hub?.catalog ?? [])
         .filter((item) => hasChannelCapability(item.capabilities))
-        .sort((a, b) => a.sortOrder - b.sortOrder),
+        .sort((a, b) => a.sort_order - b.sort_order),
     [hub]
   );
 

@@ -43,8 +43,8 @@ export function ConnectorInstanceCard({
   onRename,
   onDelete,
 }: ConnectorInstanceCardProps) {
-  const catalogItem = getCatalogItem(catalog, connector.integrationSlug);
-  const detailPath = getConnectorPath(connector.integrationSlug, connector.id);
+  const catalogItem = getCatalogItem(catalog, connector.integration_slug);
+  const detailPath = getConnectorPath(connector.integration_slug, connector.id);
 
   return (
     <Card
@@ -53,7 +53,7 @@ export function ConnectorInstanceCard({
     >
       <CardContent className="flex h-full flex-col gap-4">
         <div className="flex items-start gap-3">
-          <IntegrationBrandIcon slug={connector.integrationSlug} />
+          <IntegrationBrandIcon slug={connector.integration_slug} />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
@@ -62,7 +62,7 @@ export function ConnectorInstanceCard({
                   href={detailPath}
                   className="block truncate text-sm font-semibold hover:underline"
                 >
-                  {connector.displayName}
+                  {connector.display_name}
                 </Link>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   {connector.identifier}
@@ -70,7 +70,7 @@ export function ConnectorInstanceCard({
               </div>
 
               <div className="flex shrink-0 items-center gap-0.5">
-                <SyncStatusBadge status={connector.syncStatus} />
+                <SyncStatusBadge status={connector.sync_status} />
                 <Popover>
                   <PopoverTrigger
                     render={
@@ -111,14 +111,14 @@ export function ConnectorInstanceCard({
         {catalogItem && (
           <CapabilityChips
             capabilities={catalogItem.capabilities}
-            enabledCapabilities={connector.enabledCapabilities}
+            enabled_capabilities={connector.enabled_capabilities}
             size="sm"
           />
         )}
 
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
           <p className="text-xs text-muted-foreground">
-            Last sync attempt: {formatLastSyncAttempt(connector.lastSyncAttemptAt)}
+            Last sync attempt: {formatLastSyncAttempt(connector.last_sync_attempt_at)}
           </p>
           <Button
             variant="ghost"
@@ -166,7 +166,7 @@ export function AvailableIntegrationCard({
 
         <CapabilityChips
           capabilities={item.capabilities}
-          enabledCapabilities={item.capabilities}
+          enabled_capabilities={item.capabilities}
           size="sm"
         />
 

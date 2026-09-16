@@ -24,17 +24,17 @@ export const KNOWLEDGE_SUB_CAPABILITY_LABELS: Record<
 
 export function CapabilityChips({
   capabilities,
-  enabledCapabilities,
+  enabled_capabilities,
   size = "default",
 }: {
   capabilities: ConnectorCapability[];
-  enabledCapabilities: ConnectorCapability[];
+  enabled_capabilities: ConnectorCapability[];
   size?: "default" | "sm";
 }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {capabilities.map((capability) => {
-        const enabled = enabledCapabilities.includes(capability);
+        const enabled = enabled_capabilities.includes(capability);
 
         return (
           <span
@@ -63,7 +63,7 @@ export function CapabilityChips({
 /** @deprecated Use CapabilityChips */
 export function CapabilityBadges(props: {
   capabilities: ConnectorCapability[];
-  enabledCapabilities: ConnectorCapability[];
+  enabled_capabilities: ConnectorCapability[];
 }) {
   return <CapabilityChips {...props} />;
 }
@@ -136,13 +136,13 @@ export function getCatalogItem<T extends { slug: string }>(
   return catalog.find((item) => item.slug === slug);
 }
 
-export function groupConnectorsBySlug<T extends { integrationSlug: string }>(
+export function groupConnectorsBySlug<T extends { integration_slug: string }>(
   connectors: T[]
 ) {
   return connectors.reduce<Record<string, T[]>>((acc, connector) => {
-    const list = acc[connector.integrationSlug] ?? [];
+    const list = acc[connector.integration_slug] ?? [];
     list.push(connector);
-    acc[connector.integrationSlug] = list;
+    acc[connector.integration_slug] = list;
     return acc;
   }, {});
 }

@@ -183,7 +183,7 @@ export function composeBillingOverview(
   const usage = asRecord(usagePayload) ?? {};
   const plans = asList(plansPayload);
   const agentsRoot = asRecord(agentsPayload) ?? {};
-  const connectorsRoot = asRecord(connectorsPayload) ?? {};
+  const connectorsRoot = isPlainObject(connectorsPayload) ? connectorsPayload : {};
   const agents = asList(agentsRoot.agents);
   const connectors = asList(connectorsRoot.connectors);
 
@@ -210,7 +210,9 @@ export function composeBillingOverview(
         : 0;
 
   const agentLimitRaw = plan?.maxAgents;
-  const connectorLimitRaw = plan?.maxConnectors ?? connectorsRoot.planLimit;
+  const connectorLimitRaw =
+    plan?.maxConnectors ??
+    asNumber(connectorsRoot.plan_limit, Number.NaN);
 
   return BillingOverviewSchema.parse({
     subscription: {
@@ -248,7 +250,7 @@ export function composeBillingOverview(
             : null,
       },
       integrations: {
-        used: asNumber(connectorsRoot.connectedCount, connectors.length),
+        used: asNumber(connectorsRoot.connected_count, connectors.length),
         limit:
           typeof connectorLimitRaw === "number" && Number.isFinite(connectorLimitRaw)
             ? connectorLimitRaw

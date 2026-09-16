@@ -1,10 +1,25 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { toast } from "sonner";
+import { getUserFacingMutationError } from "@/lib/api/user-facing-error";
 
 function makeQueryClient() {
   return new QueryClient({
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) => {
+        if (mutation.meta?.skipErrorToast) {
+          return;
+        }
+
+        toast.error(getUserFacingMutationError(error));
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000,

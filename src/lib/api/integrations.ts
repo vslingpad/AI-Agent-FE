@@ -65,7 +65,7 @@ export async function completeOAuthStep(
 ): Promise<{ connector: OrgConnector; session: ConnectSession }> {
   const json = await apiPost<unknown>(
     `/api/integrations/${connectorId}/oauth`,
-    { connectSessionId, stepId }
+    { connect_session_id: connectSessionId, step_id: stepId }
   );
 
   return {
@@ -93,7 +93,7 @@ export async function startOAuthStep(
 ): Promise<ConnectSession> {
   const json = await apiPost<unknown>(
     `/api/integrations/${connectorId}/oauth/start`,
-    { stepId }
+    { step_id: stepId }
   );
   return ConnectSessionSchema.parse(json);
 }
@@ -104,7 +104,7 @@ export async function getConnectStatus(
 ): Promise<ConnectSession> {
   const json = await apiGet<unknown>(
     `/api/integrations/${connectorId}/connect-status`,
-    { connectSessionId }
+    { connect_session_id: connectSessionId }
   );
   return ConnectSessionSchema.parse(json);
 }

@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 
 type ActionsTabProps = {
   connector: ConnectorDetail;
-  enabledCapabilities: ConnectorCapability[];
+  enabled_capabilities: ConnectorCapability[];
   searchQuery: string;
   onFixPermission?: (fix: ActionsPermissionFix) => void;
   isFixPending?: boolean;
@@ -37,7 +37,7 @@ function filterActions(actions: ConnectorAction[], query: string) {
   const normalized = query.trim().toLowerCase();
 
   return actions.filter((action) =>
-    [action.name, action.description, action.requiredScope]
+    [action.name, action.description, action.required_scope]
       .filter(Boolean)
       .some((value) => value!.toLowerCase().includes(normalized))
   );
@@ -45,7 +45,7 @@ function filterActions(actions: ConnectorAction[], query: string) {
 
 export function ActionsTab({
   connector,
-  enabledCapabilities,
+  enabled_capabilities,
   searchQuery,
   onFixPermission,
   isFixPending = false,
@@ -59,7 +59,7 @@ export function ActionsTab({
 
   const permissionIssue = getActionsPermissionIssue(
     connector,
-    enabledCapabilities
+    enabled_capabilities
   );
 
   return (
@@ -122,14 +122,14 @@ export function ActionsTab({
               key={action.id}
               size="sm"
               className={cn(
-                !action.permissionGranted &&
+                !action.permission_granted &&
                   "border-amber-200/80 bg-amber-50/30 dark:border-amber-900/50 dark:bg-amber-950/10"
               )}
             >
               <CardHeader className="pb-0">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    {action.permissionGranted ? (
+                    {action.permission_granted ? (
                       <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                     ) : (
                       <LockIcon className="mt-0.5 size-4 shrink-0 text-amber-600" />
@@ -142,16 +142,16 @@ export function ActionsTab({
                     </div>
                   </div>
                   <Badge
-                    variant={action.permissionGranted ? "success" : "warning"}
+                    variant={action.permission_granted ? "success" : "warning"}
                   >
-                    {action.permissionGranted ? "Allowed" : "Missing permission"}
+                    {action.permission_granted ? "Allowed" : "Missing permission"}
                   </Badge>
                 </div>
               </CardHeader>
-              {action.requiredScope && (
+              {action.required_scope && (
                 <CardContent>
                   <p className="font-mono text-[11px] text-muted-foreground">
-                    Required: {action.requiredScope}
+                    Required: {action.required_scope}
                   </p>
                 </CardContent>
               )}

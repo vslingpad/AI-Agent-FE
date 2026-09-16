@@ -5,7 +5,7 @@ import { apiError, requireOrgId } from "@/lib/api/auth";
 const CAPABILITIES = new Set(["channel", "knowledge", "action"]);
 const CATALOG_STATUSES = new Set(["active", "beta", "deprecated"]);
 const CONFIG_FIELD_TYPES = new Set(["text", "url", "select"]);
-const ID_KEYS = new Set(["id", "organizationId", "orgConnectorId"]);
+const ID_KEYS = new Set(["id", "organization_id", "org_connector_id"]);
 
 export function controlPlaneBaseUrl() {
   return (
@@ -117,16 +117,16 @@ function normalizeIntegrationsShape(value: unknown): unknown {
     delete out.options;
   }
 
-  if ("connectSessionId" in out && out.connectSessionId == null) {
-    out.connectSessionId = "";
+  if ("connect_session_id" in out && out.connect_session_id == null) {
+    out.connect_session_id = "";
   }
 
   if (Array.isArray(out.capabilities)) {
     out.capabilities = filterCaps(out.capabilities);
   }
 
-  if (Array.isArray(out.enabledCapabilities)) {
-    out.enabledCapabilities = filterCaps(out.enabledCapabilities);
+  if (Array.isArray(out.enabled_capabilities)) {
+    out.enabled_capabilities = filterCaps(out.enabled_capabilities);
   }
 
   if (
@@ -141,36 +141,36 @@ function normalizeIntegrationsShape(value: unknown): unknown {
   if (
     typeof out.status === "string" &&
     "slug" in out &&
-    "configFields" in out &&
+    "config_fields" in out &&
     !CATALOG_STATUSES.has(out.status)
   ) {
     out.status = "active";
   }
 
   if (
-    "integrationSlug" in out &&
+    "integration_slug" in out &&
     "id" in out &&
-    (!out.connectedBy || !isPlainObject(out.connectedBy))
+    (!out.connected_by || !isPlainObject(out.connected_by))
   ) {
-    out.connectedBy = {
+    out.connected_by = {
       name: "—",
-      connectedAt:
-        typeof out.createdAt === "string"
-          ? out.createdAt
+      connected_at:
+        typeof out.created_at === "string"
+          ? out.created_at
           : new Date().toISOString(),
     };
   }
 
   if (
     "slug" in out &&
-    "configFields" in out &&
+    "config_fields" in out &&
     typeof out.available !== "boolean"
   ) {
     out.available = out.slug === "zendesk" || out.slug === "web_widget";
   }
 
-  if (Array.isArray(out.oauthSteps)) {
-    out.oauthSteps = out.oauthSteps.map((step) => {
+  if (Array.isArray(out.oauth_steps)) {
+    out.oauth_steps = out.oauth_steps.map((step) => {
       if (!isPlainObject(step)) {
         return step;
       }
@@ -183,24 +183,55 @@ function normalizeIntegrationsShape(value: unknown): unknown {
 
   if (
     "slug" in out &&
-    "configFields" in out &&
-    !Array.isArray(out.actionHighlights)
+    "config_fields" in out &&
+    !Array.isArray(out.action_highlights)
   ) {
-    out.actionHighlights = [];
+    out.action_highlights = [];
   }
 
   if (
     out.slug === "zendesk" &&
-    !Array.isArray(out.knowledgeSubCapabilities)
+    !Array.isArray(out.knowledge_sub_capabilities)
   ) {
-    out.knowledgeSubCapabilities = ["help_center", "tickets"];
+    out.knowledge_sub_capabilities = ["help_center", "tickets"];
+  }
+
+  if (isPlainObject(out.channel)) {
+    const channel = out.channel as Record<string, unknown>;
+    if (
+      channel.default_routing_agent != null &&
+      typeof channel.default_routing_agent !== "string"
+    ) {
+      channel.default_routing_agent = String(channel.default_routing_agent);
+    }
+    if (typeof channel.sunshine_app_id !== "string" && channel.sunshine_app_id != null) {
+      channel.sunshine_app_id = String(channel.sunshine_app_id);
+    }
+    if (Array.isArray(channel.tag_rules)) {
+      channel.tag_rules = channel.tag_rules.map((rule) => {
+        if (!isPlainObject(rule)) {
+          return rule;
+        }
+        const agentId = rule.agent_id ?? rule.agentId;
+        if (agentId != null && typeof agentId !== "string") {
+          return { ...rule, agent_id: String(agentId) };
+        }
+        if (typeof rule.agent_id === "string") {
+          return rule;
+        }
+        if (typeof rule.agentId === "string") {
+          return { ...rule, agent_id: rule.agentId };
+        }
+        return rule;
+      });
+    }
   }
 
   return out;
 }
 
 export function adaptConnectorPayload(value: unknown) {
-  return normalizeIntegrationsShape(stringifyIds(keysToCamel(value)));
+  return normalizeIntegrationsShape(stringifyIds(value));
 }
 
 export function detailToError(detail: unknown): string {

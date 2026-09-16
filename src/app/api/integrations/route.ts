@@ -1,8 +1,4 @@
-import {
-  adaptConnectorPayload,
-  keysToSnake,
-  proxyControlPlane,
-} from "@/lib/api/control-plane";
+import { adaptConnectorPayload, proxyControlPlane } from "@/lib/api/control-plane";
 
 export async function GET(request: Request) {
   return proxyControlPlane(request, "/orgs/me/connectors", {
@@ -12,7 +8,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   return proxyControlPlane(request, "/orgs/me/connectors", {
-    rewriteBody: keysToSnake,
     transformJson: adaptConnectorPayload,
   });
 }

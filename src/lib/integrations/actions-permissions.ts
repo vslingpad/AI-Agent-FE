@@ -19,10 +19,10 @@ export type ActionsPermissionIssue = {
 
 export function getActionsPermissionIssue(
   connector: ConnectorDetail,
-  enabledCapabilities: ConnectorCapability[]
+  enabled_capabilities: ConnectorCapability[]
 ): ActionsPermissionIssue | null {
   const actions = connector.actions ?? [];
-  const missingActions = actions.filter((action) => !action.permissionGranted);
+  const missingActions = actions.filter((action) => !action.permission_granted);
 
   if (missingActions.length === 0) {
     return null;
@@ -30,7 +30,7 @@ export function getActionsPermissionIssue(
 
   const countLabel = `${missingActions.length} action${missingActions.length === 1 ? "" : "s"}`;
 
-  if (!enabledCapabilities.includes("action")) {
+  if (!enabled_capabilities.includes("action")) {
     return {
       title: `${countLabel} unavailable`,
       description:
@@ -40,8 +40,8 @@ export function getActionsPermissionIssue(
     };
   }
 
-  if (connector.reauthRequired) {
-    const scope = connector.reauthScope ?? "sunshine";
+  if (connector.reauth_required) {
+    const scope = connector.reauth_scope ?? "sunshine";
     const globalAuthScope = scope === "global_auth" || scope === "both";
 
     return {
@@ -54,13 +54,13 @@ export function getActionsPermissionIssue(
     };
   }
 
-  if (connector.integrationSlug === "zendesk") {
+  if (connector.integration_slug === "zendesk") {
     const auth = getZendeskAuthStatus(connector.config);
     const needsGlobalAuth = missingActions.some((action) =>
-      action.requiredScope?.toLowerCase().includes("global auth")
+      action.required_scope?.toLowerCase().includes("global auth")
     );
     const needsChannel = missingActions.some((action) =>
-      action.requiredScope?.toLowerCase().includes("sunshine")
+      action.required_scope?.toLowerCase().includes("sunshine")
     );
 
     if (needsGlobalAuth && !auth.globalAuth) {
@@ -73,7 +73,7 @@ export function getActionsPermissionIssue(
       };
     }
 
-    if (needsChannel && !enabledCapabilities.includes("channel")) {
+    if (needsChannel && !enabled_capabilities.includes("channel")) {
       return {
         title: `${countLabel} missing permissions`,
         description:
@@ -85,7 +85,7 @@ export function getActionsPermissionIssue(
   }
 
   const policyOnly = missingActions.every((action) =>
-    action.requiredScope?.toLowerCase().includes("policy")
+    action.required_scope?.toLowerCase().includes("policy")
   );
 
   if (policyOnly) {

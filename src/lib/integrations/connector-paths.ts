@@ -29,26 +29,26 @@ export function getConnectWizardPath(
 
 export function formatConnectorIdentifier(
   slug: string,
-  externalInstanceId: string | null,
+  external_instance_id: string | null,
   config: Record<string, unknown>
 ): string {
   const subdomain =
-    externalInstanceId ?? (config.subdomain as string | undefined) ?? null;
+    external_instance_id ?? (config.subdomain as string | undefined) ?? null;
 
   switch (slug) {
     case "zendesk":
       return subdomain ? `support.${subdomain}.zendesk.com` : "—";
     case "calendly":
-      return (config.accountEmail as string | undefined) ?? externalInstanceId ?? "—";
+      return (config.accountEmail as string | undefined) ?? external_instance_id ?? "—";
     case "stripe":
     case "stripe_subscriptions":
-      return (config.accountId as string | undefined) ?? externalInstanceId ?? "—";
+      return (config.accountId as string | undefined) ?? external_instance_id ?? "—";
     case "freshdesk":
       return subdomain ? `${subdomain}.freshdesk.com` : "—";
     case "shopify":
-      return (config.shopDomain as string | undefined) ?? externalInstanceId ?? "—";
+      return (config.shopDomain as string | undefined) ?? external_instance_id ?? "—";
     default:
-      return externalInstanceId ?? "—";
+      return external_instance_id ?? "—";
   }
 }
 
@@ -56,8 +56,8 @@ export function enrichConnector(connector: Omit<OrgConnector, "identifier"> & Pa
   return {
     ...connector,
     identifier: formatConnectorIdentifier(
-      connector.integrationSlug,
-      connector.externalInstanceId,
+      connector.integration_slug,
+      connector.external_instance_id,
       connector.config
     ),
   };

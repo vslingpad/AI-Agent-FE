@@ -33,7 +33,7 @@ export function getDeployChannelDefinitions(): DeployChannelDefinition[] {
   const fromCatalog = INTEGRATION_CATALOG.filter((item) =>
     item.capabilities.includes("channel")
   )
-    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .sort((a, b) => a.sort_order - b.sort_order)
     .map((item) => ({
       id: item.slug,
       label: item.name,

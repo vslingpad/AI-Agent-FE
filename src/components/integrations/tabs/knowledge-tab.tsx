@@ -34,8 +34,8 @@ export function KnowledgeTab({ connector }: KnowledgeTabProps) {
   return (
     <div className="w-full max-w-6xl space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Total articles" value={knowledge.totalArticles.toLocaleString()} />
-        <StatCard label="Indexed" value={knowledge.indexedArticles.toLocaleString()} />
+        <StatCard label="Total articles" value={knowledge.total_articles.toLocaleString()} />
+        <StatCard label="Indexed" value={knowledge.indexed_articles.toLocaleString()} />
         <StatCard
           label="Collections"
           value={knowledge.collections.length.toString()}
@@ -56,12 +56,12 @@ export function KnowledgeTab({ connector }: KnowledgeTabProps) {
                 <div>
                   <p className="font-medium">{collection.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {collection.articleCount.toLocaleString()} articles
+                    {collection.article_count.toLocaleString()} articles
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  {collection.lastSyncedAt
-                    ? formatConnectedDate(collection.lastSyncedAt)
+                  {collection.last_synced_at
+                    ? formatConnectedDate(collection.last_synced_at)
                     : "Never synced"}
                 </span>
               </div>
@@ -103,14 +103,14 @@ export function KnowledgeTab({ connector }: KnowledgeTabProps) {
                         {article.category}
                       </td>
                       <td className="py-3 pr-4 tabular-nums text-muted-foreground">
-                        {article.wordCount}
+                        {article.word_count}
                       </td>
                       <td className="py-3 pr-4">
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </td>
                       <td className="py-3 text-muted-foreground">
-                        {article.lastTrainedAt
-                          ? formatConnectedDate(article.lastTrainedAt)
+                        {article.last_trained_at
+                          ? formatConnectedDate(article.last_trained_at)
                           : "—"}
                       </td>
                     </tr>

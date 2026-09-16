@@ -41,8 +41,8 @@ export function GlobalAuthDialog({
   const [session, setSession] = useState<ConnectSession | null>(null);
   const connectStatus = useConnectStatus(
     connectorId,
-    session?.connectSessionId ?? null,
-    open && Boolean(session?.connectSessionId)
+    session?.connect_session_id ?? null,
+    open && Boolean(session?.connect_session_id)
   );
 
   useEffect(() => {
@@ -82,13 +82,13 @@ export function GlobalAuthDialog({
       return;
     }
 
-    if (!session.wizard.currentStep) {
+    if (!session.wizard.current_step) {
       return;
     }
 
     const result = await completeOAuth.mutateAsync({
-      connectSessionId: session.connectSessionId,
-      stepId: session.wizard.currentStep,
+      connect_session_id: session.connect_session_id,
+      step_id: session.wizard.current_step,
     });
     const nextSession = result.session;
     setSession(nextSession);
@@ -143,12 +143,12 @@ export function GlobalAuthDialog({
             </Button>
           ) : (
             <div className="flex gap-2">
-              {session.authorizeUrl ? (
+              {session.authorize_url ? (
                 <Button
                   variant="outline"
                   render={
                     <a
-                      href={session.authorizeUrl}
+                      href={session.authorize_url}
                       target="_blank"
                       rel="noreferrer"
                     />

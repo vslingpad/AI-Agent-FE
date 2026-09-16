@@ -107,12 +107,12 @@ export function useCompleteOAuthStep(connectorId: string) {
 
   return useMutation({
     mutationFn: ({
-      connectSessionId,
-      stepId,
+      connect_session_id,
+      step_id,
     }: {
-      connectSessionId: string;
-      stepId: string;
-    }) => completeOAuthStep(connectorId, connectSessionId, stepId),
+      connect_session_id: string;
+      step_id: string;
+    }) => completeOAuthStep(connectorId, connect_session_id, step_id),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: connectorDetailKey(organization?.id, connectorId),

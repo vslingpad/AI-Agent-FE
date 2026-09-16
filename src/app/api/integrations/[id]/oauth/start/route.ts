@@ -1,8 +1,4 @@
-import {
-  adaptConnectorPayload,
-  keysToSnake,
-  proxyControlPlane,
-} from "@/lib/api/control-plane";
+import { adaptConnectorPayload, proxyControlPlane } from "@/lib/api/control-plane";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -14,7 +10,6 @@ export async function POST(request: Request, context: RouteContext) {
     request,
     `/orgs/me/connectors/${id}/oauth/start`,
     {
-      rewriteBody: keysToSnake,
       transformJson: adaptConnectorPayload,
     }
   );

@@ -33,9 +33,9 @@ export function ChannelTab({
   }
 
   const webhookVariant =
-    channel.webhookStatus === "healthy"
+    channel.webhook_status === "healthy"
       ? "success"
-      : channel.webhookStatus === "degraded"
+      : channel.webhook_status === "degraded"
         ? "warning"
         : "destructive";
 
@@ -52,27 +52,27 @@ export function ChannelTab({
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Messaging</span>
-            <Badge variant={channel.messagingEnabled ? "success" : "muted"}>
-              {channel.messagingEnabled ? "Enabled" : "Disabled"}
+            <Badge variant={channel.messaging_enabled ? "success" : "muted"}>
+              {channel.messaging_enabled ? "Enabled" : "Disabled"}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Webhook health</span>
-            <Badge variant={webhookVariant}>{channel.webhookStatus}</Badge>
+            <Badge variant={webhookVariant}>{channel.webhook_status}</Badge>
           </div>
-          {channel.sunshineAppId && (
+          {channel.sunshine_app_id && (
             <div className="space-y-1">
               <Label>Sunshine app ID</Label>
               <p className="font-mono text-xs text-muted-foreground">
-                {channel.sunshineAppId}
+                {channel.sunshine_app_id}
               </p>
             </div>
           )}
-          {channel.webhookUrl && (
+          {channel.webhook_url && (
             <div className="space-y-1">
               <Label>Webhook URL</Label>
               <p className="break-all font-mono text-xs text-muted-foreground">
-                {channel.webhookUrl}
+                {channel.webhook_url}
               </p>
             </div>
           )}
@@ -100,17 +100,17 @@ export function ChannelTab({
             </div>
           </Show>
 
-          {channel.tagRules.length > 0 && (
+          {channel.tag_rules.length > 0 && (
             <div className="space-y-2">
               <Label>Tag rules</Label>
               <div className="divide-y rounded-lg border border-border">
-                {channel.tagRules.map((rule) => (
+                {channel.tag_rules.map((rule) => (
                   <div
                     key={rule.tag}
                     className="flex items-center justify-between px-3 py-2 text-sm"
                   >
                     <span className="font-mono text-xs">{rule.tag}</span>
-                    <span className="text-muted-foreground">{rule.agentId}</span>
+                    <span className="text-muted-foreground">{rule.agent_id}</span>
                   </div>
                 ))}
               </div>

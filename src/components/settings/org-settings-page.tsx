@@ -23,7 +23,6 @@ import {
   useUpdateOrganizationSettings,
   useUploadOrganizationLogo,
 } from "@/hooks/use-org-settings";
-import { ApiError } from "@/lib/api/client";
 import { SUPPORT_EMAIL } from "@/lib/constants/support";
 import { getOrgInitials } from "@/lib/org-utils";
 import { cn } from "@/lib/utils";
@@ -31,7 +30,6 @@ import { cn } from "@/lib/utils";
 export function OrgSettingsPage() {
   const { organization, membership, isLoaded } = useOrganization();
   const isAdmin = membership?.role === "org:admin";
-  const [actionError, setActionError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [leaveOpen, setLeaveOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,14 +68,8 @@ export function OrgSettingsPage() {
   const logoPending = uploadLogo.isPending || removeLogo.isPending;
   const nameDirty = name.trim() !== organization.name;
 
-  const handleSaveName = async () => {
-    setActionError(null);
-
-    try {
-      await updateSettings.mutateAsync({ name: name.trim() });
-    } catch (error) {
-      setActionError(getErrorMessage(error));
-    }
+  const handleSaveName = () => {
+    void updateSettings.mutateAsync({ name: name.trim() });
   };
 
   const handleLogoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,35 +79,22 @@ export function OrgSettingsPage() {
       return;
     }
 
-    setActionError(null);
-
     try {
       await uploadLogo.mutateAsync(file);
-    } catch (error) {
-      setActionError(getErrorMessage(error));
     } finally {
       event.target.value = "";
     }
   };
 
-  const handleRemoveLogo = async () => {
-    setActionError(null);
-
-    try {
-      await removeLogo.mutateAsync();
-    } catch (error) {
-      setActionError(getErrorMessage(error));
-    }
+  const handleRemoveLogo = () => {
+    void removeLogo.mutateAsync();
   };
 
   const handleLeave = async () => {
-    setActionError(null);
-
     try {
       await leaveOrg.mutateAsync();
       setLeaveOpen(false);
-    } catch (error) {
-      setActionError(getErrorMessage(error));
+    } catch {
       setLeaveOpen(false);
     }
   };
@@ -129,12 +108,6 @@ export function OrgSettingsPage() {
           : "View your organization profile and membership options."
       }
     >
-      {actionError ? (
-        <div className="max-w-2xl rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {actionError}
-        </div>
-      ) : null}
-
       <div className="flex max-w-2xl flex-col gap-6">
         <Card className="border-border">
           <CardHeader>
@@ -367,16 +340,4 @@ function OrgSettingsSkeleton() {
       </div>
     </AgentPageFrame>
   );
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return "Something went wrong";
 }

@@ -42,11 +42,12 @@ export const IntegrationCatalogItemSchema = z.object({
   name: z.string(),
   description: z.string(),
   capabilities: z.array(ConnectorCapabilitySchema),
-  knowledgeSubCapabilities: z.array(KnowledgeSubCapabilitySchema).optional(),
+  integration_family: z.string().nullish(),
+  knowledge_sub_capabilities: z.array(KnowledgeSubCapabilitySchema).optional(),
   status: z.enum(["active", "beta", "deprecated"]),
   available: z.boolean().default(false),
-  sortOrder: z.number(),
-  configFields: z.array(
+  sort_order: z.number(),
+  config_fields: z.array(
     z.object({
       key: z.string(),
       label: z.string(),
@@ -58,7 +59,7 @@ export const IntegrationCatalogItemSchema = z.object({
         .optional(),
     })
   ),
-  oauthSteps: z.array(
+  oauth_steps: z.array(
     z.object({
       id: z.string(),
       label: z.string(),
@@ -66,45 +67,45 @@ export const IntegrationCatalogItemSchema = z.object({
       required: z.boolean(),
     })
   ),
-  actionHighlights: z.array(z.string()).default([]),
+  action_highlights: z.array(z.string()).default([]),
 });
 
 export const OrgConnectorSchema = z.object({
   id: z.string(),
-  organizationId: z.string(),
-  integrationSlug: z.string(),
-  displayName: z.string(),
-  externalInstanceId: z.string().nullable(),
+  organization_id: z.string(),
+  integration_slug: z.string(),
+  display_name: z.string(),
+  external_instance_id: z.string().nullable(),
   identifier: z.string(),
   capabilities: z.array(ConnectorCapabilitySchema),
-  enabledCapabilities: z.array(ConnectorCapabilitySchema),
-  knowledgeSubCapabilities: z.array(KnowledgeSubCapabilitySchema).optional(),
-  enabledKnowledgeSubCapabilities: z
+  enabled_capabilities: z.array(ConnectorCapabilitySchema),
+  knowledge_sub_capabilities: z.array(KnowledgeSubCapabilitySchema).optional(),
+  enabled_knowledge_sub_capabilities: z
     .array(KnowledgeSubCapabilitySchema)
     .optional(),
   status: ConnectorStatusSchema,
-  syncStatus: SyncStatusSchema,
+  sync_status: SyncStatusSchema,
   config: z.record(z.string(), z.unknown()),
-  routingConfig: z.record(z.string(), z.unknown()),
-  reauthRequired: z.boolean(),
-  reauthScope: z.string().nullable(),
-  reauthReason: z.string().nullable(),
-  lastSyncedAt: z.string().nullable(),
-  lastSyncAttemptAt: z.string().nullable(),
-  connectedBy: z.object({
+  routing_config: z.record(z.string(), z.unknown()),
+  reauth_required: z.boolean(),
+  reauth_scope: z.string().nullable(),
+  reauth_reason: z.string().nullable(),
+  last_synced_at: z.string().nullable(),
+  last_sync_attempt_at: z.string().nullable(),
+  connected_by: z.object({
     name: z.string(),
-    connectedAt: z.string(),
+    connected_at: z.string(),
   }),
-  createdAt: z.string(),
-  modifiedAt: z.string(),
+  created_at: z.string(),
+  modified_at: z.string(),
 });
 
 export const ConnectorActionSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  permissionGranted: z.boolean(),
-  requiredScope: z.string().nullish(),
+  permission_granted: z.boolean(),
+  required_scope: z.string().nullish(),
 });
 
 export const KnowledgeArticleSchema = z.object({
@@ -112,29 +113,29 @@ export const KnowledgeArticleSchema = z.object({
   title: z.string(),
   category: z.string(),
   status: z.enum(["indexed", "pending", "failed"]),
-  wordCount: z.number(),
-  lastTrainedAt: z.string().nullable(),
+  word_count: z.number(),
+  last_trained_at: z.string().nullable(),
 });
 
 export const KnowledgeCollectionSchema = z.object({
   id: z.string(),
   name: z.string(),
-  articleCount: z.number(),
-  lastSyncedAt: z.string().nullable(),
+  article_count: z.number(),
+  last_synced_at: z.string().nullable(),
+});
+
+export const ChannelTagRuleSchema = z.object({
+  tag: z.string(),
+  agent_id: z.coerce.string(),
 });
 
 export const ChannelConfigSchema = z.object({
-  webhookStatus: z.enum(["healthy", "degraded", "missing"]),
-  webhookUrl: z.string().nullable(),
-  sunshineAppId: z.string().nullable(),
-  defaultRoutingAgent: z.string().nullable(),
-  tagRules: z.array(
-    z.object({
-      tag: z.string(),
-      agentId: z.string(),
-    })
-  ),
-  messagingEnabled: z.boolean(),
+  webhook_status: z.enum(["healthy", "degraded", "missing"]),
+  webhook_url: z.string().nullable(),
+  sunshine_app_id: z.coerce.string().nullable(),
+  default_routing_agent: z.coerce.string().nullable(),
+  tag_rules: z.array(ChannelTagRuleSchema),
+  messaging_enabled: z.boolean(),
 });
 
 export const ConnectorDetailSchema = OrgConnectorSchema.extend({
@@ -148,8 +149,8 @@ export const ConnectorDetailSchema = OrgConnectorSchema.extend({
     .object({
       collections: z.array(KnowledgeCollectionSchema),
       articles: z.array(KnowledgeArticleSchema),
-      totalArticles: z.number(),
-      indexedArticles: z.number(),
+      total_articles: z.number(),
+      indexed_articles: z.number(),
     })
     .nullish(),
   channel: ChannelConfigSchema.nullish(),
@@ -157,48 +158,48 @@ export const ConnectorDetailSchema = OrgConnectorSchema.extend({
 });
 
 export const ConnectSessionSchema = z.object({
-  orgConnectorId: z.string(),
-  connectSessionId: z.string(),
+  org_connector_id: z.string(),
+  connect_session_id: z.string(),
   status: ConnectorStatusSchema,
   wizard: z.object({
-    currentStep: z.string().nullable(),
+    current_step: z.string().nullable(),
     steps: z.array(OAuthWizardStepSchema),
   }),
-  authorizeUrl: z.string().nullable(),
+  authorize_url: z.string().nullable(),
 });
 
 export const IntegrationsHubSchema = z.object({
   catalog: z.array(IntegrationCatalogItemSchema),
   connectors: z.array(OrgConnectorSchema),
-  planLimit: z.number().nullable(),
-  connectedCount: z.number(),
+  plan_limit: z.number().nullable(),
+  connected_count: z.number(),
 });
 
 export const CreateConnectorInputSchema = z.object({
-  integrationSlug: z.string(),
-  displayName: z.string().min(1).max(120),
-  externalInstanceId: z.string().optional(),
+  integration_slug: z.string(),
+  display_name: z.string().min(1).max(120),
+  external_instance_id: z.string().optional(),
   capabilities: z.array(ConnectorCapabilitySchema).min(1),
   config: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const UpdateConnectorInputSchema = z.object({
-  displayName: z.string().min(1).max(120).optional(),
-  enabledCapabilities: z.array(ConnectorCapabilitySchema).optional(),
-  enabledKnowledgeSubCapabilities: z
+  display_name: z.string().min(1).max(120).optional(),
+  enabled_capabilities: z.array(ConnectorCapabilitySchema).optional(),
+  enabled_knowledge_sub_capabilities: z
     .array(KnowledgeSubCapabilitySchema)
     .optional(),
   config: z.record(z.string(), z.unknown()).optional(),
-  routingConfig: z.record(z.string(), z.unknown()).optional(),
+  routing_config: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const CompleteOAuthStepInputSchema = z.object({
-  connectSessionId: z.string(),
-  stepId: z.string(),
+  connect_session_id: z.string(),
+  step_id: z.string(),
 });
 
 export const StartOAuthStepInputSchema = z.object({
-  stepId: z.enum(["global_auth", "sunshine"]),
+  step_id: z.enum(["global_auth", "sunshine"]),
 });
 
 export type ConnectorCapability = z.infer<typeof ConnectorCapabilitySchema>;

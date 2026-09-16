@@ -9,6 +9,7 @@ import {
 import { AppSidebar } from "@/components/app-sidebar";
 import { UsageNotificationBanner } from "@/components/notification-banner";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [bannerHeight, setBannerHeight] = useState("0px");
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <QueryProvider>
+      <Toaster />
       <SidebarProvider
         className="flex h-svh flex-col overflow-hidden"
         style={

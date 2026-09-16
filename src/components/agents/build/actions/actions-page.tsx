@@ -41,7 +41,7 @@ function AgentActionsPageContent({ agentId }: { agentId: string }) {
     () =>
       (hub?.catalog ?? [])
         .filter((item) => hasActionCapability(item.capabilities))
-        .sort((a, b) => a.sortOrder - b.sortOrder),
+        .sort((a, b) => a.sort_order - b.sort_order),
     [hub]
   );
 
@@ -168,7 +168,7 @@ function ConnectedAgentActionCard({
   const highlights =
     binding.kind === "custom_tool"
       ? binding.subActions.map((subAction) => subAction.name)
-      : (catalogItem?.actionHighlights ?? binding.subActions.map((item) => item.name));
+      : (catalogItem?.action_highlights ?? binding.subActions.map((item) => item.name));
 
   return (
     <button
@@ -239,7 +239,7 @@ function filterActionCatalog(
   query: string
 ) {
   return catalog.filter((item) =>
-    matchesQuery(query, [item.name, item.description, item.slug, ...(item.actionHighlights ?? [])])
+    matchesQuery(query, [item.name, item.description, item.slug, ...(item.action_highlights ?? [])])
   );
 }
 

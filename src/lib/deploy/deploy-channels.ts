@@ -25,9 +25,9 @@ function findChannelConnector(connectors: OrgConnector[], slug: string) {
   return (
     connectors.find(
       (connector) =>
-        connector.integrationSlug === slug &&
+        connector.integration_slug === slug &&
         connector.capabilities.includes("channel") &&
-        connector.enabledCapabilities.includes("channel")
+        connector.enabled_capabilities.includes("channel")
     ) ?? null
   );
 }
@@ -37,7 +37,7 @@ function resolveConnectorStatus(connector: OrgConnector | null): DeployChannelSt
     return "not_connected";
   }
 
-  if (connector.reauthRequired || connector.status === "reauth_required") {
+  if (connector.reauth_required || connector.status === "reauth_required") {
     return "reauth_required";
   }
 

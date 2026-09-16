@@ -63,10 +63,10 @@ function filterConnectors(
     (connector) =>
       matchesCapability(connector.capabilities, capabilityFilter) &&
       matchesSearch(query, [
-        connector.displayName,
+        connector.display_name,
         connector.identifier,
-        connector.externalInstanceId,
-        connector.integrationSlug,
+        connector.external_instance_id,
+        connector.integration_slug,
       ])
   );
 }
@@ -142,9 +142,9 @@ export function IntegrationsHubPage() {
           Connect external systems once at the organization level. Agents bind
           to these connectors for channels, knowledge, and actions.
         </p>
-        {data.planLimit !== null && (
+        {data.plan_limit !== null && (
           <p className="text-xs text-muted-foreground">
-            {data.connectedCount} of {data.planLimit} integrations used on your
+            {data.connected_count} of {data.plan_limit} integrations used on your
             plan
           </p>
         )}

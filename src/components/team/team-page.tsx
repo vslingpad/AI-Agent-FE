@@ -21,7 +21,6 @@ import {
   useUpdateTeamMemberRole,
   type OrgMemberRole,
 } from "@/hooks/use-team";
-import { ApiError } from "@/lib/api/client";
 import { formatOrgRole, getOrgInitials } from "@/lib/org-utils";
 import {
   TEAM_PAGE_SIZE_OPTIONS,
@@ -42,7 +41,6 @@ const defaultInvitationsQuery: TeamListQuery = { page: 1, pageSize: 10 };
 
 export function TeamPage() {
   const [activeTab, setActiveTab] = useState<TeamTab>("members");
-  const [actionError, setActionError] = useState<string | null>(null);
   const [membersQuery, setMembersQuery] = useState<TeamListQuery>(defaultMembersQuery);
   const [invitationsQuery, setInvitationsQuery] =
     useState<TeamListQuery>(defaultInvitationsQuery);
@@ -90,12 +88,6 @@ export function TeamPage() {
         title="Team"
         description="Manage who has access to your organization and invite new members."
       >
-        {actionError ? (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-            {actionError}
-          </div>
-        ) : null}
-
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as TeamTab)}
@@ -124,20 +116,13 @@ export function TeamPage() {
           </div>
 
           <TabsContent value="members">
-            <MembersTab
-              query={membersQuery}
-              onQueryChange={setMembersQuery}
-              onError={setActionError}
-              onClearError={() => setActionError(null)}
-            />
+            <MembersTab query={membersQuery} onQueryChange={setMembersQuery} />
           </TabsContent>
 
           <TabsContent value="invitations">
             <InvitationsTab
               query={invitationsQuery}
               onQueryChange={setInvitationsQuery}
-              onError={setActionError}
-              onClearError={() => setActionError(null)}
             />
           </TabsContent>
         </Tabs>
@@ -149,13 +134,9 @@ export function TeamPage() {
 function MembersTab({
   query,
   onQueryChange,
-  onError,
-  onClearError,
 }: {
   query: TeamListQuery;
   onQueryChange: (query: TeamListQuery) => void;
-  onError: (message: string) => void;
-  onClearError: () => void;
 }) {
   const { user } = useUser();
   const { data, isLoading, isError, refetch } = useTeamMembers(query);
@@ -172,26 +153,22 @@ function MembersTab({
       return;
     }
 
-    onClearError();
-
     try {
       await updateRole.mutateAsync({ userId: member.userId, input: { role } });
-    } catch (error) {
-      onError(getErrorMessage(error));
+    } catch {
+      // Mutation toast is shown globally.
     }
   };
 
   const handleRemove = async (member: TeamMember) => {
-    onClearError();
-
     try {
       await removeMember.mutateAsync(member.userId);
 
       if (members.length === 1 && query.page > 1) {
         onQueryChange({ ...query, page: query.page - 1 });
       }
-    } catch (error) {
-      onError(getErrorMessage(error));
+    } catch {
+      // Mutation toast is shown globally.
     }
   };
 
@@ -318,13 +295,9 @@ function MembersTab({
 function InvitationsTab({
   query,
   onQueryChange,
-  onError,
-  onClearError,
 }: {
   query: TeamListQuery;
   onQueryChange: (query: TeamListQuery) => void;
-  onError: (message: string) => void;
-  onClearError: () => void;
 }) {
   const { data, isLoading, isError, refetch } = useTeamInvitations(query);
   const createInvitation = useCreateTeamInvitation();
@@ -339,29 +312,26 @@ function InvitationsTab({
 
   const handleInvite = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onClearError();
 
     try {
       await createInvitation.mutateAsync({ emailAddress: email.trim(), role });
       setEmail("");
       setRole("org:member");
       onQueryChange({ ...query, page: 1 });
-    } catch (error) {
-      onError(getErrorMessage(error));
+    } catch {
+      // Mutation toast is shown globally.
     }
   };
 
   const handleRevoke = async (invitation: TeamInvitation) => {
-    onClearError();
-
     try {
       await revokeInvitation.mutateAsync(invitation.id);
 
       if (invitations.length === 1 && query.page > 1) {
         onQueryChange({ ...query, page: query.page - 1 });
       }
-    } catch (error) {
-      onError(getErrorMessage(error));
+    } catch {
+      // Mutation toast is shown globally.
     }
   };
 
@@ -637,14 +607,3 @@ function formatTeamDate(timestamp: number) {
   });
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return "Something went wrong";
-}

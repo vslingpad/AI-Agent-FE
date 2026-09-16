@@ -16,11 +16,11 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     description:
       "Connect Zendesk Messaging for channels, Help Center for knowledge, and Support actions.",
     capabilities: ["channel", "knowledge", "action"],
-    knowledgeSubCapabilities: ["help_center", "tickets"],
+    knowledge_sub_capabilities: ["help_center", "tickets"],
     status: "active",
     available: true,
-    sortOrder: 10,
-    configFields: [
+    sort_order: 10,
+    config_fields: [
       {
         key: "subdomain",
         label: "Zendesk subdomain",
@@ -29,7 +29,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         placeholder: "acme",
       },
     ],
-    oauthSteps: [
+    oauth_steps: [
       {
         id: "sunshine",
         label: "Messaging (Sunshine)",
@@ -44,7 +44,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: false,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Create and update support tickets",
       "Search Help Center articles",
       "Add internal notes to tickets",
@@ -58,9 +58,9 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["action"],
     status: "active",
     available: true,
-    sortOrder: 20,
-    configFields: [],
-    oauthSteps: [
+    sort_order: 20,
+    config_fields: [],
+    oauth_steps: [
       {
         id: "oauth",
         label: "Calendly OAuth",
@@ -68,7 +68,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: true,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Check available time slots",
       "Book a meeting",
       "Cancel or reschedule a booking",
@@ -82,8 +82,8 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["action"],
     status: "active",
     available: true,
-    sortOrder: 30,
-    configFields: [
+    sort_order: 30,
+    config_fields: [
       {
         key: "mode",
         label: "Environment",
@@ -95,7 +95,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         ],
       },
     ],
-    oauthSteps: [
+    oauth_steps: [
       {
         id: "oauth",
         label: "Stripe Connect",
@@ -103,7 +103,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: true,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Retrieve and display invoices",
       "Retrieve and display subscriptions",
       "Change customer information",
@@ -118,8 +118,8 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     available: false,
-    sortOrder: 40,
-    configFields: [
+    sort_order: 40,
+    config_fields: [
       {
         key: "subdomain",
         label: "Freshdesk domain",
@@ -128,7 +128,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         placeholder: "acme",
       },
     ],
-    oauthSteps: [
+    oauth_steps: [
       {
         id: "oauth",
         label: "Freshdesk OAuth",
@@ -136,7 +136,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: true,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Create and update tickets",
       "Search solution articles",
       "Add internal notes",
@@ -150,9 +150,9 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     available: false,
-    sortOrder: 50,
-    configFields: [],
-    oauthSteps: [
+    sort_order: 50,
+    config_fields: [],
+    oauth_steps: [
       {
         id: "oauth",
         label: "Intercom OAuth",
@@ -160,7 +160,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: true,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Look up conversations",
       "Tag and assign contacts",
       "Search Help Center articles",
@@ -174,9 +174,9 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     available: false,
-    sortOrder: 60,
-    configFields: [],
-    oauthSteps: [
+    sort_order: 60,
+    config_fields: [],
+    oauth_steps: [
       {
         id: "oauth",
         label: "HubSpot OAuth",
@@ -184,7 +184,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: true,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Look up contacts and companies",
       "Create and update tickets",
       "Search knowledge base articles",
@@ -198,9 +198,9 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["channel", "knowledge", "action"],
     status: "active",
     available: false,
-    sortOrder: 70,
-    configFields: [],
-    oauthSteps: [
+    sort_order: 70,
+    config_fields: [],
+    oauth_steps: [
       {
         id: "oauth",
         label: "Zoho Desk OAuth",
@@ -208,7 +208,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: true,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Create and update tickets",
       "Assign departments",
       "Search knowledge base articles",
@@ -222,8 +222,8 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["action"],
     status: "active",
     available: false,
-    sortOrder: 80,
-    configFields: [
+    sort_order: 80,
+    config_fields: [
       {
         key: "shopDomain",
         label: "Shop domain",
@@ -232,7 +232,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         placeholder: "acme.myshopify.com",
       },
     ],
-    oauthSteps: [
+    oauth_steps: [
       {
         id: "oauth",
         label: "Shopify OAuth",
@@ -240,7 +240,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: true,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Look up order status",
       "Retrieve fulfillment and tracking",
       "Issue refunds",
@@ -254,9 +254,9 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
     capabilities: ["channel", "action"],
     status: "active",
     available: false,
-    sortOrder: 90,
-    configFields: [],
-    oauthSteps: [
+    sort_order: 90,
+    config_fields: [],
+    oauth_steps: [
       {
         id: "oauth",
         label: "Gorgias OAuth",
@@ -264,7 +264,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         required: true,
       },
     ],
-    actionHighlights: [
+    action_highlights: [
       "Create and update tickets",
       "Add internal notes",
       "Apply macros",
@@ -281,81 +281,81 @@ function createSeedConnectors(): OrgConnector[] {
   return [
     enrichConnector({
       id: "conn_zd_us",
-      organizationId: DEFAULT_ORG_ID,
-      integrationSlug: "zendesk",
-      displayName: "Zendesk — US Support",
-      externalInstanceId: "acme",
+      organization_id: DEFAULT_ORG_ID,
+      integration_slug: "zendesk",
+      display_name: "Zendesk — US Support",
+      external_instance_id: "acme",
       capabilities: ["channel", "knowledge", "action"],
-      enabledCapabilities: ["channel"],
-      knowledgeSubCapabilities: ["help_center", "tickets"],
-      enabledKnowledgeSubCapabilities: [],
+      enabled_capabilities: ["channel"],
+      knowledge_sub_capabilities: ["help_center", "tickets"],
+      enabled_knowledge_sub_capabilities: [],
       status: "active",
-      syncStatus: "synced",
+      sync_status: "synced",
       config: {
         subdomain: "acme",
         webhooks: { sunshine_id: "wh_sun_001" },
         auth: { sunshine: true, globalAuth: false },
       },
-      routingConfig: {
+      routing_config: {
         defaultAgentId: null,
         rules: [],
       },
-      reauthRequired: false,
-      reauthScope: null,
-      reauthReason: null,
-      lastSyncedAt: twoHoursAgo,
-      lastSyncAttemptAt: twoHoursAgo,
-      connectedBy: { name: "Sam Lee", connectedAt },
-      createdAt: connectedAt,
-      modifiedAt: twoHoursAgo,
+      reauth_required: false,
+      reauth_scope: null,
+      reauth_reason: null,
+      last_synced_at: twoHoursAgo,
+      last_sync_attempt_at: twoHoursAgo,
+      connected_by: { name: "Sam Lee", connected_at: connectedAt },
+      created_at: connectedAt,
+      modified_at: twoHoursAgo,
     }),
     enrichConnector({
       id: "conn_cal_sales",
-      organizationId: DEFAULT_ORG_ID,
-      integrationSlug: "calendly",
-      displayName: "Calendly — Sales",
-      externalInstanceId: "sales@acme.com",
+      organization_id: DEFAULT_ORG_ID,
+      integration_slug: "calendly",
+      display_name: "Calendly — Sales",
+      external_instance_id: "sales@acme.com",
       capabilities: ["action"],
-      enabledCapabilities: ["action"],
+      enabled_capabilities: ["action"],
       status: "active",
-      syncStatus: "never",
+      sync_status: "never",
       config: {
         defaultEventType: "/support-call",
         accountEmail: "sales@acme.com",
       },
-      routingConfig: {},
-      reauthRequired: false,
-      reauthScope: null,
-      reauthReason: null,
-      lastSyncedAt: null,
-      lastSyncAttemptAt: null,
-      connectedBy: { name: "Sam Lee", connectedAt },
-      createdAt: connectedAt,
-      modifiedAt: connectedAt,
+      routing_config: {},
+      reauth_required: false,
+      reauth_scope: null,
+      reauth_reason: null,
+      last_synced_at: null,
+      last_sync_attempt_at: null,
+      connected_by: { name: "Sam Lee", connected_at: connectedAt },
+      created_at: connectedAt,
+      modified_at: connectedAt,
     }),
     enrichConnector({
       id: "conn_stripe_acme",
-      organizationId: DEFAULT_ORG_ID,
-      integrationSlug: "stripe",
-      displayName: "Stripe",
-      externalInstanceId: "acct_1acme",
+      organization_id: DEFAULT_ORG_ID,
+      integration_slug: "stripe",
+      display_name: "Stripe",
+      external_instance_id: "acct_1acme",
       capabilities: ["action"],
-      enabledCapabilities: ["action"],
+      enabled_capabilities: ["action"],
       status: "active",
-      syncStatus: "never",
+      sync_status: "never",
       config: {
         accountId: "acct_1acme....",
         mode: "live",
       },
-      routingConfig: {},
-      reauthRequired: false,
-      reauthScope: null,
-      reauthReason: null,
-      lastSyncedAt: null,
-      lastSyncAttemptAt: null,
-      connectedBy: { name: "Sam Lee", connectedAt },
-      createdAt: connectedAt,
-      modifiedAt: connectedAt,
+      routing_config: {},
+      reauth_required: false,
+      reauth_scope: null,
+      reauth_reason: null,
+      last_synced_at: null,
+      last_sync_attempt_at: null,
+      connected_by: { name: "Sam Lee", connected_at: connectedAt },
+      created_at: connectedAt,
+      modified_at: connectedAt,
     }),
   ];
 }
@@ -366,19 +366,19 @@ function buildConnectorDetail(connector: OrgConnector): ConnectorDetail {
     notification: null,
   };
 
-  if (connector.integrationSlug === "zendesk") {
+  if (connector.integration_slug === "zendesk") {
     const auth = connector.config.auth as
       | { sunshine?: boolean; globalAuth?: boolean }
       | undefined;
     const globalAuthConnected = auth?.globalAuth ?? false;
     const actionsEnabled =
-      connector.enabledCapabilities.includes("action") && globalAuthConnected;
+      connector.enabled_capabilities.includes("action") && globalAuthConnected;
     const knowledgeEnabled =
-      connector.enabledCapabilities.includes("knowledge") &&
+      connector.enabled_capabilities.includes("knowledge") &&
       globalAuthConnected;
 
     base.notification = !globalAuthConnected &&
-      connector.enabledCapabilities.some(
+      connector.enabled_capabilities.some(
         (cap) => cap === "knowledge" || cap === "action"
       )
       ? {
@@ -386,13 +386,13 @@ function buildConnectorDetail(connector: OrgConnector): ConnectorDetail {
           message:
             "Support & Guide authorization is required for Knowledge and Actions. Complete Global Auth from the Overview tab.",
         }
-      : connector.syncStatus === "sync_failed" && knowledgeEnabled
+      : connector.sync_status === "sync_failed" && knowledgeEnabled
         ? {
             type: "warning",
             message:
               "Help Center sync failed during the last attempt. Knowledge articles may be out of date until sync succeeds.",
           }
-        : connector.reauthRequired
+        : connector.reauth_required
           ? {
               type: "error",
               message:
@@ -401,16 +401,16 @@ function buildConnectorDetail(connector: OrgConnector): ConnectorDetail {
           : null;
 
     base.channel = {
-      webhookStatus: "healthy",
-      webhookUrl:
+      webhook_status: "healthy",
+      webhook_url:
         "https://hooks.lingpad.ai/webhooks/zendesk/sunshine/conn_zd_us",
-      sunshineAppId: "5f8a9b2c1d3e4f5a",
-      defaultRoutingAgent: null,
-      tagRules: [
-        { tag: "sales", agentId: "agent_sales" },
-        { tag: "billing", agentId: "agent_billing" },
+      sunshine_app_id: "5f8a9b2c1d3e4f5a",
+      default_routing_agent: null,
+      tag_rules: [
+        { tag: "sales", agent_id: "agent_sales" },
+        { tag: "billing", agent_id: "agent_billing" },
       ],
-      messagingEnabled: connector.enabledCapabilities.includes("channel"),
+      messaging_enabled: connector.enabled_capabilities.includes("channel"),
     };
 
     base.knowledge = {
@@ -418,14 +418,14 @@ function buildConnectorDetail(connector: OrgConnector): ConnectorDetail {
         {
           id: "hc_general",
           name: "General",
-          articleCount: 842,
-          lastSyncedAt: connector.lastSyncedAt,
+          article_count: 842,
+          last_synced_at: connector.last_synced_at,
         },
         {
           id: "hc_billing",
           name: "Billing & Refunds",
-          articleCount: 362,
-          lastSyncedAt: connector.lastSyncedAt,
+          article_count: 362,
+          last_synced_at: connector.last_synced_at,
         },
       ],
       articles: [
@@ -434,36 +434,36 @@ function buildConnectorDetail(connector: OrgConnector): ConnectorDetail {
           title: "How to request a refund",
           category: "Billing & Refunds",
           status: "indexed",
-          wordCount: 420,
-          lastTrainedAt: connector.lastSyncedAt,
+          word_count: 420,
+          last_trained_at: connector.last_synced_at,
         },
         {
           id: "art_002",
           title: "Shipping timelines and tracking",
           category: "General",
           status: "indexed",
-          wordCount: 310,
-          lastTrainedAt: connector.lastSyncedAt,
+          word_count: 310,
+          last_trained_at: connector.last_synced_at,
         },
         {
           id: "art_003",
           title: "Enterprise SLA overview",
           category: "General",
           status: "failed",
-          wordCount: 890,
-          lastTrainedAt: null,
+          word_count: 890,
+          last_trained_at: null,
         },
         {
           id: "art_004",
           title: "Updating payment method",
           category: "Billing & Refunds",
           status: "pending",
-          wordCount: 240,
-          lastTrainedAt: null,
+          word_count: 240,
+          last_trained_at: null,
         },
       ],
-      totalArticles: 1204,
-      indexedArticles: 1189,
+      total_articles: 1204,
+      indexed_articles: 1189,
     };
 
     base.actions = [
@@ -471,76 +471,76 @@ function buildConnectorDetail(connector: OrgConnector): ConnectorDetail {
         id: "zd_tag_ticket",
         name: "Tag ticket",
         description: "Add tags to a Support ticket during or after a conversation.",
-        permissionGranted: actionsEnabled,
-        requiredScope: "Zendesk Global Auth (read write)",
+        permission_granted: actionsEnabled,
+        required_scope: "Zendesk Global Auth (read write)",
       },
       {
         id: "zd_assign_ticket",
         name: "Assign ticket",
         description: "Assign a ticket to a group or agent on escalation.",
-        permissionGranted: actionsEnabled,
-        requiredScope: "Zendesk Global Auth (read write)",
+        permission_granted: actionsEnabled,
+        required_scope: "Zendesk Global Auth (read write)",
       },
       {
         id: "zd_internal_note",
         name: "Add internal note",
         description: "Post an internal note with AI summary on handover.",
-        permissionGranted: actionsEnabled,
-        requiredScope: "Zendesk Global Auth (read write)",
+        permission_granted: actionsEnabled,
+        required_scope: "Zendesk Global Auth (read write)",
       },
       {
         id: "zd_pass_control",
         name: "Pass control (Messaging)",
         description: "Hand off a Messaging conversation to a human agent queue.",
-        permissionGranted: connector.enabledCapabilities.includes("channel"),
-        requiredScope: "Sunshine OAuth (messages:write)",
+        permission_granted: connector.enabled_capabilities.includes("channel"),
+        required_scope: "Sunshine OAuth (messages:write)",
       },
     ];
   }
 
-  if (connector.integrationSlug === "calendly") {
+  if (connector.integration_slug === "calendly") {
     base.actions = [
       {
         id: "cal_schedule",
         name: "Schedule meeting",
         description: "Book a meeting using a configured event type.",
-        permissionGranted: true,
+        permission_granted: true,
       },
       {
         id: "cal_availability",
         name: "Check availability",
         description: "Look up open slots for a given event type.",
-        permissionGranted: true,
+        permission_granted: true,
       },
       {
         id: "cal_cancel",
         name: "Cancel event",
         description: "Cancel a scheduled Calendly event on behalf of the customer.",
-        permissionGranted: true,
+        permission_granted: true,
       },
     ];
   }
 
-  if (connector.integrationSlug === "stripe") {
+  if (connector.integration_slug === "stripe") {
     base.actions = [
       {
         id: "stripe_lookup_sub",
         name: "Lookup subscription",
         description: "Retrieve subscription status and plan details.",
-        permissionGranted: true,
+        permission_granted: true,
       },
       {
         id: "stripe_portal_link",
         name: "Customer portal link",
         description: "Generate a Stripe Customer Portal session link.",
-        permissionGranted: true,
+        permission_granted: true,
       },
       {
         id: "stripe_refund",
         name: "Issue refund",
         description: "Process a refund — requires policy approval and confirmation.",
-        permissionGranted: false,
-        requiredScope: "Restricted — enable in Stripe connector policy",
+        permission_granted: false,
+        required_scope: "Restricted — enable in Stripe connector policy",
       },
     ];
   }
@@ -551,8 +551,8 @@ function buildConnectorDetail(connector: OrgConnector): ConnectorDetail {
 type WizardMode = "initial" | "global_auth";
 
 type ConnectSessionRecord = ConnectSession & {
-  organizationId: string;
-  integrationSlug: string;
+  organization_id: string;
+  integration_slug: string;
   completedSteps: string[];
   wizardMode: WizardMode;
 };
@@ -566,7 +566,7 @@ function getOrgConnectors(orgId: string): OrgConnector[] {
       orgId,
       createSeedConnectors().map((c) => ({
         ...c,
-        organizationId: orgId,
+        organization_id: orgId,
       }))
     );
   }
@@ -594,8 +594,8 @@ function buildWizardSteps(
   if (catalog.slug === "zendesk") {
     const zendeskSteps =
       mode === "global_auth"
-        ? catalog.oauthSteps.filter((step) => step.id === "global_auth")
-        : catalog.oauthSteps.filter((step) => step.id === "sunshine");
+        ? catalog.oauth_steps.filter((step) => step.id === "global_auth")
+        : catalog.oauth_steps.filter((step) => step.id === "sunshine");
 
     return zendeskSteps.map((step) => ({
       id: step.id,
@@ -608,7 +608,7 @@ function buildWizardSteps(
     }));
   }
 
-  return catalog.oauthSteps.map((step) => ({
+  return catalog.oauth_steps.map((step) => ({
     id: step.id,
     label: step.label,
     description: step.description,
@@ -631,40 +631,40 @@ function makeConnector(
   orgId: string,
   input: CreateConnectorInput,
   catalog: IntegrationCatalogItem,
-  externalInstanceId: string | null
+  external_instance_id: string | null
 ): OrgConnector {
   const now = new Date().toISOString();
 
   return enrichConnector({
     id: generateId("conn"),
-    organizationId: orgId,
-    integrationSlug: input.integrationSlug,
-    displayName: input.displayName,
-    externalInstanceId,
+    organization_id: orgId,
+    integration_slug: input.integration_slug,
+    display_name: input.display_name,
+    external_instance_id,
     capabilities: catalog.capabilities,
-    enabledCapabilities: input.capabilities,
-    knowledgeSubCapabilities: catalog.knowledgeSubCapabilities ?? [],
-    enabledKnowledgeSubCapabilities: input.capabilities.includes("knowledge")
-      ? [...(catalog.knowledgeSubCapabilities ?? [])]
+    enabled_capabilities: input.capabilities,
+    knowledge_sub_capabilities: catalog.knowledge_sub_capabilities ?? [],
+    enabled_knowledge_sub_capabilities: input.capabilities.includes("knowledge")
+      ? [...(catalog.knowledge_sub_capabilities ?? [])]
       : [],
     status: "pending_oauth",
-    syncStatus: "never",
+    sync_status: "never",
     config:
-      input.integrationSlug === "zendesk"
+      input.integration_slug === "zendesk"
         ? {
             ...(input.config ?? {}),
             auth: { sunshine: false, globalAuth: false },
           }
         : (input.config ?? {}),
-    routingConfig: {},
-    reauthRequired: false,
-    reauthScope: null,
-    reauthReason: null,
-    lastSyncedAt: null,
-    lastSyncAttemptAt: null,
-    connectedBy: { name: "You", connectedAt: now },
-    createdAt: now,
-    modifiedAt: now,
+    routing_config: {},
+    reauth_required: false,
+    reauth_scope: null,
+    reauth_reason: null,
+    last_synced_at: null,
+    last_sync_attempt_at: null,
+    connected_by: { name: "You", connected_at: now },
+    created_at: now,
+    modified_at: now,
   });
 }
 
@@ -676,8 +676,8 @@ export function getIntegrationsHub(orgId: string) {
   return {
     catalog: INTEGRATION_CATALOG,
     connectors,
-    planLimit: 10,
-    connectedCount: connectors.length,
+    plan_limit: 10,
+    connected_count: connectors.length,
   };
 }
 
@@ -696,7 +696,7 @@ export function getConnectorDetail(orgId: string, connectorId: string) {
 }
 
 export function createOrgConnector(orgId: string, input: CreateConnectorInput) {
-  const catalog = findCatalogItem(input.integrationSlug);
+  const catalog = findCatalogItem(input.integration_slug);
 
   if (!catalog) {
     throw new Error("Unknown integration type");
@@ -710,54 +710,54 @@ export function createOrgConnector(orgId: string, input: CreateConnectorInput) {
     throw new Error("Invalid capabilities for this integration");
   }
 
-  const externalInstanceId =
-    input.externalInstanceId ??
+  const external_instance_id =
+    input.external_instance_id ??
     (input.config?.subdomain as string | undefined) ??
     null;
 
   const duplicate = getOrgConnectors(orgId).some(
     (c) =>
-      c.integrationSlug === input.integrationSlug &&
-      c.externalInstanceId === externalInstanceId &&
+      c.integration_slug === input.integration_slug &&
+      c.external_instance_id === external_instance_id &&
       c.status !== "disconnected"
   );
 
-  if (duplicate && externalInstanceId) {
+  if (duplicate && external_instance_id) {
     throw new Error(
       "An integration with this account already exists. Use a different instance or rename the existing one."
     );
   }
 
-  const connectSessionId = generateId("cs");
-  const connector = makeConnector(orgId, input, catalog, externalInstanceId);
+  const connect_session_id = generateId("cs");
+  const connector = makeConnector(orgId, input, catalog, external_instance_id);
 
   const steps = buildWizardSteps(catalog, [], "initial");
   const currentStep = getNextStep(steps);
 
   const session: ConnectSessionRecord = {
-    orgConnectorId: connector.id,
-    connectSessionId,
-    organizationId: orgId,
-    integrationSlug: input.integrationSlug,
+    org_connector_id: connector.id,
+    connect_session_id,
+    organization_id: orgId,
+    integration_slug: input.integration_slug,
     status: "pending_oauth",
     completedSteps: [],
     wizardMode: "initial",
     wizard: {
-      currentStep,
+      current_step: currentStep,
       steps: steps.map((step) => ({
         ...step,
         status: step.id === currentStep ? "in_progress" : step.status,
       })),
     },
-    authorizeUrl: currentStep
-      ? `https://oauth.lingpad.ai/${input.integrationSlug}/${currentStep}?session=${connectSessionId}`
+    authorize_url: currentStep
+      ? `https://oauth.lingpad.ai/${input.integration_slug}/${currentStep}?session=${connect_session_id}`
       : null,
   };
 
   const connectors = getOrgConnectors(orgId);
   connectors.push(connector);
   saveOrgConnectors(orgId, connectors);
-  connectSessions.set(connectSessionId, session);
+  connectSessions.set(connect_session_id, session);
 
   return { connector, session };
 }
@@ -765,20 +765,20 @@ export function createOrgConnector(orgId: string, input: CreateConnectorInput) {
 export function completeOAuthStep(
   orgId: string,
   connectorId: string,
-  connectSessionId: string,
-  stepId: string
+  connect_session_id: string,
+  step_id: string
 ) {
-  const session = connectSessions.get(connectSessionId);
+  const session = connectSessions.get(connect_session_id);
 
-  if (!session || session.orgConnectorId !== connectorId) {
+  if (!session || session.org_connector_id !== connectorId) {
     throw new Error("Invalid connect session");
   }
 
-  if (session.organizationId !== orgId) {
+  if (session.organization_id !== orgId) {
     throw new Error("Unauthorized");
   }
 
-  const catalog = findCatalogItem(session.integrationSlug);
+  const catalog = findCatalogItem(session.integration_slug);
 
   if (!catalog) {
     throw new Error("Unknown integration");
@@ -792,7 +792,7 @@ export function completeOAuthStep(
   }
 
   const connector = connectors[connectorIndex]!;
-  const completedSteps = [...session.completedSteps, stepId];
+  const completedSteps = [...session.completedSteps, step_id];
   const steps = buildWizardSteps(
     catalog,
     completedSteps,
@@ -806,7 +806,7 @@ export function completeOAuthStep(
     completedSteps,
     status: allComplete ? "active" : "pending_oauth",
     wizard: {
-      currentStep,
+      current_step: currentStep,
       steps: steps.map((step) => {
         if (step.id === currentStep) {
           return { ...step, status: "in_progress" as const };
@@ -815,22 +815,22 @@ export function completeOAuthStep(
         return step;
       }),
     },
-    authorizeUrl: currentStep
-      ? `https://oauth.lingpad.ai/${session.integrationSlug}/${currentStep}?session=${connectSessionId}`
+    authorize_url: currentStep
+      ? `https://oauth.lingpad.ai/${session.integration_slug}/${currentStep}?session=${connect_session_id}`
       : null,
   };
 
-  connectSessions.set(connectSessionId, updatedSession);
+  connectSessions.set(connect_session_id, updatedSession);
 
   const now = new Date().toISOString();
   let nextConfig = connector.config;
 
-  if (connector.integrationSlug === "zendesk") {
-    if (stepId === "sunshine") {
+  if (connector.integration_slug === "zendesk") {
+    if (step_id === "sunshine") {
       nextConfig = mergeZendeskAuthConfig(nextConfig, { sunshine: true });
     }
 
-    if (stepId === "global_auth") {
+    if (step_id === "global_auth") {
       nextConfig = mergeZendeskAuthConfig(nextConfig, { globalAuth: true });
     }
   }
@@ -839,14 +839,14 @@ export function completeOAuthStep(
     ...connector,
     config: nextConfig,
     status: allComplete ? "active" : connector.status === "active" ? "active" : "pending_oauth",
-    reauthRequired: allComplete && stepId === "global_auth" ? false : connector.reauthRequired,
-    syncStatus:
+    reauth_required: allComplete && step_id === "global_auth" ? false : connector.reauth_required,
+    sync_status:
       allComplete && session.wizardMode === "initial"
         ? "synced"
-        : connector.syncStatus,
-    modifiedAt: now,
-    lastSyncedAt: allComplete ? now : connector.lastSyncedAt,
-    lastSyncAttemptAt: allComplete ? now : connector.lastSyncAttemptAt,
+        : connector.sync_status,
+    modified_at: now,
+    last_synced_at: allComplete ? now : connector.last_synced_at,
+    last_sync_attempt_at: allComplete ? now : connector.last_sync_attempt_at,
   });
 
   connectors[connectorIndex] = updatedConnector;
@@ -855,8 +855,8 @@ export function completeOAuthStep(
   return { connector: updatedConnector, session: updatedSession };
 }
 
-export function getConnectSession(connectSessionId: string) {
-  return connectSessions.get(connectSessionId) ?? null;
+export function getConnectSession(connect_session_id: string) {
+  return connectSessions.get(connect_session_id) ?? null;
 }
 
 export function updateOrgConnector(
@@ -872,10 +872,10 @@ export function updateOrgConnector(
   }
 
   const existing = connectors[index]!;
-  const catalog = findCatalogItem(existing.integrationSlug);
+  const catalog = findCatalogItem(existing.integration_slug);
 
-  if (input.enabledCapabilities && catalog) {
-    const invalid = input.enabledCapabilities.filter(
+  if (input.enabled_capabilities && catalog) {
+    const invalid = input.enabled_capabilities.filter(
       (cap) => !catalog.capabilities.includes(cap)
     );
 
@@ -884,9 +884,9 @@ export function updateOrgConnector(
     }
   }
 
-  if (input.enabledKnowledgeSubCapabilities && catalog) {
-    const available = catalog.knowledgeSubCapabilities ?? [];
-    const invalid = input.enabledKnowledgeSubCapabilities.filter(
+  if (input.enabled_knowledge_sub_capabilities && catalog) {
+    const available = catalog.knowledge_sub_capabilities ?? [];
+    const invalid = input.enabled_knowledge_sub_capabilities.filter(
       (cap) => !available.includes(cap)
     );
 
@@ -896,25 +896,25 @@ export function updateOrgConnector(
   }
 
   const nextEnabledCapabilities =
-    input.enabledCapabilities ?? existing.enabledCapabilities;
+    input.enabled_capabilities ?? existing.enabled_capabilities;
   const knowledgeEnabled = nextEnabledCapabilities.includes("knowledge");
 
   const updated = enrichConnector({
     ...existing,
-    displayName: input.displayName ?? existing.displayName,
-    enabledCapabilities: nextEnabledCapabilities,
-    enabledKnowledgeSubCapabilities: knowledgeEnabled
-      ? (input.enabledKnowledgeSubCapabilities ??
-        existing.enabledKnowledgeSubCapabilities ??
+    display_name: input.display_name ?? existing.display_name,
+    enabled_capabilities: nextEnabledCapabilities,
+    enabled_knowledge_sub_capabilities: knowledgeEnabled
+      ? (input.enabled_knowledge_sub_capabilities ??
+        existing.enabled_knowledge_sub_capabilities ??
         [])
       : [],
     config: input.config
       ? { ...existing.config, ...input.config }
       : existing.config,
-    routingConfig: input.routingConfig
-      ? { ...existing.routingConfig, ...input.routingConfig }
-      : existing.routingConfig,
-    modifiedAt: new Date().toISOString(),
+    routing_config: input.routing_config
+      ? { ...existing.routing_config, ...input.routing_config }
+      : existing.routing_config,
+    modified_at: new Date().toISOString(),
   });
 
   connectors[index] = updated;
@@ -934,7 +934,7 @@ export function deleteOrgConnector(orgId: string, connectorId: string) {
   connectors[index] = enrichConnector({
     ...connectors[index]!,
     status: "disconnected",
-    modifiedAt: new Date().toISOString(),
+    modified_at: new Date().toISOString(),
   });
 
   saveOrgConnectors(orgId, connectors);
@@ -945,7 +945,7 @@ export function deleteOrgConnector(orgId: string, connectorId: string) {
 export function startOAuthStep(
   orgId: string,
   connectorId: string,
-  stepId: "global_auth" | "sunshine"
+  step_id: "global_auth" | "sunshine"
 ) {
   const connector = getOrgConnector(orgId, connectorId);
 
@@ -953,28 +953,28 @@ export function startOAuthStep(
     throw new Error("Connector not found");
   }
 
-  const catalog = findCatalogItem(connector.integrationSlug);
+  const catalog = findCatalogItem(connector.integration_slug);
 
   if (!catalog) {
     throw new Error("Unknown integration");
   }
 
-  const connectSessionId = generateId("cs");
+  const connect_session_id = generateId("cs");
   const wizardMode: WizardMode =
-    stepId === "global_auth" ? "global_auth" : "initial";
+    step_id === "global_auth" ? "global_auth" : "initial";
   const steps = buildWizardSteps(catalog, [], wizardMode);
-  const currentStep = stepId;
+  const currentStep = step_id;
 
   const session: ConnectSessionRecord = {
-    orgConnectorId: connectorId,
-    connectSessionId,
-    organizationId: orgId,
-    integrationSlug: connector.integrationSlug,
+    org_connector_id: connectorId,
+    connect_session_id,
+    organization_id: orgId,
+    integration_slug: connector.integration_slug,
     status: "pending_oauth",
     completedSteps: [],
     wizardMode,
     wizard: {
-      currentStep,
+      current_step: currentStep,
       steps: steps.map((step) => ({
         ...step,
         status:
@@ -983,10 +983,10 @@ export function startOAuthStep(
             : ("pending" as const),
       })),
     },
-    authorizeUrl: `https://oauth.lingpad.ai/${connector.integrationSlug}/${currentStep}?session=${connectSessionId}`,
+    authorize_url: `https://oauth.lingpad.ai/${connector.integration_slug}/${currentStep}?session=${connect_session_id}`,
   };
 
-  connectSessions.set(connectSessionId, session);
+  connectSessions.set(connect_session_id, session);
 
   return session;
 }
@@ -998,7 +998,7 @@ export function startReauth(orgId: string, connectorId: string) {
     throw new Error("Connector not found");
   }
 
-  const scope = connector.reauthScope ?? "sunshine";
+  const scope = connector.reauth_scope ?? "sunshine";
   return startOAuthStep(
     orgId,
     connectorId,

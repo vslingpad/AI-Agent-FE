@@ -38,7 +38,7 @@ export function ActionsHubPage() {
     () =>
       (hub?.catalog ?? [])
         .filter((item) => hasActionCapability(item.capabilities))
-        .sort((a, b) => a.sortOrder - b.sortOrder),
+        .sort((a, b) => a.sort_order - b.sort_order),
     [hub]
   );
 
@@ -182,10 +182,10 @@ function ConnectedActionCard({
   catalog: IntegrationCatalogItem[];
 }) {
   const catalogItem = catalog.find(
-    (item) => item.slug === connector.integrationSlug
+    (item) => item.slug === connector.integration_slug
   );
-  const highlights = catalogItem?.actionHighlights ?? [];
-  const detailPath = getConnectorPath(connector.integrationSlug, connector.id, {
+  const highlights = catalogItem?.action_highlights ?? [];
+  const detailPath = getConnectorPath(connector.integration_slug, connector.id, {
     tab: "actions",
   });
 
@@ -197,12 +197,12 @@ function ConnectedActionCard({
       >
         <CardContent className="flex h-full flex-col gap-4">
           <div className="flex items-start gap-3">
-            <IntegrationBrandIcon slug={connector.integrationSlug} />
+            <IntegrationBrandIcon slug={connector.integration_slug} />
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">
-                    {connector.displayName}
+                    {connector.display_name}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {connector.identifier}
@@ -273,7 +273,7 @@ function filterActionCatalog(
   query: string
 ) {
   return catalog.filter((item) =>
-    matchesQuery(query, [item.name, item.description, item.slug, ...item.actionHighlights])
+    matchesQuery(query, [item.name, item.description, item.slug, ...item.action_highlights])
   );
 }
 
@@ -284,15 +284,15 @@ function filterConnectedActions(
 ) {
   return connectors.filter((connector) => {
     const catalogItem = catalog.find(
-      (item) => item.slug === connector.integrationSlug
+      (item) => item.slug === connector.integration_slug
     );
 
     return matchesQuery(query, [
-      connector.displayName,
+      connector.display_name,
       connector.identifier,
-      connector.integrationSlug,
+      connector.integration_slug,
       catalogItem?.name,
-      ...(catalogItem?.actionHighlights ?? []),
+      ...(catalogItem?.action_highlights ?? []),
     ]);
   });
 }

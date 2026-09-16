@@ -30,9 +30,9 @@ export async function POST(request: Request, context: RouteContext) {
 
   const { id } = await context.params;
   const body = (await request.json().catch(() => null)) as {
-    connectSessionId?: string;
+    connect_session_id?: string;
   } | null;
-  const connectSessionId = body?.connectSessionId;
+  const connectSessionId = body?.connect_session_id;
   const query = connectSessionId
     ? `?connect_session_id=${encodeURIComponent(connectSessionId)}`
     : "";

@@ -30,8 +30,8 @@ function parseDateOnly(date: string): { year: number; month: number; day: number
   return { year, month, day };
 }
 
-/** Calendar date (YYYY-MM-DD) in the user's local timezone for `<input type="date">`. */
-export function toLocalDateInput(value?: string): string {
+/** Calendar date (YYYY-MM-DD) for `<input type="date">`. */
+export function toDateInputValue(value?: string): string {
   if (!value) {
     return "";
   }
@@ -46,30 +46,10 @@ export function toLocalDateInput(value?: string): string {
   }
 
   return [
-    parsed.getFullYear(),
-    padDatePart(parsed.getMonth() + 1),
-    padDatePart(parsed.getDate()),
+    parsed.getUTCFullYear(),
+    padDatePart(parsed.getUTCMonth() + 1),
+    padDatePart(parsed.getUTCDate()),
   ].join("-");
-}
-
-/** Local midnight (`00:00:00.000`) converted to UTC ISO. */
-export function localStartOfDayToUtcIso(date: string): string {
-  const parts = parseDateOnly(date);
-  if (!parts) {
-    return date;
-  }
-
-  return new Date(parts.year, parts.month - 1, parts.day, 0, 0, 0, 0).toISOString();
-}
-
-/** Local end of day (`23:59:59.999`) converted to UTC ISO. */
-export function localEndOfDayToUtcIso(date: string): string {
-  const parts = parseDateOnly(date);
-  if (!parts) {
-    return date;
-  }
-
-  return new Date(parts.year, parts.month - 1, parts.day, 23, 59, 59, 999).toISOString();
 }
 
 export function parseDashboardScope(
@@ -78,17 +58,9 @@ export function parseDashboardScope(
   const dateFromRaw = searchParams.get("dateFrom") ?? undefined;
   const dateToRaw = searchParams.get("dateTo") ?? undefined;
   const dateFrom =
-    dateFromRaw && isDashboardTimestamp(dateFromRaw)
-      ? DATE_ONLY_RE.test(dateFromRaw)
-        ? localStartOfDayToUtcIso(dateFromRaw)
-        : dateFromRaw
-      : undefined;
+    dateFromRaw && isDashboardTimestamp(dateFromRaw) ? dateFromRaw : undefined;
   const dateTo =
-    dateToRaw && isDashboardTimestamp(dateToRaw)
-      ? DATE_ONLY_RE.test(dateToRaw)
-        ? localEndOfDayToUtcIso(dateToRaw)
-        : dateToRaw
-      : undefined;
+    dateToRaw && isDashboardTimestamp(dateToRaw) ? dateToRaw : undefined;
   const hasCustomRange = Boolean(dateFrom || dateTo);
   const period = ChartPeriodSchema.safeParse(searchParams.get("period"));
   const agentId = searchParams.get("agentId")?.trim() || undefined;
@@ -143,7 +115,7 @@ export function isCustomDashboardRange(query: DashboardQueryParams) {
 }
 
 function formatLocalDay(value: string) {
-  const day = toLocalDateInput(value);
+  const day = toDateInputValue(value);
   const parts = parseDateOnly(day);
   if (!parts) {
     return value;

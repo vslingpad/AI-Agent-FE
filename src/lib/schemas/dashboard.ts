@@ -24,7 +24,7 @@ export const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export const DashboardDateSchema = z.string().refine(
   (value) => DATE_ONLY_RE.test(value) || !Number.isNaN(Date.parse(value)),
-  { message: "Expected a UTC date or ISO datetime" }
+  { message: "Expected a date (YYYY-MM-DD) or ISO datetime" }
 );
 
 export const DashboardScopeQuerySchema = z.object({

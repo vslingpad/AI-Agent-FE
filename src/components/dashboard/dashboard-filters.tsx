@@ -5,6 +5,7 @@ import {
   CalendarIcon,
   CheckIcon,
   ChevronDownIcon,
+  InfoIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,14 +15,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAgentsList } from "@/hooks/use-agents";
 import {
   DASHBOARD_PERIOD_OPTIONS,
   DEFAULT_DASHBOARD_PERIOD,
   isCustomDashboardRange,
-  toLocalDateInput,
-  localEndOfDayToUtcIso,
-  localStartOfDayToUtcIso,
+  toDateInputValue,
 } from "@/lib/dashboard/query";
 import type { ChartPeriod, DashboardQueryParams } from "@/lib/schemas/dashboard";
 import { cn } from "@/lib/utils";
@@ -65,8 +69,8 @@ function DashboardDateFilter({
   onChange: (query: DashboardQueryParams) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [draftFrom, setDraftFrom] = useState(toLocalDateInput(query.dateFrom));
-  const [draftTo, setDraftTo] = useState(toLocalDateInput(query.dateTo));
+  const [draftFrom, setDraftFrom] = useState(toDateInputValue(query.dateFrom));
+  const [draftTo, setDraftTo] = useState(toDateInputValue(query.dateTo));
   const customRange = isCustomDashboardRange(query);
   const inverted = Boolean(draftFrom && draftTo && draftFrom > draftTo);
 
@@ -88,94 +92,112 @@ function DashboardDateFilter({
     onChange({
       ...query,
       period: undefined,
-      dateFrom: draftFrom ? localStartOfDayToUtcIso(draftFrom) : undefined,
-      dateTo: draftTo ? localEndOfDayToUtcIso(draftTo) : undefined,
+      dateFrom: draftFrom || undefined,
+      dateTo: draftTo || undefined,
     });
     setOpen(false);
   };
 
   return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) {
-          setDraftFrom(toLocalDateInput(query.dateFrom));
-          setDraftTo(toLocalDateInput(query.dateTo));
-        }
-        setOpen(nextOpen);
-      }}
-    >
-      <PopoverTrigger
-        render={<Button variant="outline" size="sm" className="gap-2" />}
+    <div className="flex items-center gap-1">
+      <Popover
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) {
+            setDraftFrom(toDateInputValue(query.dateFrom));
+            setDraftTo(toDateInputValue(query.dateTo));
+          }
+          setOpen(nextOpen);
+        }}
       >
-        <CalendarIcon className="size-4" />
-        {label}
-        <ChevronDownIcon className="size-4 text-muted-foreground" />
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 gap-3 p-3">
-        <div className="flex gap-0.5">
-          {DASHBOARD_PERIOD_OPTIONS.map((option) => {
-            const selected =
-              !customRange && (query.period ?? DEFAULT_DASHBOARD_PERIOD) === option.value;
+        <PopoverTrigger
+          render={<Button variant="outline" size="sm" className="gap-2" />}
+        >
+          <CalendarIcon className="size-4" />
+          {label}
+          <ChevronDownIcon className="size-4 text-muted-foreground" />
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-72 gap-3 p-3">
+          <div className="flex gap-0.5">
+            {DASHBOARD_PERIOD_OPTIONS.map((option) => {
+              const selected =
+                !customRange && (query.period ?? DEFAULT_DASHBOARD_PERIOD) === option.value;
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => selectPeriod(option.value)}
-                className={cn(
-                  "flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted bg-gray-100",
-                  selected && "bg-primary text-primary-foreground"
-                )}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="space-y-2 border-t border-border pt-3">
-          <Label>Custom range</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="dashboard-date-from" className="text-xs text-muted-foreground">
-                From
-              </Label>
-              <Input
-                id="dashboard-date-from"
-                type="date"
-                value={draftFrom}
-                onChange={(event) => setDraftFrom(event.target.value)}
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="dashboard-date-to" className="text-xs text-muted-foreground">
-                To
-              </Label>
-              <Input
-                id="dashboard-date-to"
-                type="date"
-                value={draftTo}
-                onChange={(event) => setDraftTo(event.target.value)}
-                className="h-9"
-              />
-            </div>
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => selectPeriod(option.value)}
+                  className={cn(
+                    "flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted bg-gray-100",
+                    selected && "bg-primary text-primary-foreground"
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
           </div>
-          {inverted ? (
-            <p className="text-xs text-destructive">From must be on or before To.</p>
-          ) : null}
-          <Button
-            size="sm"
-            className="w-full"
-            disabled={inverted || (!draftFrom && !draftTo)}
-            onClick={applyCustomRange}
-          >
-            Apply dates
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+
+          <div className="space-y-2 border-t border-border pt-3">
+            <Label>Custom range</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="dashboard-date-from" className="text-xs text-muted-foreground">
+                  From
+                </Label>
+                <Input
+                  id="dashboard-date-from"
+                  type="date"
+                  value={draftFrom}
+                  onChange={(event) => setDraftFrom(event.target.value)}
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="dashboard-date-to" className="text-xs text-muted-foreground">
+                  To
+                </Label>
+                <Input
+                  id="dashboard-date-to"
+                  type="date"
+                  value={draftTo}
+                  onChange={(event) => setDraftTo(event.target.value)}
+                  className="h-9"
+                />
+              </div>
+            </div>
+            {inverted ? (
+              <p className="text-xs text-destructive">From must be on or before To.</p>
+            ) : null}
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={inverted || (!draftFrom && !draftTo)}
+              onClick={applyCustomRange}
+            >
+              Apply dates
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <button
+              type="button"
+              className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Date range timezone"
+            >
+              <InfoIcon className="size-3.5" />
+            </button>
+          }
+        />
+        <TooltipContent>
+          Dates are in UTC timezone.
+        </TooltipContent>
+      </Tooltip>
+    </div>
   );
 }
 

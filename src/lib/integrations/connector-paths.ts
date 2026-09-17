@@ -37,7 +37,7 @@ export function formatConnectorIdentifier(
 
   switch (slug) {
     case "zendesk":
-      return subdomain ? `support.${subdomain}.zendesk.com` : "—";
+      return subdomain ? `${subdomain}.zendesk.com` : "—";
     case "calendly":
       return (config.accountEmail as string | undefined) ?? external_instance_id ?? "—";
     case "stripe":

@@ -26,7 +26,7 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
         label: "Zendesk subdomain",
         type: "text",
         required: true,
-        placeholder: "acme",
+        placeholder: "your-subdomain",
       },
     ],
     oauth_steps: [

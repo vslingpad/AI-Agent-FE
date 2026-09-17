@@ -141,7 +141,7 @@ Component: `connector-instance-card.tsx` → `ConnectorInstanceCard`.
 | UI field | Data source | Notes |
 |----------|-------------|--------|
 | Title (link) | `connector.display_name` | API / DB; user can rename via PATCH |
-| Subtitle | `connector.identifier` | Computed on Control Plane (e.g. Zendesk → `support.{subdomain}.zendesk.com`) |
+| Subtitle | `connector.identifier` | Computed on Control Plane (e.g. Zendesk → `{subdomain}.zendesk.com`) |
 | Brand icon | `connector.integration_slug` | `IntegrationBrandIcon` → SVG assets or fallback initials |
 | Capability chips | `catalog` item matched by `integration_slug` | Shows catalog capabilities vs `enabled_capabilities` on the instance |
 | Sync badge | `connector.sync_status` | Derived from knowledge source sync state on backend |

@@ -77,6 +77,7 @@ import {
   type UpdateProcedureExampleInput,
 } from "@/lib/schemas/procedures";
 import { serializeProcedureBody } from "@/lib/procedures/step-utils";
+import type { DashboardQueryParams } from "@/lib/schemas/dashboard";
 
 export async function getAgentsList(): Promise<AgentsList> {
   const json = await apiGet<unknown>("/api/agents");
@@ -93,8 +94,16 @@ export async function getAgentSettings(agentId: string): Promise<AgentSettings> 
   return AgentSettingsSchema.parse(json);
 }
 
-export async function getAgentAnalytics(agentId: string): Promise<AgentAnalytics> {
-  const json = await apiGet<unknown>(`/api/agents/${agentId}/analytics`);
+export async function getAgentAnalytics(
+  agentId: string,
+  params: DashboardQueryParams = {}
+): Promise<AgentAnalytics> {
+  const hasCustomRange = Boolean(params.dateFrom || params.dateTo);
+  const json = await apiGet<unknown>(`/api/agents/${agentId}/analytics`, {
+    period: hasCustomRange ? undefined : params.period,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+  });
   return AgentAnalyticsSchema.parse(json);
 }
 

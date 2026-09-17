@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@clerk/nextjs";
 import {
   createAgent,
@@ -69,6 +69,8 @@ import type {
   RunProcedureSimulationInput,
   UpdateProcedureExampleInput,
 } from "@/lib/schemas/procedures";
+import { DEFAULT_DASHBOARD_PERIOD } from "@/lib/dashboard/query";
+import type { DashboardQueryParams } from "@/lib/schemas/dashboard";
 
 function agentsKey(orgId?: string) {
   return ["agents", orgId] as const;
@@ -125,8 +127,24 @@ export function useAgentSettings(agentId: string) {
   return useAgentSectionQuery(agentId, "settings", () => getAgentSettings(agentId));
 }
 
-export function useAgentAnalytics(agentId: string) {
-  return useAgentSectionQuery(agentId, "analytics", () => getAgentAnalytics(agentId));
+export function useAgentAnalytics(agentId: string, query: DashboardQueryParams = {}) {
+  const { organization, isLoaded } = useOrganization();
+  const period = query.period ?? DEFAULT_DASHBOARD_PERIOD;
+
+  return useQuery({
+    queryKey: [
+      "agents",
+      organization?.id,
+      agentId,
+      "analytics",
+      period,
+      query.dateFrom,
+      query.dateTo,
+    ],
+    queryFn: () => getAgentAnalytics(agentId, query),
+    enabled: isLoaded && Boolean(organization?.id) && Boolean(agentId),
+    placeholderData: keepPreviousData,
+  });
 }
 
 export function useAgentKnowledge(agentId: string) {

@@ -275,7 +275,17 @@ Response: full updated `AgentSettings`.
 
 ## `GET /api/agents/:agentId/analytics`
 
-Read-only. Returns `AgentAnalytics`:
+Read-only. Optional query params:
+
+| Param | Values | Default |
+|-------|--------|---------|
+| `period` | `7d`, `30d`, `90d` | `7d` |
+| `dateFrom` | `YYYY-MM-DD` (or ISO datetime) | — |
+| `dateTo` | `YYYY-MM-DD` (or ISO datetime) | — |
+
+If `dateFrom` or `dateTo` is set, that custom range is used and `period` is ignored. KPIs compare the selected window with the equal-length window immediately before it (ticket volume is a relative %, rates are percentage-point deltas).
+
+Returns `AgentAnalytics`:
 
 ```json
 {
@@ -285,7 +295,7 @@ Read-only. Returns `AgentAnalytics`:
       "label": "AI-handled conversations",
       "displayValue": "412",
       "change": 12.4,
-      "changeLabel": "vs prior 20 days",
+      "changeLabel": "vs Jul 25 – Jul 31, 2026",
       "direction": "up",
       "invert": true,
       "sparkline": [280, 290, 300]
@@ -296,7 +306,10 @@ Read-only. Returns `AgentAnalytics`:
   "avgConfidence": 0.82,
   "knowledgeGroundedRate": 94,
   "remainingCredits": 588,
-  "includedCredits": 1000
+  "includedCredits": 1000,
+  "period": "7d",
+  "dateRangeLabel": "Aug 1 – Aug 7, 2026",
+  "comparisonLabel": "Jul 25 – Jul 31, 2026"
 }
 ```
 

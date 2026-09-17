@@ -1,11 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import { Sparkline } from "@/components/dashboard/sparkline";
 import { TrendIndicator } from "@/components/dashboard/trend-indicator";
+import { DashboardDateFilter } from "@/components/dashboard/dashboard-filters";
+import { DashboardPeriodToggle } from "@/components/dashboard/dashboard-subpage-header";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
 import { AgentAnalyticsSkeleton, AgentErrorState } from "@/components/agents/agent-states";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
@@ -13,6 +17,15 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { useAgentAnalytics } from "@/hooks/use-agents";
+import {
+  DEFAULT_DASHBOARD_PERIOD,
+  dashboardDateButtonLabel,
+  isCustomDashboardRange,
+  parseDashboardScope,
+  toDashboardSearchParams,
+} from "@/lib/dashboard/query";
+import type { ChartPeriod, DashboardQueryParams } from "@/lib/schemas/dashboard";
+import { cn } from "@/lib/utils";
 
 const chartConfig = {
   value: {
@@ -22,24 +35,55 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function AgentAnalyticsPage({ agentId }: { agentId: string }) {
-  const { data: analytics, isLoading, isError, refetch } = useAgentAnalytics(agentId);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = useMemo(() => parseDashboardScope(searchParams), [searchParams]);
+  const { data: analytics, isError, isFetching, refetch } = useAgentAnalytics(
+    agentId,
+    query
+  );
 
-  if (isLoading) {
+  const updateQuery = (next: DashboardQueryParams) => {
+    const params = toDashboardSearchParams(next);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  };
+
+  const selectedPeriod = isCustomDashboardRange(query)
+    ? null
+    : (query.period ?? DEFAULT_DASHBOARD_PERIOD);
+
+  const rangeFilter = (
+    <DashboardDateFilter
+      query={query}
+      label={dashboardDateButtonLabel(query, analytics?.dateRangeLabel)}
+      onChange={updateQuery}
+    />
+  );
+
+  if (!analytics) {
+    if (isError) {
+      return (
+        <AgentErrorState message="Unable to load analytics." onRetry={() => refetch()} />
+      );
+    }
+
     return <AgentAnalyticsSkeleton />;
-  }
-
-  if (isError || !analytics) {
-    return (
-      <AgentErrorState message="Unable to load analytics." onRetry={() => refetch()} />
-    );
   }
 
   return (
     <AgentPageFrame
       title="Analytics"
       description="AI-handled conversations, resolution, and quality for this agent."
+      actions={rangeFilter}
     >
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div
+        className={cn(
+          "grid gap-4 sm:grid-cols-3",
+          isFetching && "opacity-70 transition-opacity"
+        )}
+      >
         {analytics.kpis.map((kpi) => (
           <Card key={kpi.id}>
             <CardContent className="space-y-3">
@@ -74,10 +118,28 @@ export function AgentAnalyticsPage({ agentId }: { agentId: string }) {
         ))}
       </div>
 
-      <div className="grid items-stretch gap-4 xl:grid-cols-3">
+      <div
+        className={cn(
+          "grid items-stretch gap-4 xl:grid-cols-3",
+          isFetching && "opacity-70 transition-opacity"
+        )}
+      >
         <Card className="xl:col-span-2">
-          <CardHeader>
+          <CardHeader className="items-center">
             <CardTitle>Conversations over time</CardTitle>
+            <CardAction className="self-center">
+              <DashboardPeriodToggle
+                value={selectedPeriod}
+                onChange={(period: ChartPeriod) =>
+                  updateQuery({
+                    ...query,
+                    period,
+                    dateFrom: undefined,
+                    dateTo: undefined,
+                  })
+                }
+              />
+            </CardAction>
           </CardHeader>
           <CardContent>
             <ChartContainer

@@ -75,7 +75,7 @@ export function AgentListSkeleton() {
 
 export function AgentAnalyticsSkeleton() {
   return (
-    <AgentPageShell>
+    <AgentPageShell withAction>
       <div className="grid gap-4 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, index) => (
           <Skeleton key={index} className="h-32 rounded-xl" />

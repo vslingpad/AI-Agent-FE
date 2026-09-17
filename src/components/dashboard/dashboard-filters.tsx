@@ -59,7 +59,7 @@ export function DashboardFilterControls({
   );
 }
 
-function DashboardDateFilter({
+export function DashboardDateFilter({
   query,
   label,
   onChange,

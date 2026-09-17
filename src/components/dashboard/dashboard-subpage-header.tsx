@@ -51,7 +51,7 @@ export function DashboardPeriodToggle({
   value,
   onChange,
 }: {
-  value: ChartPeriod;
+  value: ChartPeriod | null;
   onChange: (period: ChartPeriod) => void;
 }) {
   return (

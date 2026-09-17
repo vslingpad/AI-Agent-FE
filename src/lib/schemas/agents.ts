@@ -80,6 +80,9 @@ export const AgentAnalyticsSchema = z.object({
   knowledgeGroundedRate: z.number(),
   remainingCredits: z.number(),
   includedCredits: z.number(),
+  period: z.enum(["7d", "30d", "90d"]).nullable().optional(),
+  dateRangeLabel: z.string().optional(),
+  comparisonLabel: z.string().optional(),
 });
 
 export const KnowledgeOptionKindSchema = z.enum([

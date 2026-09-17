@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   ChevronRightIcon,
@@ -15,12 +16,15 @@ import { IntegrationBrandIcon } from "@/components/integrations/connector-instan
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useCustomToolsHub } from "@/hooks/use-custom-tools";
 import { useAgentActions } from "@/hooks/use-agents";
 import { useIntegrationsHub } from "@/hooks/use-integrations";
 import { hasActionCapability, matchesCustomActionsSearch, connectedActionNames } from "@/lib/actions/action-utils";
 import type { AgentActionBinding } from "@/lib/schemas/agents";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
 import { cn } from "@/lib/utils";
+
+const CUSTOM_ACTION_BINDING_ID = "act_custom";
 
 export function AgentActionsPage({ agentId }: { agentId: string }) {
   return <AgentActionsPageContent key={agentId} agentId={agentId} />;
@@ -35,6 +39,12 @@ function AgentActionsPageContent({ agentId }: { agentId: string }) {
   } = useAgentActions(agentId);
   const { data: hub, isLoading: hubLoading, isError: hubError, refetch: refetchHub } =
     useIntegrationsHub();
+  const {
+    data: toolsHub,
+    isLoading: toolsLoading,
+    isError: toolsError,
+    refetch: refetchTools,
+  } = useCustomToolsHub();
   const [showAllOpen, setShowAllOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewActionId, setViewActionId] = useState<string | null>(null);
@@ -55,33 +65,47 @@ function AgentActionsPageContent({ agentId }: { agentId: string }) {
     [actionsData]
   );
 
+  const customBinding = useMemo(
+    () => connectedBindings.find((action) => action.id === CUSTOM_ACTION_BINDING_ID),
+    [connectedBindings]
+  );
+
+  const connectorBindings = useMemo(
+    () =>
+      connectedBindings.filter((action) => action.id !== CUSTOM_ACTION_BINDING_ID),
+    [connectedBindings]
+  );
+
   const filteredCatalog = useMemo(
     () => filterActionCatalog(actionCatalog, searchQuery),
     [actionCatalog, searchQuery]
   );
 
-  const filteredConnected = useMemo(
-    () => filterConnectedBindings(connectedBindings, searchQuery),
-    [connectedBindings, searchQuery]
+  const filteredConnectors = useMemo(
+    () => filterConnectedBindings(connectorBindings, searchQuery),
+    [connectorBindings, searchQuery]
   );
+
+  const showCustomCard = matchesCustomActionsSearch(searchQuery);
 
   const viewBinding = viewActionId
     ? actionsData?.actions.find((action) => action.id === viewActionId)
     : null;
 
-  const hasConnectedResults = filteredConnected.length > 0;
+  const hasConnectedResults = showCustomCard || filteredConnectors.length > 0;
 
-  if (hubLoading || actionsLoading) {
+  if (hubLoading || actionsLoading || toolsLoading) {
     return <AgentActionsSkeleton />;
   }
 
-  if (agentError || hubError || !hub || !actionsData) {
+  if (agentError || hubError || toolsError || !hub || !actionsData || !toolsHub) {
     return (
       <AgentErrorState
         message="Unable to load actions."
         onRetry={() => {
           void refetchAgent();
           void refetchHub();
+          void refetchTools();
         }}
       />
     );
@@ -136,7 +160,19 @@ function AgentActionsPageContent({ agentId }: { agentId: string }) {
           </div>
         ) : (
           <div className="grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-2">
-            {filteredConnected.map((binding) => (
+            {showCustomCard ? (
+              customBinding ? (
+                <ConnectedAgentActionCard
+                  key={customBinding.id}
+                  binding={customBinding}
+                  catalog={hub.catalog}
+                  onOpen={() => setViewActionId(customBinding.id)}
+                />
+              ) : (
+                <CustomActionsSetupCard toolCount={toolsHub.tools.length} />
+              )
+            ) : null}
+            {filteredConnectors.map((binding) => (
               <ConnectedAgentActionCard
                 key={binding.id}
                 binding={binding}
@@ -154,6 +190,43 @@ function AgentActionsPageContent({ agentId }: { agentId: string }) {
         onOpenChange={setShowAllOpen}
       />
     </AgentPageFrame>
+  );
+}
+
+function CustomActionsSetupCard({ toolCount }: { toolCount: number }) {
+  return (
+    <Link href="/actions/custom" className="block h-full">
+      <Card
+        size="sm"
+        className="h-full bg-teal-50/80 ring-teal-200/80 transition-shadow hover:shadow-sm dark:bg-teal-950/20 dark:ring-teal-900/60"
+      >
+        <CardContent className="flex h-full flex-col gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-teal-800 text-white">
+              <CodeXmlIcon className="size-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">Custom actions</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Org-defined HTTP APIs
+                  </p>
+                </div>
+                <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-medium text-teal-900 dark:bg-teal-950/60 dark:text-teal-100">
+                  {toolCount}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto flex items-center justify-end gap-0.5 pt-1 text-sm font-medium text-teal-900 dark:text-teal-200">
+            View, edit, and add custom actions
+            <ChevronRightIcon className="size-4" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 

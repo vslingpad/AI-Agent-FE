@@ -34,7 +34,7 @@ import {
 } from "@/hooks/use-integrations";
 import {
   TAB_LABELS,
-  formatConnectedDate,
+  formatConnectedBySubtitle,
   getConnectorPath,
   getDetailTabs,
   isDetailTab,
@@ -262,9 +262,11 @@ export function ConnectorDetailPage({
             <ConnectorStatusBadge status={connector.status} />
           </div>
           <p className="text-sm text-muted-foreground">
-            {connector.identifier} · connected by{" "}
-            {connector.connected_by.name} on{" "}
-            {formatConnectedDate(connector.connected_by.connected_at)}
+            {connector.identifier} ·{" "}
+            {formatConnectedBySubtitle(
+              connector.connected_by.name,
+              connector.connected_by.connected_at
+            )}
           </p>
         </div>
 

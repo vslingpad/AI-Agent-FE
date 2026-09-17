@@ -153,7 +153,7 @@ function normalizeIntegrationsShape(value: unknown): unknown {
     (!out.connected_by || !isPlainObject(out.connected_by))
   ) {
     out.connected_by = {
-      name: "—",
+      name: "",
       connected_at:
         typeof out.created_at === "string"
           ? out.created_at

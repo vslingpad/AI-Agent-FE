@@ -71,6 +71,19 @@ export function formatConnectedDate(isoDate: string) {
   }).format(new Date(isoDate));
 }
 
+export function formatConnectedByLine(name: string, connectedAt: string) {
+  const date = formatConnectedDate(connectedAt);
+  const trimmed = name.trim();
+  return trimmed ? `${trimmed} on ${date}` : `Connected on ${date}`;
+}
+
+/** Lowercase phrase for integration detail subtitles (after identifier ·). */
+export function formatConnectedBySubtitle(name: string, connectedAt: string) {
+  const trimmed = name.trim();
+  const date = formatConnectedDate(connectedAt);
+  return trimmed ? `connected by ${trimmed} on ${date}` : `connected on ${date}`;
+}
+
 export function formatLastSyncAttempt(isoDate: string | null) {
   if (!isoDate) {
     return "Never";

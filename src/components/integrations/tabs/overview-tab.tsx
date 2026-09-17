@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { KNOWLEDGE_SUB_CAPABILITY_LABELS } from "@/components/integrations/integration-utils";
-import { formatConnectedDate } from "@/lib/integrations/connector-paths";
+import {
+  formatConnectedByLine,
+  formatConnectedDate,
+} from "@/lib/integrations/connector-paths";
 import { getZendeskAuthStatus } from "@/lib/integrations/zendesk-auth";
 import { Badge } from "@/components/ui/badge";
 import type {
@@ -112,8 +115,19 @@ export function OverviewTab({
           <DetailRow label="Display name" value={connector.display_name} />
           <DetailRow label="Account" value={connector.identifier} />
           <DetailRow
-            label="Connected by"
-            value={`${connector.connected_by.name} on ${formatConnectedDate(connector.connected_by.connected_at)}`}
+            label={
+              connector.connected_by.name.trim()
+                ? "Connected by"
+                : "Connected on"
+            }
+            value={
+              connector.connected_by.name.trim()
+                ? formatConnectedByLine(
+                    connector.connected_by.name,
+                    connector.connected_by.connected_at
+                  )
+                : formatConnectedDate(connector.connected_by.connected_at)
+            }
           />
           <DetailRow
             label="Status"

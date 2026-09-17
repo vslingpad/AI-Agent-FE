@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
+  ChevronRightIcon,
   CodeXmlIcon,
   SearchIcon,
 } from "lucide-react";
@@ -13,9 +14,10 @@ import { AgentActionsSkeleton, AgentErrorState } from "@/components/agents/agent
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useAgentActions } from "@/hooks/use-agents";
 import { useIntegrationsHub } from "@/hooks/use-integrations";
-import { hasActionCapability, matchesCustomActionsSearch } from "@/lib/actions/action-utils";
+import { hasActionCapability, matchesCustomActionsSearch, connectedActionNames } from "@/lib/actions/action-utils";
 import type { AgentActionBinding } from "@/lib/schemas/agents";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
 import { cn } from "@/lib/utils";
@@ -165,10 +167,12 @@ function ConnectedAgentActionCard({
   onOpen: () => void;
 }) {
   const catalogItem = catalog.find((item) => item.slug === binding.slug);
-  const highlights =
-    binding.kind === "custom_tool"
-      ? binding.subActions.map((subAction) => subAction.name)
-      : (catalogItem?.action_highlights ?? binding.subActions.map((item) => item.name));
+  const highlights = connectedActionNames(binding.slug, {
+    subActions: binding.subActions,
+    catalogHighlights: catalogItem?.action_highlights,
+  });
+  const enabledCount = binding.subActions.filter((item) => item.enabled).length;
+  const totalCount = binding.subActions.length;
 
   return (
     <button
@@ -196,12 +200,11 @@ function ConnectedAgentActionCard({
                     </p>
                   ) : null}
                 </div>
-                {binding.connected ? (
-                  <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
-                    Connected
-                  </span>
-                ) : null}
+                {totalCount > 0 ? (
+                  <Badge variant="outline">
+                      {enabledCount}/{totalCount} enabled
+                  </Badge>
+                  ) : null}
               </div>
             </div>
           </div>
@@ -218,6 +221,12 @@ function ConnectedAgentActionCard({
               ))}
             </div>
           ) : null}
+      
+          <div className="mt-auto flex items-center justify-end gap-0.5 pt-1 text-sm font-medium text-foreground">
+            Manage actions
+            <ChevronRightIcon className="size-4" />
+          </div>
+       
         </CardContent>
       </Card>
     </button>

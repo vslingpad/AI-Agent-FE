@@ -1,8 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronLeftIcon, CodeXmlIcon } from "lucide-react";
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -21,7 +21,33 @@ export function AgentActionDetail({
   onBack,
 }: AgentActionDetailProps) {
   const updateActions = useUpdateAgentActions(agentId);
+  const [bulkPending, setBulkPending] = useState(false);
   const enabledCount = binding.subActions.filter((item) => item.enabled).length;
+  const totalCount = binding.subActions.length;
+  const allEnabled = totalCount > 0 && enabledCount === totalCount;
+  const noneEnabled = enabledCount === 0;
+  const controlsDisabled =
+    !binding.connected || updateActions.isPending || bulkPending;
+
+  async function setAllSubActions(enabled: boolean) {
+    const toUpdate = binding.subActions.filter((item) => item.enabled !== enabled);
+    if (toUpdate.length === 0) {
+      return;
+    }
+
+    setBulkPending(true);
+    try {
+      for (const subAction of toUpdate) {
+        await updateActions.mutateAsync({
+          actionId: binding.id,
+          actionSubActionId: subAction.id,
+          actionSubActionEnabled: enabled,
+        });
+      }
+    } finally {
+      setBulkPending(false);
+    }
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-6 px-6 pb-8 pt-6">
@@ -52,16 +78,33 @@ export function AgentActionDetail({
       </div>
 
       <div className="max-w-3xl space-y-4">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-medium">Actions for this agent</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Choose which actions this agent can call from {binding.name}.
             </p>
           </div>
-          <Badge variant="outline">
-            {enabledCount}/{binding.subActions.length} enabled
-          </Badge>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={controlsDisabled || allEnabled}
+              onClick={() => void setAllSubActions(true)}
+            >
+              Enable all
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={controlsDisabled || noneEnabled}
+              onClick={() => void setAllSubActions(false)}
+            >
+              Disable all
+            </Button>
+          </div>
         </div>
 
         <ul className="divide-y divide-border rounded-lg border border-border">
@@ -83,7 +126,7 @@ export function AgentActionDetail({
                 <Switch
                   id={`${binding.id}-${subAction.id}`}
                   checked={subAction.enabled}
-                  disabled={!binding.connected || updateActions.isPending}
+                  disabled={controlsDisabled}
                   onCheckedChange={(checked) =>
                     updateActions.mutate({
                       actionId: binding.id,

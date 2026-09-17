@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomToolsHub } from "@/hooks/use-custom-tools";
 import { useIntegrationsHub } from "@/hooks/use-integrations";
-import { hasActionCapability, matchesCustomActionsSearch } from "@/lib/actions/action-utils";
+import { hasActionCapability, matchesCustomActionsSearch, connectedActionNames } from "@/lib/actions/action-utils";
 import {
   getConnectorPath,
 } from "@/lib/integrations/connector-paths";
@@ -184,7 +184,9 @@ function ConnectedActionCard({
   const catalogItem = catalog.find(
     (item) => item.slug === connector.integration_slug
   );
-  const highlights = catalogItem?.action_highlights ?? [];
+  const highlights = connectedActionNames(connector.integration_slug, {
+    catalogHighlights: catalogItem?.action_highlights,
+  });
   const detailPath = getConnectorPath(connector.integration_slug, connector.id, {
     tab: "actions",
   });
@@ -292,7 +294,9 @@ function filterConnectedActions(
       connector.identifier,
       connector.integration_slug,
       catalogItem?.name,
-      ...(catalogItem?.action_highlights ?? []),
+      ...connectedActionNames(connector.integration_slug, {
+        catalogHighlights: catalogItem?.action_highlights,
+      }),
     ]);
   });
 }

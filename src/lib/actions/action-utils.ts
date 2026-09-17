@@ -1,3 +1,4 @@
+import { CONNECTOR_ACTION_TEMPLATES } from "@/lib/actions/agent-action-catalog";
 import { isIntegrationAvailable } from "@/lib/integrations/availability";
 import type { IntegrationCatalogItem } from "@/lib/schemas/integrations";
 
@@ -10,6 +11,31 @@ export function isActionConnectorAvailable(
   catalog?: IntegrationCatalogItem[]
 ) {
   return isIntegrationAvailable(slug, catalog);
+}
+
+export function connectedActionNames(
+  slug: string,
+  options?: {
+    subActions?: Array<{ name: string }>;
+    catalogHighlights?: string[];
+  }
+) {
+  const subActionNames = (options?.subActions ?? [])
+    .map((item) => item.name)
+    .filter(Boolean);
+
+  if (subActionNames.length > 0) {
+    return subActionNames;
+  }
+
+  const templateNames = (CONNECTOR_ACTION_TEMPLATES[slug] ?? []).map(
+    (item) => item.name
+  );
+  if (templateNames.length > 0) {
+    return templateNames;
+  }
+
+  return (options?.catalogHighlights ?? []).filter(Boolean);
 }
 
 export function matchesCustomActionsSearch(query: string) {

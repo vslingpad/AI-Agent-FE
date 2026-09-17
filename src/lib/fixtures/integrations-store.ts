@@ -45,9 +45,10 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       },
     ],
     action_highlights: [
-      "Create and update support tickets",
-      "Search Help Center articles",
-      "Add internal notes to tickets",
+      "Tag ticket",
+      "Assign ticket",
+      "Add internal note",
+      "Pass control (Messaging)",
     ],
   },
   {
@@ -69,9 +70,9 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       },
     ],
     action_highlights: [
-      "Check available time slots",
-      "Book a meeting",
-      "Cancel or reschedule a booking",
+      "Schedule meeting",
+      "Check availability",
+      "Cancel event",
     ],
   },
   {
@@ -104,10 +105,10 @@ export const INTEGRATION_CATALOG: IntegrationCatalogItem[] = [
       },
     ],
     action_highlights: [
-      "Retrieve and display invoices",
-      "Retrieve and display subscriptions",
-      "Change customer information",
-      "Manage subscriptions",
+      "Get subscription details",
+      "Cancel subscription",
+      "Pause subscription",
+      "Resume subscription",
     ],
   },
   {

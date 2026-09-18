@@ -8,6 +8,7 @@ import {
   AgentDeployChannelsSchema,
   AgentImproveListSchema,
   AgentKnowledgeSchema,
+  CreatePlaygroundSessionInputSchema,
   PlaygroundSessionSchema,
   SendPlaygroundMessageInputSchema,
   SendPlaygroundMessageResponseSchema,
@@ -38,6 +39,7 @@ import {
   type ConversationQuery,
   type AgentImproveList,
   type AgentKnowledge,
+  type CreatePlaygroundSessionInput,
   type PlaygroundSession,
   type SendPlaygroundMessageInput,
   type UpdatePlaygroundSessionInput,
@@ -370,8 +372,15 @@ export async function getAgentTestRuns(agentId: string) {
   return AgentTestRunsListSchema.parse(json);
 }
 
-export async function createPlaygroundSession(agentId: string): Promise<PlaygroundSession> {
-  const json = await apiPost<unknown>(`/api/agents/${agentId}/test/playground`, {});
+export async function createPlaygroundSession(
+  agentId: string,
+  input: CreatePlaygroundSessionInput = {}
+): Promise<PlaygroundSession> {
+  const parsed = CreatePlaygroundSessionInputSchema.parse(input);
+  const json = await apiPost<unknown>(
+    `/api/agents/${agentId}/test/playground`,
+    parsed
+  );
   return PlaygroundSessionSchema.parse(json);
 }
 

@@ -370,8 +370,18 @@ export const PlaygroundSessionSchema = z.object({
   messages: z.array(PlaygroundMessageSchema),
 });
 
+export const PLAYGROUND_PROMPT_MAX_LENGTH = 8000;
+
+export const CreatePlaygroundSessionInputSchema = z.object({
+  promptOverride: z
+    .string()
+    .max(PLAYGROUND_PROMPT_MAX_LENGTH)
+    .nullable()
+    .optional(),
+});
+
 export const UpdatePlaygroundSessionInputSchema = z.object({
-  promptOverride: z.string().max(8000).nullable(),
+  promptOverride: z.string().max(PLAYGROUND_PROMPT_MAX_LENGTH).nullable(),
 });
 
 export const SendPlaygroundMessageInputSchema = z.object({
@@ -539,6 +549,9 @@ export type AgentWorkspace = z.infer<typeof AgentWorkspaceSchema>;
 export type AgentsList = z.infer<typeof AgentsListSchema>;
 export type PlaygroundMessage = z.infer<typeof PlaygroundMessageSchema>;
 export type PlaygroundSession = z.infer<typeof PlaygroundSessionSchema>;
+export type CreatePlaygroundSessionInput = z.infer<
+  typeof CreatePlaygroundSessionInputSchema
+>;
 export type UpdatePlaygroundSessionInput = z.infer<
   typeof UpdatePlaygroundSessionInputSchema
 >;

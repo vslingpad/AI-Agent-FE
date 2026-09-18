@@ -1688,7 +1688,11 @@ function mockPlaygroundReply(prompt: string, agentName: string) {
   return `${agentName} here. I can help with that from the knowledge base. Could you share a bit more detail, or an order ID if this is about a purchase?`;
 }
 
-export function createPlaygroundSession(orgId: string, agentId: string) {
+export function createPlaygroundSession(
+  orgId: string,
+  agentId: string,
+  input: { promptOverride?: string | null } = {}
+) {
   const agent = findAgent(orgId, agentId);
 
   if (!agent) {
@@ -1699,13 +1703,21 @@ export function createPlaygroundSession(orgId: string, agentId: string) {
   const sessionNumber = (playgroundSessionCounters.get(key) ?? 0) + 1;
   playgroundSessionCounters.set(key, sessionNumber);
 
+  let promptOverride = input.promptOverride ?? null;
+  if (
+    promptOverride !== null &&
+    promptOverride.trim() === agent.settings.systemPrompt.trim()
+  ) {
+    promptOverride = null;
+  }
+
   const session: StoredPlaygroundSession = {
     id: `pg-${agentId}-${sessionNumber}-${Date.now()}`,
     agentId,
     orgId,
     sessionNumber,
     createdAt: new Date().toISOString(),
-    promptOverride: null,
+    promptOverride,
     messages: [],
   };
 

@@ -246,7 +246,8 @@ export function useCreatePlaygroundSession(agentId: string) {
   const { organization } = useOrganization();
 
   return useMutation({
-    mutationFn: () => createPlaygroundSession(agentId),
+    mutationFn: (input?: Parameters<typeof createPlaygroundSession>[1]) =>
+      createPlaygroundSession(agentId, input ?? {}),
     onSuccess: (session) => {
       queryClient.setQueryData(
         playgroundSessionKey(organization?.id, agentId, session.id),

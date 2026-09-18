@@ -1,161 +1,246 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useOrganization } from "@clerk/nextjs";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChatMessageContent } from "@/components/agents/test/playground/chat-message-content";
 import { ProcedureDebugPanel } from "@/components/agents/test/playground/procedure-debug-panel";
-import {
-  BotIcon,
-  LoaderCircleIcon,
-  RotateCcwIcon,
-} from "lucide-react";
+import { BotIcon, RotateCcwIcon } from "lucide-react";
 import { AgentErrorState, AgentPlaygroundSkeleton } from "@/components/agents/agent-states";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
+  useAgent,
+  useAgentSettings,
   useCreatePlaygroundSession,
-  useSendPlaygroundMessage,
   useUpdatePlaygroundSession,
 } from "@/hooks/use-agents";
-import type { PlaygroundSession } from "@/lib/schemas/agents";
+import { sendPlaygroundMessage as sendPlaygroundMessageApi } from "@/lib/api/agents";
+import {
+  PLAYGROUND_PROMPT_MAX_LENGTH,
+  type PlaygroundSession,
+} from "@/lib/schemas/agents";
 import { detectBrowserLocation } from "@/lib/geo/detect-location";
 import { cn } from "@/lib/utils";
 
 const promptTextareaClassName =
   "min-h-0 w-full flex-1 resize-none overflow-y-auto rounded-lg border border-input bg-transparent px-3 py-2 text-xs leading-relaxed shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
+function playgroundSessionKey(
+  orgId: string | undefined,
+  agentId: string,
+  sessionId: string
+) {
+  return ["agents", orgId, agentId, "playground", sessionId] as const;
+}
+
+function promptOverrideFromDraft(draft: string, productionPrompt: string) {
+  const trimmed = draft.trim();
+  return trimmed === productionPrompt.trim() ? null : trimmed;
+}
+
+function clampPlaygroundPrompt(value: string) {
+  return value.slice(0, PLAYGROUND_PROMPT_MAX_LENGTH);
+}
+
 export function AgentPlaygroundPage({ agentId }: { agentId: string }) {
   const {
-    mutate,
-    data: session,
-    isPending,
-    isError,
-    reset,
-  } = useCreatePlaygroundSession(agentId);
+    data: agent,
+    isPending: agentPending,
+    isError: agentError,
+    refetch: refetchAgent,
+  } = useAgent(agentId);
+  const {
+    data: settings,
+    isPending: settingsPending,
+    isError: settingsError,
+    refetch: refetchSettings,
+  } = useAgentSettings(agentId);
+  const [session, setSession] = useState<PlaygroundSession | null>(null);
+  const createSession = useCreatePlaygroundSession(agentId);
 
-  useEffect(() => {
-    reset();
-    mutate();
-  }, [agentId, mutate, reset]);
-
-  if (isPending && !session) {
+  if (agentPending || settingsPending) {
     return <AgentPlaygroundSkeleton />;
   }
 
-  if (isError && !session) {
+  if (agentError || settingsError || !agent || !settings) {
     return (
       <AgentErrorState
-        message="Unable to start playground session."
+        message="Unable to load playground."
         onRetry={() => {
-          reset();
-          mutate();
+          void refetchAgent();
+          void refetchSettings();
         }}
       />
     );
   }
 
-  if (!session) {
-    return <AgentPlaygroundSkeleton />;
-  }
-
   return (
     <PlaygroundWorkspace
-      key={session.id}
       agentId={agentId}
+      agentName={agent.name}
+      productionPrompt={settings.systemPrompt}
       session={session}
-      onNewSession={() => mutate()}
-      startingSession={isPending}
+      onSessionChange={setSession}
+      createSession={createSession}
+      onNewSession={() => setSession(null)}
     />
   );
 }
 
 function PlaygroundWorkspace({
   agentId,
-  session: initialSession,
+  agentName,
+  productionPrompt,
+  session,
+  onSessionChange,
+  createSession,
   onNewSession,
-  startingSession,
 }: {
   agentId: string;
-  session: PlaygroundSession;
+  agentName: string;
+  productionPrompt: string;
+  session: PlaygroundSession | null;
+  onSessionChange: (session: PlaygroundSession | null) => void;
+  createSession: ReturnType<typeof useCreatePlaygroundSession>;
   onNewSession: () => void;
-  startingSession: boolean;
 }) {
-  const [session, setSession] = useState(initialSession);
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
   const [input, setInput] = useState("");
-  const sendMessage = useSendPlaygroundMessage(agentId, session.id);
+  const [preSessionPromptDraft, setPreSessionPromptDraft] = useState(productionPrompt);
+  const [preSessionAppliedPrompt, setPreSessionAppliedPrompt] = useState(productionPrompt);
+  const preSessionPromptDirty = preSessionPromptDraft !== preSessionAppliedPrompt;
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const messages = session?.messages ?? [];
+  const busy = sending || createSession.isPending;
+
   useEffect(() => {
-    setSession(initialSession);
-    setInput("");
-  }, [initialSession]);
+    if (!session) {
+      setPreSessionPromptDraft(productionPrompt);
+      setPreSessionAppliedPrompt(productionPrompt);
+    }
+  }, [productionPrompt, session]);
+
+  const cacheSession = useCallback(
+    (active: PlaygroundSession) => {
+      queryClient.setQueryData(
+        playgroundSessionKey(organization?.id, agentId, active.id),
+        active
+      );
+    },
+    [agentId, organization?.id, queryClient]
+  );
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [session.messages.length, sendMessage.isPending]);
+  }, [messages.length, busy]);
 
   const send = async () => {
     const text = input.trim();
 
-    if (!text || sendMessage.isPending) {
+    if (!text || busy) {
       return;
     }
 
+    setSendError(null);
     setInput("");
+    setSending(true);
 
-    const geo = await detectBrowserLocation();
-    const updated = await sendMessage.mutateAsync({
-      content: text,
-      ...geo,
-    });
-    setSession(updated);
+    try {
+      const geo = await detectBrowserLocation();
+      let active = session;
+      if (!active) {
+        const promptForCreate = preSessionPromptDirty
+          ? preSessionPromptDraft
+          : preSessionAppliedPrompt;
+        active = await createSession.mutateAsync({
+          promptOverride: promptOverrideFromDraft(promptForCreate, productionPrompt),
+        });
+        cacheSession(active);
+        onSessionChange(active);
+      }
+
+      const updated = await sendPlaygroundMessageApi(agentId, active.id, {
+        content: text,
+        ...geo,
+      });
+      cacheSession(updated);
+      onSessionChange(updated);
+    } catch {
+      setSendError("Unable to send message. Try again.");
+      setInput(text);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const startNewTest = () => {
+    setInput("");
+    setSendError(null);
+    setPreSessionPromptDraft(productionPrompt);
+    setPreSessionAppliedPrompt(productionPrompt);
+    onNewSession();
   };
 
   return (
     <div className="flex h-[calc(100svh-var(--notification-banner-height)-3.5rem)] min-h-[32rem] flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
-        <div className="min-w-0 space-y-1">
+        <div className="min-w-0">
           <h1 className="font-heading text-lg font-semibold">Playground</h1>
-          <p className="text-xs text-muted-foreground">Session {session.sessionNumber}</p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={onNewSession}
-          disabled={startingSession}
+          onClick={startNewTest}
+          disabled={busy}
         >
-          {startingSession ? (
-            <>
-              <LoaderCircleIcon className="animate-spin" />
-              Starting…
-            </>
-          ) : (
-            "New test"
-          )}
+          New test
         </Button>
       </header>
 
+      {sendError ? (
+        <p className="border-b border-border bg-destructive/10 px-6 py-2 text-sm text-destructive">
+          {sendError}
+        </p>
+      ) : null}
+
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_350px]">
         <ChatPanel
-          agentName={session.agentName}
-          messages={session.messages}
+          agentName={session?.agentName ?? agentName}
+          messages={messages}
           input={input}
           onInputChange={setInput}
           onSend={() => void send()}
-          busy={sendMessage.isPending}
+          busy={busy}
           scrollRef={scrollRef}
         />
 
-        <PromptPanel
-          agentId={agentId}
-          sessionId={session.id}
-          messages={session.messages}
-          productionPrompt={session.productionPrompt}
-          promptOverride={session.promptOverride}
-          onSessionUpdate={setSession}
-        />
+        {session ? (
+          <PromptPanelConnected
+            agentId={agentId}
+            sessionId={session.id}
+            messages={messages}
+            productionPrompt={session.productionPrompt}
+            promptOverride={session.promptOverride}
+            onSessionUpdate={onSessionChange}
+          />
+        ) : (
+          <PromptPanelLocal
+            productionPrompt={productionPrompt}
+            draft={preSessionPromptDraft}
+            onDraftChange={(value) =>
+              setPreSessionPromptDraft(clampPlaygroundPrompt(value))
+            }
+            onApply={() => setPreSessionAppliedPrompt(preSessionPromptDraft)}
+          />
+        )}
       </div>
     </div>
   );
@@ -301,7 +386,65 @@ function TypingIndicator({ agentName }: { agentName: string }) {
   );
 }
 
-function PromptPanel({
+function PromptCharCount({ length }: { length: number }) {
+  const atLimit = length >= PLAYGROUND_PROMPT_MAX_LENGTH;
+
+  return (
+    <span
+      className={cn(
+        "text-xs tabular-nums text-muted-foreground",
+        atLimit && "text-destructive"
+      )}
+    >
+      {length}/{PLAYGROUND_PROMPT_MAX_LENGTH}
+    </span>
+  );
+}
+
+function PromptPanelLocal({
+  productionPrompt,
+  draft,
+  onDraftChange,
+  onApply,
+}: {
+  productionPrompt: string;
+  draft: string;
+  onDraftChange: (draft: string) => void;
+  onApply: () => void;
+}) {
+  const reset = () => {
+    onDraftChange(productionPrompt);
+  };
+
+  return (
+    <PromptPanelShell messages={[]}>
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="playground-prompt">System prompt</Label>
+          <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={reset}>
+            <RotateCcwIcon className="size-3.5" />
+            Reset
+          </Button>
+        </div>
+        <textarea
+          id="playground-prompt"
+          value={draft}
+          maxLength={PLAYGROUND_PROMPT_MAX_LENGTH}
+          onChange={(event) => onDraftChange(event.target.value)}
+          className={promptTextareaClassName}
+        />
+        <div className="flex shrink-0 items-center justify-between gap-2">
+          <PromptCharCount length={draft.length} />
+          <Button size="sm" onClick={onApply}>
+            Apply prompt
+          </Button>
+        </div>
+      </div>
+    </PromptPanelShell>
+  );
+}
+
+function PromptPanelConnected({
   agentId,
   sessionId,
   messages,
@@ -354,41 +497,33 @@ function PromptPanel({
   };
 
   return (
-    <aside className="hidden h-full w-[350px] shrink-0 min-h-0 flex-col overflow-hidden border-l border-border bg-background lg:flex">
-      <div className="shrink-0 border-b border-border px-4 py-3">
-        <p className="font-medium">Configuration</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Playground-only prompt override. Published settings are unchanged.
-        </p>
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
-        <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <Label htmlFor="playground-prompt">System prompt</Label>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={reset}
-              disabled={updateSession.isPending}
-            >
-              <RotateCcwIcon className="size-3.5" />
-              Reset
-            </Button>
-          </div>
-          <textarea
-            id="playground-prompt"
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              setDirty(true);
-            }}
-            className={promptTextareaClassName}
-          />
+    <PromptPanelShell messages={messages}>
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="playground-prompt">System prompt</Label>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={reset}
+            disabled={updateSession.isPending}
+          >
+            <RotateCcwIcon className="size-3.5" />
+            Reset
+          </Button>
         </div>
-
-        <div className="flex shrink-0 justify-end">
+        <textarea
+          id="playground-prompt"
+          value={draft}
+          maxLength={PLAYGROUND_PROMPT_MAX_LENGTH}
+          onChange={(event) => {
+            setDraft(clampPlaygroundPrompt(event.target.value));
+            setDirty(true);
+          }}
+          className={promptTextareaClassName}
+        />
+        <div className="flex shrink-0 items-center justify-between gap-2">
+          <PromptCharCount length={draft.length} />
           <Button
             size="sm"
             onClick={save}
@@ -397,6 +532,29 @@ function PromptPanel({
             {updateSession.isPending ? "Saving…" : "Apply prompt"}
           </Button>
         </div>
+      </div>
+    </PromptPanelShell>
+  );
+}
+
+function PromptPanelShell({
+  messages,
+  children,
+}: {
+  messages: PlaygroundSession["messages"];
+  children: React.ReactNode;
+}) {
+  return (
+    <aside className="hidden h-full w-[350px] shrink-0 min-h-0 flex-col overflow-hidden border-l border-border bg-background lg:flex">
+      <div className="shrink-0 border-b border-border px-4 py-3">
+        <p className="font-medium">Configuration</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          This configuration is for playground use only and will not affect published settings.
+        </p>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
+        {children}
 
         <div className="shrink-0 border-t border-border pt-3">
           <ProcedureDebugPanel messages={messages} />

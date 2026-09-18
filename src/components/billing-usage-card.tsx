@@ -14,7 +14,6 @@ import {
 import {
   formatSubscriptionStatusLabel,
   subscriptionNeedsAttention,
-  subscriptionStatusBadgeVariant,
   type SubscriptionStatus,
 } from "@/lib/billing/subscription-status";
 

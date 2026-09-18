@@ -1,6 +1,6 @@
 "use client";
 
-import { FileIcon } from "lucide-react";
+import { FileIcon, UploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,13 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type AddKnowledgeFileDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (name: string) => void;
+  onSubmit: (names: string[]) => void;
   pending?: boolean;
 };
 
@@ -27,14 +27,17 @@ export function AddKnowledgeFileDialog({
   pending,
 }: AddKnowledgeFileDialogProps) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const names = Array.from(event.target.files ?? [])
+      .map((file) => file.name.trim())
+      .filter(Boolean);
 
-    if (!file) {
+    event.target.value = "";
+
+    if (names.length === 0) {
       return;
     }
 
-    onSubmit(file.name);
-    event.target.value = "";
+    onSubmit(names);
   };
 
   return (
@@ -54,14 +57,29 @@ export function AddKnowledgeFileDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="knowledge-file-upload">Choose file</Label>
-            <Input
-              id="knowledge-file-upload"
-              type="file"
-              accept=".pdf,.doc,.docx,.txt,.md"
-              disabled={pending}
-              onChange={handleFileChange}
-            />
+            <Label htmlFor="knowledge-file-upload">Choose files</Label>
+            <label
+              htmlFor="knowledge-file-upload"
+              className={cn(
+                "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dotted border-input bg-transparent px-4 py-6 text-center transition-colors hover:bg-muted/50 has-focus-visible:border-ring has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
+                pending && "pointer-events-none cursor-not-allowed opacity-50"
+              )}
+            >
+              <UploadIcon className="size-6 text-muted-foreground" />
+              <span className="text-sm font-medium">Click to upload</span>
+              <span className="text-xs text-muted-foreground">
+                PDF, DOCX, TXT, or MD
+              </span>
+              <input
+                id="knowledge-file-upload"
+                type="file"
+                accept=".pdf,.doc,.docx,.txt,.md"
+                multiple
+                disabled={pending}
+                onChange={handleFileChange}
+                className="sr-only"
+              />
+            </label>
           </div>
 
           <DialogFooter>

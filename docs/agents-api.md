@@ -366,6 +366,11 @@ Returns `AgentAnalytics`:
 { "addFile": { "name": "Refund policy.pdf" } }
 ```
 
+**Add files**
+```json
+{ "addFile": { "names": ["Refund policy.pdf", "Warranty.pdf"] } }
+```
+
 **Add Q&A**
 ```json
 {

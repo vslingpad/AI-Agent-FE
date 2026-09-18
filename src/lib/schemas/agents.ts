@@ -427,7 +427,11 @@ export const UpdateAgentKnowledgeInputSchema = z.object({
   addUrl: z.string().url().optional(),
   addFile: z
     .object({
-      name: z.string().min(1),
+      name: z.string().min(1).optional(),
+      names: z.array(z.string().min(1)).optional(),
+    })
+    .refine((value) => Boolean(value.name?.trim() || value.names?.length), {
+      message: "Add at least one file name",
     })
     .optional(),
   addQna: z

@@ -1916,7 +1916,7 @@ export function updateAgentKnowledge(
     knowledgeSourceId?: string;
     knowledgeEnabled?: boolean;
     addUrl?: string;
-    addFile?: { name: string };
+    addFile?: { name?: string; names?: string[] };
     addQna?: { title: string; questions: string[]; answer: string };
     knowledgeResourceAction?: {
       sourceId: string;
@@ -1965,19 +1965,25 @@ export function updateAgentKnowledge(
 
   if (input.addFile) {
     const files = agent.knowledge.sources.find((source) => source.kind === "files");
+    const names = [
+      ...(input.addFile.names ?? []),
+      ...(input.addFile.name ? [input.addFile.name] : []),
+    ].filter((name, index, all) => name.trim() && all.indexOf(name) === index);
 
     if (files) {
       files.enabled = true;
-      files.resources.unshift({
-        type: "file",
-        id: `file_${Date.now()}`,
-        name: input.addFile.name,
-        sizeLabel: "—",
-        status: "processing",
-        updatedAt: now,
-        addedBy: "You",
-        trained: false,
-      });
+      for (const name of names) {
+        files.resources.unshift({
+          type: "file",
+          id: `file_${Date.now()}_${name}`,
+          name,
+          sizeLabel: "—",
+          status: "processing",
+          updatedAt: now,
+          addedBy: "You",
+          trained: false,
+        });
+      }
     }
   }
 

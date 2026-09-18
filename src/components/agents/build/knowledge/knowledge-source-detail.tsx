@@ -325,8 +325,8 @@ export function KnowledgeSourceDetail({
         open={addDialog === "files"}
         onOpenChange={(open) => !open && setAddDialog(null)}
         pending={updateKnowledge.isPending}
-        onSubmit={(name) => {
-          updateKnowledge.mutate({ addFile: { name } });
+        onSubmit={(names) => {
+          updateKnowledge.mutate({ addFile: { names } });
           setAddDialog(null);
         }}
       />

@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { apiError, requireOrgId } from "@/lib/api/auth";
 
@@ -265,6 +265,41 @@ async function getClerkAccessToken() {
   return getToken();
 }
 
+async function actorDisplayName() {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return "";
+    }
+
+    const fullName = user.fullName?.trim();
+    if (fullName) {
+      return fullName;
+    }
+
+    const joined = [user.firstName, user.lastName]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join(" ")
+      .trim();
+    if (joined) {
+      return joined;
+    }
+
+    const username = user.username?.trim();
+    if (username) {
+      return username;
+    }
+
+    const email = user.primaryEmailAddress?.emailAddress?.trim() || "";
+    if (email.includes("@")) {
+      return email.split("@", 1)[0] || email;
+    }
+    return email;
+  } catch {
+    return "";
+  }
+}
+
 const GEO_HEADERS = [
   "x-vercel-ip-city",
   "x-vercel-ip-country",
@@ -281,7 +316,10 @@ export async function controlPlaneFetch(
   init: RequestInit = {},
   incoming?: Request
 ): Promise<Response> {
-  const token = await getClerkAccessToken();
+  const [token, actorName] = await Promise.all([
+    getClerkAccessToken(),
+    actorDisplayName(),
+  ]);
 
   if (!token) {
     throw new ControlPlaneAuthError();
@@ -291,6 +329,9 @@ export async function controlPlaneFetch(
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
   headers.set("Authorization", `Bearer ${token}`);
+  if (actorName && !headers.has("X-Actor-Name")) {
+    headers.set("X-Actor-Name", actorName);
+  }
 
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");

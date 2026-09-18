@@ -265,7 +265,7 @@ export function KnowledgeSourceDetail({
                         </td>
                         {isNative ? (
                           <td className="py-3 pr-4 align-middle text-muted-foreground">
-                            {row.addedBy ?? "—"}
+                            {row.addedBy?.trim() ? row.addedBy : "—"}
                           </td>
                         ) : null}
                         <td className="py-3 align-middle">

@@ -14,8 +14,6 @@ import { buildDeployChannels, countEnabledDeployChannels } from "@/lib/deploy/de
 import { connectorSourceId, nativeSourceId } from "@/lib/knowledge/catalog";
 import { templateSubActions } from "@/lib/actions/agent-action-catalog";
 
-const DEFAULT_ORG_ID = "org_demo";
-
 function hoursAgo(hours: number) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 }

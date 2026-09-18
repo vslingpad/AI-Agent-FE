@@ -26,7 +26,10 @@ export function RichTextEditor({
   className,
 }: RichTextEditorProps) {
   const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const editor = useEditor({
     immediatelyRender: false,

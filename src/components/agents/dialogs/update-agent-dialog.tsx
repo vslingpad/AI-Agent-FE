@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useResetKey } from "@/hooks/use-reset-key";
 import {
   Dialog,
   DialogContent,
@@ -30,15 +31,13 @@ export function UpdateAgentDialog({
   onOpenChange,
 }: UpdateAgentDialogProps) {
   const updateAgent = useUpdateAgent(agent?.id ?? "");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(agent?.name ?? "");
+  const [description, setDescription] = useState(agent?.description ?? "");
 
-  useEffect(() => {
-    if (agent && open) {
-      setName(agent.name);
-      setDescription(agent.description);
-    }
-  }, [agent, open]);
+  if (useResetKey(open ? agent : null) && agent && open) {
+    setName(agent.name);
+    setDescription(agent.description);
+  }
 
   const handleSubmit = async () => {
     const trimmed = name.trim();

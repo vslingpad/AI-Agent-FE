@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useResetKey } from "@/hooks/use-reset-key";
 import {
   Dialog,
   DialogContent,
@@ -26,14 +27,12 @@ export function RenameConnectorDialog({
   open,
   onOpenChange,
 }: RenameConnectorDialogProps) {
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState(connector?.display_name ?? "");
   const updateConnector = useUpdateConnector(connector?.id ?? "");
 
-  useEffect(() => {
-    if (connector) {
-      setDisplayName(connector.display_name);
-    }
-  }, [connector]);
+  if (useResetKey(connector) && connector) {
+    setDisplayName(connector.display_name);
+  }
 
   const handleSave = async () => {
     if (!connector || !displayName.trim()) {

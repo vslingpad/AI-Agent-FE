@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MessageCircleQuestionIcon, PlusIcon, XIcon } from "lucide-react";
+import { useResetKey } from "@/hooks/use-reset-key";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -55,19 +56,23 @@ export function AddKnowledgeQnaDialog({
   defaults,
   submitLabel = "Add Q&A source",
 }: AddKnowledgeQnaDialogProps) {
-  const [title, setTitle] = useState("");
-  const [questions, setQuestions] = useState<string[]>([""]);
-  const [answer, setAnswer] = useState("");
+  const [title, setTitle] = useState(defaults?.title ?? "");
+  const [questions, setQuestions] = useState(() => normalizeQuestions(defaults));
+  const [answer, setAnswer] = useState(defaults?.answer ?? "");
+  const defaultsKey = open
+    ? JSON.stringify({
+        title: defaults?.title ?? "",
+        questions: defaults?.questions ?? [],
+        question: defaults?.question ?? "",
+        answer: defaults?.answer ?? "",
+      })
+    : "closed";
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
+  if (useResetKey(defaultsKey) && open) {
     setTitle(defaults?.title ?? "");
     setQuestions(normalizeQuestions(defaults));
     setAnswer(defaults?.answer ?? "");
-  }, [open, defaults?.title, defaults?.questions, defaults?.question, defaults?.answer]);
+  }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

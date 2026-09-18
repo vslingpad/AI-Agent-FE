@@ -16,6 +16,8 @@ export function useBuildPageMeta(meta: BuildPageMeta) {
     return () => {
       setMeta({});
     };
+    // meta is represented by the serialized breadcrumb key and search flags.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setMeta, breadcrumbsKey, meta.enableSearch, meta.searchPlaceholder]);
 }
 

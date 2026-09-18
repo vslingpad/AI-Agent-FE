@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useResetKey } from "@/hooks/use-reset-key";
 import { DownloadIcon, ListFilterIcon, SearchIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,9 +86,21 @@ export function ConversationFiltersBar({
 
   const activeFilterCount = useMemo(() => countActiveFilters(filters), [filters]);
 
-  useEffect(() => {
-    setSearchValue(filters.customer ?? filters.conversationId ?? "");
-  }, [filters.customer, filters.conversationId]);
+  if (useResetKey(`${filters.customer ?? ""}:${filters.conversationId ?? ""}`)) {
+    setSearchValue(searchQuery);
+  }
+
+  if (useResetKey(filterOpen ? filters : false) && filterOpen) {
+    setDraft({
+      dateFrom: filters.dateFrom,
+      dateTo: filters.dateTo,
+      location: filters.location,
+      channel: filters.channel,
+      status: filters.status,
+      billable: filters.billable,
+      knowledgeGap: filters.knowledgeGap,
+    });
+  }
 
   useEffect(() => {
     return () => {
@@ -96,20 +109,6 @@ export function ConversationFiltersBar({
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (filterOpen) {
-      setDraft({
-        dateFrom: filters.dateFrom,
-        dateTo: filters.dateTo,
-        location: filters.location,
-        channel: filters.channel,
-        status: filters.status,
-        billable: filters.billable,
-        knowledgeGap: filters.knowledgeGap,
-      });
-    }
-  }, [filterOpen, filters]);
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Show, useOrganization } from "@clerk/nextjs";
+import { useResetKey } from "@/hooks/use-reset-key";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
 import { DeleteAgentDialog } from "@/components/agents/dialogs/delete-agent-dialog";
 import { AgentErrorState, AgentSettingsSkeleton } from "@/components/agents/agent-states";
@@ -50,23 +51,15 @@ export function AgentSettingsPage({ agentId }: { agentId: string }) {
   const [handoverConnectorId, setHandoverConnectorId] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  useEffect(() => {
-    if (!agent) {
-      return;
-    }
-
+  if (useResetKey(agent) && agent) {
     setName(agent.name);
     setDescription(agent.description);
-  }, [agent]);
+  }
 
-  useEffect(() => {
-    if (!settings) {
-      return;
-    }
-
+  if (useResetKey(settings) && settings) {
     setPrompt(settings.systemPrompt);
     setHandoverConnectorId(settings.handoverConnectorId);
-  }, [settings]);
+  }
 
   const isLoading = agentLoading || settingsLoading;
   const isError = agentError || settingsError;

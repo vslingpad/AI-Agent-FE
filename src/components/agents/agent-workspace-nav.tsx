@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useResetKey } from "@/hooks/use-reset-key";
 import { usePathname } from "next/navigation";
 import { ChevronRightIcon } from "lucide-react";
 import {
@@ -38,7 +39,7 @@ export function AgentWorkspaceNav({ agentId }: { agentId: string }) {
   const pathname = usePathname();
   const [openSections, setOpenSections] = useState(defaultOpenSections);
 
-  useEffect(() => {
+  if (useResetKey(pathname)) {
     const next: Record<string, boolean> = {};
 
     for (const group of AGENT_NAV) {
@@ -47,12 +48,10 @@ export function AgentWorkspaceNav({ agentId }: { agentId: string }) {
       }
     }
 
-    if (Object.keys(next).length === 0) {
-      return;
+    if (Object.keys(next).length > 0) {
+      setOpenSections((current) => ({ ...current, ...next }));
     }
-
-    setOpenSections((current) => ({ ...current, ...next }));
-  }, [pathname]);
+  }
 
   return (
     <nav

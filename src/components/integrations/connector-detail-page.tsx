@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useResetKey } from "@/hooks/use-reset-key";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -82,7 +83,7 @@ export function ConnectorDetailPage({
   const [pendingCapability, setPendingCapability] =
     useState<ConnectorCapability | null>(null);
 
-  const tabs = getDetailTabs(type) as DetailTab[];
+  const tabs = getDetailTabs();
 
   const pageMeta = useMemo(
     () =>
@@ -101,22 +102,19 @@ export function ConnectorDetailPage({
   useBuildPageMeta(pageMeta ?? { enableSearch: false });
 
   useEffect(() => {
-    if (!connector) {
-      return;
-    }
-
-    if (connector.integration_slug !== type) {
+    if (connector && connector.integration_slug !== type) {
       router.replace(
         getConnectorPath(connector.integration_slug, connector.id)
       );
-      return;
     }
+  }, [connector, type, router]);
 
+  if (useResetKey(connector) && connector) {
     setEnabledCapabilities(connector.enabled_capabilities);
     setEnabledKnowledgeSubCapabilities(
       connector.enabled_knowledge_sub_capabilities ?? []
     );
-  }, [connector, type, router]);
+  }
 
   if (isLoading) {
     return <ConnectorDetailSkeleton />;

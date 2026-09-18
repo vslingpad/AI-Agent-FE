@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { SearchIcon, XIcon } from "lucide-react";
+import { useResetKey } from "@/hooks/use-reset-key";
 import {
   type DeployChannelTile,
 } from "@/components/agents/deploy/connect-channel-tile";
@@ -49,11 +50,9 @@ export function ShowAllChannelsDialog({
   const [query, setQuery] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (open) {
-      setQuery("");
-    }
-  }, [open]);
+  if (useResetKey(open) && open) {
+    setQuery("");
+  }
 
   const filteredCatalog = catalog.filter((item) =>
     matchesChannelSearch(item.name, item.slug, query)

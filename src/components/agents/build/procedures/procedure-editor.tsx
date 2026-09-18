@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +62,9 @@ export function ProcedureEditor({
   const [error, setError] = useState<string | null>(null);
   const [showStepErrors, setShowStepErrors] = useState(mode === "all");
   const [selectedTemplateId, setSelectedTemplateId] = useState(initialTemplateId);
-  const appliedInitialTemplate = useRef<string | null>(null);
+  const [appliedInitialTemplateId, setAppliedInitialTemplateId] = useState<
+    string | null
+  >(null);
 
   const stepValidation = useMemo(
     () => validateProcedureSteps(steps, availableTools),
@@ -160,24 +162,17 @@ export function ProcedureEditor({
     applyTemplateData(template);
   };
 
-  useEffect(() => {
-    if (isEditing || !initialTemplateId) {
-      return;
-    }
-    if (appliedInitialTemplate.current === initialTemplateId) {
-      return;
-    }
-    const template = templatesData?.templates.find(
-      (item) => item.id === initialTemplateId
-    );
-    if (!template) {
-      return;
-    }
+  const initialTemplate =
+    !isEditing &&
+    initialTemplateId &&
+    appliedInitialTemplateId !== initialTemplateId
+      ? templatesData?.templates.find((item) => item.id === initialTemplateId)
+      : undefined;
 
-    if (applyTemplateData(template)) {
-      appliedInitialTemplate.current = initialTemplateId;
-    }
-  }, [applyTemplateData, initialTemplateId, isEditing, templatesData]);
+  if (initialTemplate) {
+    applyTemplateData(initialTemplate);
+    setAppliedInitialTemplateId(initialTemplateId);
+  }
 
   return (
     <div className="grid gap-6">

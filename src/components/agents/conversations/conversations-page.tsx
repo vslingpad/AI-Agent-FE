@@ -108,7 +108,9 @@ export function AgentConversationsPage({ agentId }: { agentId: string }) {
   const searchParams = useSearchParams();
   const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
   const filtersRef = useRef(filters);
-  filtersRef.current = filters;
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
   const { data: agent } = useAgent(agentId);
   const {
     data: locationOptions,
@@ -124,26 +126,16 @@ export function AgentConversationsPage({ agentId }: { agentId: string }) {
   } | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  const conversations = data?.conversations ?? [];
+  const conversations = data?.conversations;
   const pagination = data?.pagination;
 
   const selected = useMemo(() => {
+    const list = conversations ?? [];
     return (
-      conversations.find((conversation) => conversation.id === selectedId) ??
-      conversations[0] ??
+      list.find((conversation) => conversation.id === selectedId) ??
+      list[0] ??
       null
     );
-  }, [conversations, selectedId]);
-
-  useEffect(() => {
-    if (conversations.length === 0) {
-      setSelectedId(null);
-      return;
-    }
-
-    if (!selectedId || !conversations.some((conversation) => conversation.id === selectedId)) {
-      setSelectedId(conversations[0]?.id ?? null);
-    }
   }, [conversations, selectedId]);
 
   const updateFilters = (nextFilters: ConversationQuery) => {
@@ -212,7 +204,7 @@ export function AgentConversationsPage({ agentId }: { agentId: string }) {
         exporting={exporting}
       />
 
-      {conversations.length === 0 ? (
+      {(conversations ?? []).length === 0 ? (
         <div className="flex flex-1 items-center justify-center px-6">
           <div className="max-w-md rounded-xl border border-dashed border-border px-6 py-16 text-center">
             <p className="text-sm font-medium">No conversations match these filters</p>
@@ -224,7 +216,7 @@ export function AgentConversationsPage({ agentId }: { agentId: string }) {
       ) : (
         <div className="grid min-h-0 flex-1 lg:grid-cols-[350px_1fr]">
           <ConversationList
-            conversations={conversations}
+            conversations={conversations ?? []}
             selectedId={selected?.id ?? null}
             onSelect={setSelectedId}
           />

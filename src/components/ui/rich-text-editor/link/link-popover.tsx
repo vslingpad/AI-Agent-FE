@@ -116,9 +116,8 @@ export function RichTextEditorLinkPopover({
       return;
     }
 
-    updatePosition();
-
     const timeoutId = window.setTimeout(() => {
+      updatePosition();
       inputRef.current?.focus();
       inputRef.current?.select();
     }, 0);

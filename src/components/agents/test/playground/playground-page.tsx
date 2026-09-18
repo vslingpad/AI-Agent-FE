@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useResetKey } from "@/hooks/use-reset-key";
 import { useOrganization } from "@clerk/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChatMessageContent } from "@/components/agents/test/playground/chat-message-content";
@@ -133,12 +134,10 @@ function PlaygroundWorkspace({
     : messages;
   const busy = sending || createSession.isPending;
 
-  useEffect(() => {
-    if (!session) {
-      setPreSessionPromptDraft(productionPrompt);
-      setPreSessionAppliedPrompt(productionPrompt);
-    }
-  }, [productionPrompt, session]);
+  if (useResetKey(session ? "session" : `pre:${productionPrompt}`) && !session) {
+    setPreSessionPromptDraft(productionPrompt);
+    setPreSessionAppliedPrompt(productionPrompt);
+  }
 
   const cacheSession = useCallback(
     (active: PlaygroundSession) => {
@@ -481,10 +480,10 @@ function PromptPanelConnected({
   const [draft, setDraft] = useState(promptOverride ?? productionPrompt);
   const [dirty, setDirty] = useState(false);
 
-  useEffect(() => {
+  if (useResetKey(`${sessionId}:${promptOverride ?? productionPrompt}`)) {
     setDraft(promptOverride ?? productionPrompt);
     setDirty(false);
-  }, [productionPrompt, promptOverride, sessionId]);
+  }
 
   const save = () => {
     const trimmed = draft.trim();

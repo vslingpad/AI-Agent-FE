@@ -48,7 +48,7 @@ export function useLinkHandler({ editor, onSetLink }: UseLinkHandlerOptions) {
     editor.chain().focus().extendMarkRange("link").unsetLink().run();
     setUrl("");
     onSetLink?.();
-  }, [editor]);
+  }, [editor, onSetLink]);
 
   const resetUrlFromSelection = useCallback(() => {
     setUrl(getLinkHref(editor));

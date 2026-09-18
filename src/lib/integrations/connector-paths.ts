@@ -196,7 +196,7 @@ export function isDetailTab(value: string | null | undefined): value is DetailTa
   return value === "overview" || value === "actions";
 }
 
-export function getDetailTabs(_slug: string): DetailTab[] {
+export function getDetailTabs(): DetailTab[] {
   return ["overview", "actions"];
 }
 

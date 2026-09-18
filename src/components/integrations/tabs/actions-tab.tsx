@@ -50,11 +50,9 @@ export function ActionsTab({
   onFixPermission,
   isFixPending = false,
 }: ActionsTabProps) {
-  const actions = connector.actions ?? [];
-
   const filteredActions = useMemo(
-    () => filterActions(actions, searchQuery),
-    [actions, searchQuery]
+    () => filterActions(connector.actions ?? [], searchQuery),
+    [connector.actions, searchQuery]
   );
 
   const permissionIssue = getActionsPermissionIssue(

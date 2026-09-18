@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ExternalLinkIcon } from "lucide-react";
 import {
   Dialog,
@@ -45,11 +45,9 @@ export function GlobalAuthDialog({
     open && Boolean(session?.connect_session_id)
   );
 
-  useEffect(() => {
-    if (connectStatus.data) {
-      setSession(connectStatus.data);
-    }
-  }, [connectStatus.data]);
+  if (connectStatus.data && connectStatus.data !== session) {
+    setSession(connectStatus.data);
+  }
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useBuildPageMeta } from "@/components/build/use-build-page-meta";
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
-import { getCatalogItem } from "@/components/integrations/integration-utils";
 import { getConnectorPath } from "@/lib/integrations/connector-paths";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,11 +64,9 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
     step === "authorize" && Boolean(connectorId && session?.connect_session_id)
   );
 
-  useEffect(() => {
-    if (connectStatus.data) {
-      setSession(connectStatus.data);
-    }
-  }, [connectStatus.data]);
+  if (connectStatus.data && connectStatus.data !== session) {
+    setSession(connectStatus.data);
+  }
 
   if (isLoading) {
     return <ConnectWizardSkeleton />;

@@ -22,10 +22,6 @@ function integrationsKey(orgId?: string) {
   return ["integrations", orgId] as const;
 }
 
-function connectorKey(orgId?: string, connectorId?: string) {
-  return ["integrations", orgId, connectorId] as const;
-}
-
 export function useIntegrationsHub() {
   const { organization, isLoaded } = useOrganization();
 

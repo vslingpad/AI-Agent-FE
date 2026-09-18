@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useResetKey } from "@/hooks/use-reset-key";
 import {
   Dialog,
   DialogContent,
@@ -84,11 +85,7 @@ export function CustomActionFormDialog({
   const [proceduresEnabled, setProceduresEnabled] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
+  if (useResetKey(open ? (tool?.id ?? "new") : "closed") && open) {
     setDisplayName(tool?.displayName ?? "");
     setDescription(tool?.description ?? "");
     setHttpMethod(tool?.httpMethod ?? "GET");
@@ -107,7 +104,7 @@ export function CustomActionFormDialog({
     setResponsePaths((tool?.responseMapping.paths ?? []).join("\n"));
     setProceduresEnabled(tool?.proceduresEnabled ?? false);
     setShowApiKey(false);
-  }, [open, tool]);
+  }
 
   const parsedPaths = responsePaths
     .split("\n")

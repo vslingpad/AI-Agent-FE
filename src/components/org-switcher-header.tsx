@@ -110,10 +110,14 @@ export function OrgSwitcherHeader({ collapsed = false }: OrgSwitcherHeaderProps)
   const { organization, isLoaded } = useOrganization();
   const clerk = useClerk();
   const [planName, setPlanName] = useState<string | null>(null);
+  const hasBilling = Boolean(organization?.id && clerk.billing);
+
+  if (!hasBilling && planName !== null) {
+    setPlanName(null);
+  }
 
   useEffect(() => {
     if (!organization?.id || !clerk.billing) {
-      setPlanName(null);
       return;
     }
 

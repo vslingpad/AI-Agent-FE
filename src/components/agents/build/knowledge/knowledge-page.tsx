@@ -224,10 +224,8 @@ function AgentKnowledgePageContent({ agentId }: { agentId: string }) {
           <KnowledgeOptionRow
             tiles={filteredAddTiles}
             sources={knowledge.sources}
-            pending={updateKnowledge.isPending}
             onAdd={handleAddTile}
             onPicker={handlePickerTile}
-            onToggle={toggleSource}
             onComingSoon={setComingSoonLabel}
             onShowAll={() => setShowAllOpen(true)}
             isSearching={Boolean(searchQuery.trim())}
@@ -339,20 +337,16 @@ function AgentKnowledgePageContent({ agentId }: { agentId: string }) {
 function KnowledgeOptionRow({
   tiles,
   sources,
-  pending,
   onAdd,
   onPicker,
-  onToggle,
   onComingSoon,
   onShowAll,
   isSearching,
 }: {
   tiles: KnowledgeTile[];
   sources: KnowledgeSource[];
-  pending: boolean;
   onAdd: (tile: KnowledgeTile) => void;
   onPicker: (tile: KnowledgeTile) => void;
-  onToggle: (sourceId: string, enabled: boolean) => void;
   onComingSoon: (label: string) => void;
   onShowAll: () => void;
   isSearching: boolean;
@@ -397,10 +391,8 @@ function KnowledgeOptionRow({
           key={tile.id}
           tile={tile}
           sources={sources}
-          pending={pending}
           onAdd={onAdd}
           onPicker={onPicker}
-          onToggle={onToggle}
           onComingSoon={onComingSoon}
         />
       ))}
@@ -425,18 +417,14 @@ function KnowledgeOptionRow({
 function KnowledgeOptionCard({
   tile,
   sources,
-  pending,
   onAdd,
   onPicker,
-  onToggle,
   onComingSoon,
 }: {
   tile: KnowledgeTile;
   sources: KnowledgeSource[];
-  pending: boolean;
   onAdd: (tile: KnowledgeTile) => void;
   onPicker: (tile: KnowledgeTile) => void;
-  onToggle: (sourceId: string, enabled: boolean) => void;
   onComingSoon: (label: string) => void;
 }) {
   const vendor = tile.kind === "group" ? primaryVendor(tile) : null;
@@ -448,7 +436,6 @@ function KnowledgeOptionCard({
     return sourceId ? item.id === sourceId : false;
   }) ?? null;
   const connected = source?.state === "connected";
-  const canToggle = tile.interaction === "toggle" && tile.available && connected && source;
   const showConnect = tile.interaction === "toggle" && tile.available && !connected && vendor;
   const isClickable = tile.interaction === "add" || tile.interaction === "picker";
 

@@ -1,5 +1,4 @@
 import { INTEGRATION_CATALOG } from "@/lib/fixtures/integrations-store";
-import { isIntegrationAvailable } from "@/lib/integrations/availability";
 
 export type DeployChannelDefinition = {
   id: string;

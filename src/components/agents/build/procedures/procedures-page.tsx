@@ -48,19 +48,18 @@ export function AgentProceduresPage({ agentId }: { agentId: string }) {
     null
   );
 
-  const procedures = data?.procedures ?? [];
-
   const filteredProcedures = useMemo(() => {
+    const list = data?.procedures ?? [];
     const normalized = searchQuery.trim().toLowerCase();
     if (!normalized) {
-      return procedures;
+      return list;
     }
 
-    return procedures.filter((procedure) =>
+    return list.filter((procedure) =>
       [procedure.name, procedure.whenToUse]
         .some((value) => value.toLowerCase().includes(normalized))
     );
-  }, [procedures, searchQuery]);
+  }, [data?.procedures, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProcedures.length / pageSize));
   const currentPage = Math.min(page, totalPages);

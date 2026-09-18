@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { SearchIcon, XIcon } from "lucide-react";
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
+import { useResetKey } from "@/hooks/use-reset-key";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,11 +44,9 @@ export function ShowAllActionsDialog({
   const [query, setQuery] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (open) {
-      setQuery("");
-    }
-  }, [open]);
+  if (useResetKey(open) && open) {
+    setQuery("");
+  }
 
   const filtered = catalog.filter((item) => matchesActionSearch(item, query));
 

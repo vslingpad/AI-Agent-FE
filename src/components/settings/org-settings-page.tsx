@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useOrganization } from "@clerk/nextjs";
+import { useResetKey } from "@/hooks/use-reset-key";
 import { Loader2Icon, UploadIcon } from "lucide-react";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ import { cn } from "@/lib/utils";
 export function OrgSettingsPage() {
   const { organization, membership, isLoaded } = useOrganization();
   const isAdmin = membership?.role === "org:admin";
-  const [name, setName] = useState("");
+  const [name, setName] = useState(organization?.name ?? "");
   const [leaveOpen, setLeaveOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,11 +40,9 @@ export function OrgSettingsPage() {
   const removeLogo = useRemoveOrganizationLogo();
   const leaveOrg = useLeaveOrganization();
 
-  useEffect(() => {
-    if (organization?.name) {
-      setName(organization.name);
-    }
-  }, [organization?.name]);
+  if (useResetKey(organization?.name) && organization?.name) {
+    setName(organization.name);
+  }
 
   if (!isLoaded) {
     return <OrgSettingsSkeleton />;

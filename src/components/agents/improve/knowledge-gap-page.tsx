@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BookPlusIcon, CheckCircle2Icon } from "lucide-react";
+import { useResetKey } from "@/hooks/use-reset-key";
 import { AddKnowledgeQnaDialog } from "@/components/agents/build/knowledge/dialogs/add-knowledge-qna-dialog";
 import { AgentErrorState, AgentImproveSkeleton } from "@/components/agents/agent-states";
 import { ConversationDetailPanel } from "@/components/agents/conversations/conversation-detail-panel";
@@ -86,17 +87,18 @@ export function AgentKnowledgeGapPage({ agentId }: { agentId: string }) {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const selectedItem =
     items.find((item) => item.id === selectedItemId) ?? items[0] ?? null;
+  const selectedConversationId = selectedItem?.conversationId;
 
   const conversationQuery = useMemo(
     () =>
-      selectedItem?.conversationId
+      selectedConversationId
         ? {
-            conversationId: selectedItem.conversationId,
+            conversationId: selectedConversationId,
             page: 1,
             pageSize: 20,
           }
         : undefined,
-    [selectedItem?.conversationId]
+    [selectedConversationId]
   );
 
   const { data: conversationData, isLoading: conversationLoading } =
@@ -112,19 +114,9 @@ export function AgentKnowledgeGapPage({ agentId }: { agentId: string }) {
     answer: string;
   } | null>(null);
 
-  useEffect(() => {
+  if (useResetKey(tab)) {
     setPage(1);
-  }, [tab]);
-
-  useEffect(() => {
-    if (items.length === 0) {
-      setSelectedItemId(null);
-      return;
-    }
-    if (!selectedItemId || !items.some((item) => item.id === selectedItemId)) {
-      setSelectedItemId(items[0]?.id ?? null);
-    }
-  }, [items, selectedItemId]);
+  }
 
   if (agentLoading || improveLoading) {
     return <AgentImproveSkeleton />;

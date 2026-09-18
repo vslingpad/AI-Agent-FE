@@ -49,7 +49,6 @@ import {
   type AgentsList,
   type CreateAgentInput,
   type HelpDeskBinding,
-  type ImproveKind,
   type ImproveQuery,
   type UpdateAgentActionsInput,
   type UpdateAgentCoreInput,

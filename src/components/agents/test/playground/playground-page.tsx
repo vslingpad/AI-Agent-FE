@@ -18,6 +18,7 @@ import {
 import { sendPlaygroundMessage as sendPlaygroundMessageApi } from "@/lib/api/agents";
 import {
   PLAYGROUND_PROMPT_MAX_LENGTH,
+  type PlaygroundMessage,
   type PlaygroundSession,
 } from "@/lib/schemas/agents";
 import { detectBrowserLocation } from "@/lib/geo/detect-location";
@@ -41,6 +42,15 @@ function promptOverrideFromDraft(draft: string, productionPrompt: string) {
 
 function clampPlaygroundPrompt(value: string) {
   return value.slice(0, PLAYGROUND_PROMPT_MAX_LENGTH);
+}
+
+function createPendingUserMessage(content: string): PlaygroundMessage {
+  return {
+    id: `pending-${crypto.randomUUID()}`,
+    role: "user",
+    content,
+    at: new Date().toISOString(),
+  };
 }
 
 export function AgentPlaygroundPage({ agentId }: { agentId: string }) {
@@ -113,9 +123,14 @@ function PlaygroundWorkspace({
   const preSessionPromptDirty = preSessionPromptDraft !== preSessionAppliedPrompt;
   const [sendError, setSendError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [pendingUserMessage, setPendingUserMessage] =
+    useState<PlaygroundMessage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const messages = session?.messages ?? [];
+  const visibleMessages = pendingUserMessage
+    ? [...messages, pendingUserMessage]
+    : messages;
   const busy = sending || createSession.isPending;
 
   useEffect(() => {
@@ -140,7 +155,7 @@ function PlaygroundWorkspace({
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages.length, busy]);
+  }, [visibleMessages.length, busy]);
 
   const send = async () => {
     const text = input.trim();
@@ -152,6 +167,7 @@ function PlaygroundWorkspace({
     setSendError(null);
     setInput("");
     setSending(true);
+    setPendingUserMessage(createPendingUserMessage(text));
 
     try {
       const geo = await detectBrowserLocation();
@@ -177,6 +193,7 @@ function PlaygroundWorkspace({
       setSendError("Unable to send message. Try again.");
       setInput(text);
     } finally {
+      setPendingUserMessage(null);
       setSending(false);
     }
   };
@@ -184,6 +201,7 @@ function PlaygroundWorkspace({
   const startNewTest = () => {
     setInput("");
     setSendError(null);
+    setPendingUserMessage(null);
     setPreSessionPromptDraft(productionPrompt);
     setPreSessionAppliedPrompt(productionPrompt);
     onNewSession();
@@ -214,7 +232,7 @@ function PlaygroundWorkspace({
       <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_350px]">
         <ChatPanel
           agentName={session?.agentName ?? agentName}
-          messages={messages}
+          messages={visibleMessages}
           input={input}
           onInputChange={setInput}
           onSend={() => void send()}
@@ -268,7 +286,7 @@ function ChatPanel({
       <div className="flex flex-col h-full items-center justify-center">
       <div className="flex h-full max-h-[600px] w-[400px] flex-col overflow-hidden rounded-xl border border-border bg-background shadow-sm">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-          {messages.length === 0 ? (
+          {messages.length === 0 && !busy ? (
             <div className="flex h-full min-h-[12rem] flex-col items-center justify-center gap-3 text-center">
               <div className="flex size-12 items-center justify-center rounded-full bg-muted">
                 <BotIcon className="size-6 text-muted-foreground" />
@@ -377,7 +395,7 @@ function TypingIndicator({ agentName }: { agentName: string }) {
   return (
     <div className="flex w-full flex-col items-start gap-1 pr-10">
       <p className="text-[11px] text-muted-foreground">{agentName}</p>
-      <div className="inline-flex w-fit items-center gap-1 rounded-2xl rounded-bl-sm bg-muted px-3 py-2">
+      <div className="inline-flex w-fit items-center gap-1 rounded-2xl rounded-bl-sm bg-muted px-5 py-4">
         <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.2s]" />
         <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.1s]" />
         <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ import {
 import { useAgentProcedureTools } from "@/hooks/use-procedure-tools";
 import { parseProcedureBody, validateProcedureSteps } from "@/lib/procedures/step-utils";
 import type { AgentProcedureBinding } from "@/lib/schemas/agents";
-import type { ProcedureStep } from "@/lib/schemas/procedures";
+import type { ProcedureStep, ProcedureTemplate } from "@/lib/schemas/procedures";
 
 const selectClassName =
   "h-9 w-full rounded-md border border-input bg-transparent px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
@@ -129,24 +129,35 @@ export function ProcedureEditor({
     }
   };
 
-  const applyTemplate = (templateId: string) => {
-    const template = templates.find((item) => item.id === templateId);
-    if (!template) {
-      return;
-    }
-
+  const applyTemplateData = useCallback((template: ProcedureTemplate) => {
     try {
+      const parsedSteps = parseProcedureBody(template.body).steps;
+      if (!parsedSteps.length && template.stepCount > 0) {
+        setError("This template did not include its steps. Reload and try again.");
+        return false;
+      }
       setSelectedTemplateId(template.id);
       setName(template.name);
       setWhenToUse(template.whenToUse);
-      setSteps(parseProcedureBody(template.body).steps);
+      setSteps(parsedSteps);
       setError(null);
       setShowStepErrors(false);
+      return true;
     } catch (applyError) {
       setError(
         applyError instanceof Error ? applyError.message : "Failed to apply template"
       );
+      return false;
     }
+  }, []);
+
+  const applyTemplate = (templateId: string) => {
+    const template = templates.find((item) => item.id === templateId);
+    if (!template) {
+      setError("Template not found.");
+      return;
+    }
+    applyTemplateData(template);
   };
 
   useEffect(() => {
@@ -163,20 +174,10 @@ export function ProcedureEditor({
       return;
     }
 
-    appliedInitialTemplate.current = initialTemplateId;
-    try {
-      setSelectedTemplateId(template.id);
-      setName(template.name);
-      setWhenToUse(template.whenToUse);
-      setSteps(parseProcedureBody(template.body).steps);
-      setError(null);
-      setShowStepErrors(false);
-    } catch (applyError) {
-      setError(
-        applyError instanceof Error ? applyError.message : "Failed to apply template"
-      );
+    if (applyTemplateData(template)) {
+      appliedInitialTemplate.current = initialTemplateId;
     }
-  }, [initialTemplateId, isEditing, templatesData]);
+  }, [applyTemplateData, initialTemplateId, isEditing, templatesData]);
 
   return (
     <div className="grid gap-6">

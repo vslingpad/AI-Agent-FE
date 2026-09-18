@@ -11,6 +11,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  formatSubscriptionStatusLabel,
+  subscriptionNeedsAttention,
+  subscriptionStatusBadgeVariant,
+  type SubscriptionStatus,
+} from "@/lib/billing/subscription-status";
 
 type BillingUsageCardProps = {
   conversationsUsed?: number;
@@ -22,6 +28,11 @@ type BillingUsageCardProps = {
   isFreePlan?: boolean;
   upgradeHref?: string;
   planName?: string;
+  subscriptionStatus?: SubscriptionStatus;
+  isAdmin?: boolean;
+  alertMessage?: string | null;
+  onManageBilling?: () => void;
+  manageBillingPending?: boolean;
 };
 
 function BillingUsageDetails({
@@ -34,6 +45,11 @@ function BillingUsageDetails({
   isFreePlan,
   upgradeHref,
   planName,
+  subscriptionStatus,
+  isAdmin,
+  alertMessage,
+  onManageBilling,
+  manageBillingPending,
   className,
 }: {
   conversationsUsed: number;
@@ -45,8 +61,18 @@ function BillingUsageDetails({
   isFreePlan?: boolean;
   upgradeHref?: string;
   planName?: string;
+  subscriptionStatus?: SubscriptionStatus;
+  isAdmin?: boolean;
+  alertMessage?: string | null;
+  onManageBilling?: () => void;
+  manageBillingPending?: boolean;
   className?: string;
 }) {
+  const needsAttention =
+    subscriptionStatus !== undefined &&
+    subscriptionNeedsAttention(subscriptionStatus);
+  const showAlertIcon = Boolean(alertMessage) && !isAdmin;
+
   return (
     <div className={cn("space-y-3", className)}>
       <div>
@@ -85,9 +111,13 @@ function BillingUsageDetails({
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between gap-2">
-        <Badge variant="default">{planName ?? (isFreePlan ? "Free" : "Plan")}</Badge>
-        {isFreePlan ? (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="default">{planName ?? (isFreePlan ? "Free" : "Plan")}</Badge>
+        </div>
+        {showAlertIcon ? (
+          <BillingAlertInfoIcon message={alertMessage!} />
+        ) : isAdmin && isFreePlan ? (
           <Button
             size="xs"
             render={<Link href={upgradeHref ?? "/billing?upgrade=1"} />}
@@ -95,11 +125,43 @@ function BillingUsageDetails({
             Upgrade
             <ArrowUpRightIcon />
           </Button>
-        ) : resetsOn ? (
+        ) : isAdmin && needsAttention && onManageBilling ? (
+          <Button
+            variant="destructive"
+            size="xs"
+            disabled={manageBillingPending}
+            onClick={onManageBilling}
+          >
+            {formatSubscriptionStatusLabel(subscriptionStatus!)}{" "}
+            <ArrowUpRightIcon />
+          </Button>
+        ) : isAdmin && resetsOn ? (
           <p className="text-xs text-sidebar-foreground/60">Renews on {resetsOn}</p>
         ) : null}
       </div>
     </div>
+  );
+}
+
+function BillingAlertInfoIcon({ message }: { message: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            aria-label="Billing alert"
+          >
+            <InfoIcon />
+          </Button>
+        }
+      />
+      <TooltipContent side="top" className="max-w-xs text-left">
+        {message}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -113,10 +175,16 @@ export function BillingUsageCard({
   isFreePlan = false,
   upgradeHref,
   planName,
+  subscriptionStatus,
+  isAdmin = true,
+  alertMessage,
+  onManageBilling,
+  manageBillingPending,
 }: BillingUsageCardProps) {
   const { state } = useSidebar();
   const hasOverage = overageUsed > 0;
   const isCollapsed = state === "collapsed";
+  const memberAlertOnly = !isAdmin && Boolean(alertMessage);
 
   const details = (
     <BillingUsageDetails
@@ -129,10 +197,37 @@ export function BillingUsageCard({
       isFreePlan={isFreePlan}
       upgradeHref={upgradeHref}
       planName={planName}
+      subscriptionStatus={subscriptionStatus}
+      isAdmin={isAdmin}
+      alertMessage={alertMessage}
+      onManageBilling={onManageBilling}
+      manageBillingPending={manageBillingPending}
     />
   );
 
   if (isCollapsed) {
+    if (memberAlertOnly) {
+      return (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="mx-auto size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Billing alert"
+              >
+                <InfoIcon />
+              </Button>
+            }
+          />
+          <TooltipContent side="right" align="center" className="max-w-xs text-left">
+            {alertMessage}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
     return (
       <Tooltip>
         <TooltipTrigger
@@ -143,9 +238,9 @@ export function BillingUsageCard({
               className="mx-auto size-8 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               aria-label="View billing usage"
               render={
-                isFreePlan ? (
+                isAdmin && isFreePlan ? (
                   <Link href={upgradeHref ?? "/billing?upgrade=1"} />
-                ) : href ? (
+                ) : isAdmin && href ? (
                   <Link href={href} />
                 ) : undefined
               }
@@ -166,7 +261,7 @@ export function BillingUsageCard({
     );
   }
 
-  if (href && !isFreePlan) {
+  if (href && isAdmin && !isFreePlan) {
     return (
       <Link
         href={href}

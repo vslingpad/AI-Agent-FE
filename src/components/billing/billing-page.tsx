@@ -19,6 +19,11 @@ import {
   useUpdateBillingSettings,
 } from "@/hooks/use-billing";
 import { formatCurrency, formatLimitValue } from "@/lib/billing/plans";
+import {
+  formatSubscriptionStatusLabel,
+  subscriptionStatusBadgeVariant,
+  subscriptionStatusMessage,
+} from "@/lib/billing/subscription-status";
 import type { BillingOverview } from "@/lib/schemas/billing";
 import { cn } from "@/lib/utils";
 
@@ -116,6 +121,7 @@ function BillingPageContent() {
         {isFreePlan ? <UpgradeQueryHandler onOpen={openUpgrade} /> : null}
       </Suspense>
       <div className="flex max-w-5xl flex-col gap-6">
+        <SubscriptionStatusAlert data={data} />
         <CurrentPlanSection data={data} />
         <UsageSection
           data={data}
@@ -178,6 +184,30 @@ function CheckoutReturnHandler({ refetch }: { refetch: () => Promise<unknown> })
   return null;
 }
 
+function SubscriptionStatusAlert({ data }: { data: BillingOverview }) {
+  const { subscription } = data;
+  const message = subscriptionStatusMessage(subscription.status);
+
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2 rounded-xl border px-4 py-3",
+        subscription.status === "past_due" && "border-amber-500/30 bg-amber-500/10",
+        subscription.status === "canceled" && "border-destructive/30 bg-destructive/10"
+      )}
+    >
+      <Badge variant={subscriptionStatusBadgeVariant(subscription.status)}>
+        {formatSubscriptionStatusLabel(subscription.status)}
+      </Badge>
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+}
+
 function CurrentPlanSection({ data }: { data: BillingOverview }) {
   const { subscription } = data;
   const isFreePlan = subscription.tier === "free";
@@ -196,8 +226,8 @@ function CurrentPlanSection({ data }: { data: BillingOverview }) {
                   : `${subscription.monthlyBaseLabel} per month`}
             </CardDescription>
           </div>
-          <Badge variant={subscription.status === "active" ? "default" : "muted"}>
-            {formatSubscriptionStatus(subscription.status)}
+          <Badge variant={subscriptionStatusBadgeVariant(subscription.status)}>
+            {formatSubscriptionStatusLabel(subscription.status)}
           </Badge>
         </div>
       </CardHeader>
@@ -437,17 +467,3 @@ function formatBillingDate(value: string) {
   });
 }
 
-function formatSubscriptionStatus(status: BillingOverview["subscription"]["status"]) {
-  switch (status) {
-    case "active":
-      return "Active";
-    case "trialing":
-      return "Trialing";
-    case "past_due":
-      return "Past due";
-    case "canceled":
-      return "Canceled";
-    default:
-      return "Free";
-  }
-}

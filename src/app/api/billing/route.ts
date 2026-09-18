@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError, requireOrgAdmin } from "@/lib/api/auth";
+import { apiError, requireOrgAdmin, requireOrgId } from "@/lib/api/auth";
 import { parseJsonBody } from "@/lib/api/agent-routes";
 import {
   ControlPlaneAuthError,
@@ -55,7 +55,7 @@ async function loadBillingOverview() {
 }
 
 export async function GET() {
-  const authResult = await requireOrgAdmin();
+  const authResult = await requireOrgId();
 
   if ("error" in authResult) {
     return authResult.error;

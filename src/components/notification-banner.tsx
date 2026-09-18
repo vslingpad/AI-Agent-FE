@@ -2,32 +2,43 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Show } from "@clerk/nextjs";
+import { useOrganization } from "@clerk/nextjs";
 import { XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useBillingOverview } from "@/hooks/use-billing";
-import type { BillingOverview } from "@/lib/schemas/billing";
-
-const DEFAULT_ALERT_THRESHOLDS = [0.8];
+import {
+  useBillingOverview,
+  useBillingPortalSession,
+} from "@/hooks/use-billing";
+import {
+  getBillingNotificationAlert,
+  subscriptionAlertDismissible,
+} from "@/lib/billing/billing-alerts";
 
 type NotificationBannerProps = {
   message: ReactNode;
   onDismiss?: () => void;
+  dismissible?: boolean;
 };
 
-export function NotificationBanner({ message, onDismiss }: NotificationBannerProps) {
+export function NotificationBanner({
+  message,
+  onDismiss,
+  dismissible = true,
+}: NotificationBannerProps) {
   return (
     <div className="relative z-20 flex shrink-0 items-center justify-center border-b border-border bg-muted/50 px-12 py-2.5 text-sm">
       <p className="text-center text-muted-foreground">{message}</p>
-      <Button
-        variant="ghost"
-        size="icon-xs"
-        onClick={onDismiss}
-        aria-label="Dismiss notification"
-        className="absolute right-4"
-      >
-        <XIcon />
-      </Button>
+      {dismissible && onDismiss ? (
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          onClick={onDismiss}
+          aria-label="Dismiss notification"
+          className="absolute right-4"
+        >
+          <XIcon />
+        </Button>
+      ) : null}
     </div>
   );
 }
@@ -38,27 +49,77 @@ export function UsageNotificationBanner({
   onVisibilityChange: (visible: boolean) => void;
 }) {
   return (
-    <Show when={{ role: "org:admin" }}>
-      <AdminUsageNotificationBanner onVisibilityChange={onVisibilityChange} />
-    </Show>
+    <OrgUsageNotificationBanner onVisibilityChange={onVisibilityChange} />
   );
 }
 
-function AdminUsageNotificationBanner({
+function OrgUsageNotificationBanner({
   onVisibilityChange,
 }: {
   onVisibilityChange: (visible: boolean) => void;
 }) {
+  const { membership } = useOrganization();
+  const isAdmin = membership?.role === "org:admin";
   const { data } = useBillingOverview();
+  const portalSession = useBillingPortalSession();
   const [dismissed, setDismissed] = useState(false);
-  const alert = dismissed ? null : usageAlert(data);
+
+  const alert = getBillingNotificationAlert(data, isAdmin);
+  const canDismiss = subscriptionAlertDismissible(data, isAdmin);
+  const visible = Boolean(alert) && !(dismissed && canDismiss);
 
   useEffect(() => {
-    onVisibilityChange(Boolean(alert));
-  }, [alert, onVisibilityChange]);
+    onVisibilityChange(visible);
+  }, [onVisibilityChange, visible]);
 
-  if (!alert) {
+  const handleManageBilling = async () => {
+    try {
+      const session = await portalSession.mutateAsync();
+      window.open(session.url, "_blank", "noopener,noreferrer");
+    } catch {
+      // Mutation toast is shown globally.
+    }
+  };
+
+  if (!visible || !alert) {
     return null;
+  }
+
+  if (alert.kind === "subscription") {
+    return (
+      <NotificationBanner
+        dismissible={false}
+        message={
+          isAdmin ? (
+            <>
+              {alert.message}{" "}
+              <button
+                type="button"
+                disabled={portalSession.isPending}
+                onClick={() => void handleManageBilling()}
+                className="font-medium text-foreground underline-offset-4 hover:underline disabled:opacity-50"
+              >
+                Manage billing
+              </button>
+            </>
+          ) : (
+            alert.message
+          )
+        }
+      />
+    );
+  }
+
+  if ("message" in alert) {
+    return (
+      <NotificationBanner
+        message={alert.message}
+        onDismiss={() => {
+          setDismissed(true);
+          onVisibilityChange(false);
+        }}
+      />
+    );
   }
 
   return (
@@ -81,65 +142,4 @@ function AdminUsageNotificationBanner({
       }}
     />
   );
-}
-
-function usageAlert(data: BillingOverview | undefined) {
-  if (!data) {
-    return null;
-  }
-
-  const isFreePlan = data.subscription.tier === "free";
-  const thresholds = data.settings.alertThresholds.length
-    ? data.settings.alertThresholds
-    : DEFAULT_ALERT_THRESHOLDS;
-  const warnAt = Math.min(...thresholds);
-  const percent = Math.max(0, Math.round(data.usage.usagePercent));
-
-  if (!data.usage.canAnswer) {
-    return isFreePlan
-      ? {
-          lead: "Production AI replies are paused. You've used all free conversations.",
-          cta: "Upgrade",
-          href: "/billing?upgrade=1",
-          tail: "to continue answering customers.",
-        }
-      : {
-          lead: "Production AI replies are paused. Included conversations are used up.",
-          cta: "Review billing",
-          href: "/billing",
-          tail: "to enable overage or change your plan.",
-        };
-  }
-
-  if (percent / 100 < warnAt) {
-    return null;
-  }
-
-  if (isFreePlan) {
-    return {
-      lead:
-        percent >= 100
-          ? "You've used all 50 free conversations."
-          : `Your free conversation usage is at ${percent}%.`,
-      cta: "Upgrade your plan",
-      href: "/billing?upgrade=1",
-      tail: "to keep production AI running.",
-    };
-  }
-
-  if (percent >= 100) {
-    return {
-      lead: `You've used ${percent}% of your included conversations.`,
-      cta: "Review billing",
-      href: "/billing",
-      tail: "to enable overage or avoid interruption.",
-    };
-  }
-
-  return {
-    lead: `Your conversation usage is at ${percent}%.`,
-    cta: "Review billing",
-    href: "/billing",
-    tail: "to avoid overage charges.",
-  };
 }

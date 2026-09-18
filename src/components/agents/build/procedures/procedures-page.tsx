@@ -135,7 +135,7 @@ export function AgentProceduresPage({ agentId }: { agentId: string }) {
         </div>
       ) : null}
 
-      {procedures.length === 0 ? (
+      {data.procedures.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border px-6 py-16 text-center">
           <p className="text-sm font-medium">No procedures yet</p>
           <p className="mt-1 text-sm text-muted-foreground">

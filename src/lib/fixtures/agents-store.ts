@@ -375,6 +375,7 @@ function defaultProcedures(enabled: Record<string, boolean>): AgentWorkspace["pr
       enabled: enabled.refund ?? true,
       stepCount: 6,
       lastSimulatedAt: hoursAgo(20),
+      body: {},
     },
     {
       id: "proc_order",
@@ -384,6 +385,7 @@ function defaultProcedures(enabled: Record<string, boolean>): AgentWorkspace["pr
       enabled: enabled.order ?? true,
       stepCount: 4,
       lastSimulatedAt: daysAgo(2),
+      body: {},
     },
     {
       id: "proc_cancel",
@@ -393,6 +395,7 @@ function defaultProcedures(enabled: Record<string, boolean>): AgentWorkspace["pr
       enabled: enabled.cancel ?? false,
       stepCount: 5,
       lastSimulatedAt: null,
+      body: {},
     },
   ];
 }

@@ -303,11 +303,11 @@ export function updateCustomTool(
   const existing = state.tools[index]!;
   const authType = input.authType ?? existing.authType;
   const authKeys = input.authKeys ?? {
-    headerName: existing.auth.headerName,
-    username: existing.auth.username,
-    tokenUrl: existing.auth.tokenUrl,
-    clientId: existing.auth.clientId,
-    scope: existing.auth.scope,
+    headerName: existing.auth.headerName ?? undefined,
+    username: existing.auth.username ?? undefined,
+    tokenUrl: existing.auth.tokenUrl ?? undefined,
+    clientId: existing.auth.clientId ?? undefined,
+    scope: existing.auth.scope ?? undefined,
   };
   const secrets = mergeSecrets(authType, input.authKeys, existing.secrets);
   const responseMapping = input.responseMapping ?? existing.responseMapping;

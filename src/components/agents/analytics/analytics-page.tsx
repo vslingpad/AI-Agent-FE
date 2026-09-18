@@ -97,7 +97,7 @@ export function AgentAnalyticsPage({ agentId }: { agentId: string }) {
                     change={kpi.change}
                     label={kpi.changeLabel}
                     direction={kpi.direction}
-                    invertColors={kpi.invert}
+                    invertColors={kpi.invert ?? undefined}
                   />
                 </div>
                 <Sparkline

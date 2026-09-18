@@ -6,6 +6,7 @@ import {
   ChevronLeftIcon,
   ChevronRight,
   EllipsisVerticalIcon,
+  PlusIcon,
   SearchIcon,
 } from "lucide-react";
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
@@ -26,7 +27,12 @@ import type {
   KnowledgeSource,
 } from "@/lib/schemas/agents";
 import { cn } from "@/lib/utils";
+import { AddKnowledgeFileDialog } from "@/components/agents/build/knowledge/dialogs/add-knowledge-file-dialog";
+import { AddKnowledgeQnaDialog } from "@/components/agents/build/knowledge/dialogs/add-knowledge-qna-dialog";
+import { AddKnowledgeWebsiteDialog } from "@/components/agents/build/knowledge/dialogs/add-knowledge-website-dialog";
 import { ViewKnowledgeQnaDialog } from "@/components/agents/build/knowledge/dialogs/view-knowledge-qna-dialog";
+
+type AddDialog = "files" | "website" | "qna" | null;
 
 type QnaResource = Extract<KnowledgeResource, { type: "qna" }>;
 
@@ -66,11 +72,13 @@ export function KnowledgeSourceDetail({
     source.kind === "qna";
   const isQnaSource = source.kind === "qna";
   const [viewingQna, setViewingQna] = useState<QnaResource | null>(null);
+  const [addDialog, setAddDialog] = useState<AddDialog>(null);
 
   const rows = useMemo(
     () => source.resources.map((resource) => normalizeResource(resource)),
     [source.resources]
   );
+  const showToolbar = isNative || rows.length > 0;
 
   const filteredRows = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
@@ -150,7 +158,7 @@ export function KnowledgeSourceDetail({
             </div>
           </div>
 
-          {rows.length > 0 ? (
+          {showToolbar ? (
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center lg:shrink-0">
               <div className="relative w-full sm:w-56">
                 <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -180,6 +188,24 @@ export function KnowledgeSourceDetail({
                   ))}
                 </select>
               </label>
+              {isNative ? (
+                <Button
+                  size="sm"
+                  className="h-9 shrink-0"
+                  onClick={() => {
+                    if (
+                      source.kind === "website" ||
+                      source.kind === "files" ||
+                      source.kind === "qna"
+                    ) {
+                      setAddDialog(source.kind);
+                    }
+                  }}
+                >
+                  <PlusIcon className="size-4" />
+                  {addItemButtonLabel(source.kind)}
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -283,6 +309,34 @@ export function KnowledgeSourceDetail({
             setViewingQna(null);
           }
         }}
+      />
+
+      <AddKnowledgeWebsiteDialog
+        open={addDialog === "website"}
+        onOpenChange={(open) => !open && setAddDialog(null)}
+        pending={updateKnowledge.isPending}
+        onSubmit={(url) => {
+          updateKnowledge.mutate({ addUrl: url });
+          setAddDialog(null);
+        }}
+      />
+
+      <AddKnowledgeFileDialog
+        open={addDialog === "files"}
+        onOpenChange={(open) => !open && setAddDialog(null)}
+        pending={updateKnowledge.isPending}
+        onSubmit={(name) => {
+          updateKnowledge.mutate({ addFile: { name } });
+          setAddDialog(null);
+        }}
+      />
+
+      <AddKnowledgeQnaDialog
+        open={addDialog === "qna"}
+        onOpenChange={(open) => !open && setAddDialog(null)}
+        pending={updateKnowledge.isPending}
+        submitLabel="Add Q&A"
+        onSubmit={(input) => updateKnowledge.mutate({ addQna: input })}
       />
     </div>
   );
@@ -583,6 +637,19 @@ function StatusBadge({ status }: { status: TrainingStatus }) {
   const label = status.charAt(0).toUpperCase() + status.slice(1);
 
   return <Badge variant={variant}>{label}</Badge>;
+}
+
+function addItemButtonLabel(kind: KnowledgeOptionKind) {
+  switch (kind) {
+    case "website":
+      return "Add website";
+    case "files":
+      return "Add files";
+    case "qna":
+      return "Add Q&A";
+    default:
+      return "Add";
+  }
 }
 
 function sourceItemCount(source: KnowledgeSource) {

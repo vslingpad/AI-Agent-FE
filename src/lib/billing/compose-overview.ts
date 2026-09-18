@@ -45,6 +45,10 @@ function asList(value: unknown): unknown[] {
 }
 
 function isoDate(value: unknown, fallback = new Date().toISOString()) {
+  return isoDateOrNull(value) ?? fallback;
+}
+
+function isoDateOrNull(value: unknown) {
   if (typeof value === "string" && value) {
     return value;
   }
@@ -53,7 +57,7 @@ function isoDate(value: unknown, fallback = new Date().toISOString()) {
     return value.toISOString();
   }
 
-  return fallback;
+  return null;
 }
 
 function asPlanTier(value: unknown): BillingPlanTier {
@@ -196,7 +200,8 @@ export function composeBillingOverview(
       : asNumber(plan?.freeGrant);
   const conversationsUsed = asNumber(usage.conversationsBilledThisPeriod);
   const overageUsed = asNumber(usage.overageUsed);
-  const resetsAt = isoDate(usage.billingPeriodEnd ?? usage.billingPeriodStart);
+  const resetsAt =
+    tier === "free" ? null : isoDateOrNull(usage.billingPeriodEnd ?? usage.billingPeriodStart);
   const usageRatio = usage.includedUsageRatio;
   const usagePercent =
     typeof usageRatio === "number" && Number.isFinite(usageRatio)
@@ -240,6 +245,8 @@ export function composeBillingOverview(
       estimatedOverageCost: asNumber(usage.estimatedOverageCost),
       usagePercent,
       resetsAt,
+      canAnswer: asBoolean(usage.canAnswer, true),
+      blockedReason: asString(usage.blockedReason) || null,
     },
     limits: {
       agents: {

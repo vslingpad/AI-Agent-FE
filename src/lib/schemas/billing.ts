@@ -17,7 +17,7 @@ export const BillingSubscriptionSchema = z.object({
   status: BillingSubscriptionStatusSchema,
   monthlyBaseLabel: z.string(),
   hasActiveSubscription: z.boolean(),
-  currentPeriodEnd: z.string(),
+  currentPeriodEnd: z.string().nullable(),
 });
 
 export const BillingUsageSchema = z.object({
@@ -29,7 +29,9 @@ export const BillingUsageSchema = z.object({
   additionalConversationCost: z.number().nullable(),
   estimatedOverageCost: z.number(),
   usagePercent: z.number(),
-  resetsAt: z.string(),
+  resetsAt: z.string().nullable(),
+  canAnswer: z.boolean(),
+  blockedReason: z.string().nullable(),
 });
 
 export const BillingResourceLimitSchema = z.object({
@@ -75,7 +77,20 @@ export const BillingPortalSessionSchema = z.object({
   url: z.string().url(),
 });
 
+export const CheckoutPlanTierSchema = z.enum(["starter", "growth", "scale"]);
+export const BillingIntervalSchema = z.enum(["month", "year"]);
+
+export const CreateCheckoutSessionInputSchema = z.object({
+  planTier: CheckoutPlanTierSchema,
+  billingInterval: BillingIntervalSchema,
+  successUrl: z.string().url(),
+  cancelUrl: z.string().url(),
+});
+
 export type BillingOverview = z.infer<typeof BillingOverviewSchema>;
 export type BillingSettings = z.infer<typeof BillingSettingsSchema>;
 export type UpdateBillingSettingsInput = z.infer<typeof UpdateBillingSettingsInputSchema>;
 export type MonthlyConversationUsagePoint = z.infer<typeof MonthlyConversationUsagePointSchema>;
+export type CreateCheckoutSessionInput = z.infer<typeof CreateCheckoutSessionInputSchema>;
+export type CheckoutPlanTier = z.infer<typeof CheckoutPlanTierSchema>;
+export type BillingInterval = z.infer<typeof BillingIntervalSchema>;

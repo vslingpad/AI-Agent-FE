@@ -1,9 +1,13 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { Show } from "@clerk/nextjs";
-import { ExternalLinkIcon, Loader2Icon } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ArrowUpRightIcon, Loader2Icon } from "lucide-react";
+import { toast } from "sonner";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
 import { ConversationUsageChart } from "@/components/billing/conversation-usage-chart";
+import { UpgradePlansDialog } from "@/components/billing/upgrade-plans";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +20,6 @@ import {
 } from "@/hooks/use-billing";
 import { formatCurrency, formatLimitValue } from "@/lib/billing/plans";
 import type { BillingOverview } from "@/lib/schemas/billing";
-import { SUPPORT_EMAIL } from "@/lib/constants/support";
 import { cn } from "@/lib/utils";
 
 export function BillingPage() {
@@ -46,6 +49,8 @@ function BillingPageContent() {
   const { data, isLoading, isError, refetch } = useBillingOverview();
   const updateSettings = useUpdateBillingSettings();
   const portalSession = useBillingPortalSession();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const openUpgrade = useCallback(() => setUpgradeOpen(true), []);
 
   if (isLoading) {
     return <BillingPageSkeleton />;
@@ -80,52 +85,115 @@ function BillingPageContent() {
     }
   };
 
+  const isFreePlan = data.subscription.tier === "free";
+
   return (
     <AgentPageFrame
       title="Billing"
       description="Review your plan, conversation usage, and overage settings."
       actions={
-        <Button
-          variant="outline"
-          disabled={portalSession.isPending}
-          onClick={() => void handleManageBilling()}
-        >
-          {portalSession.isPending ? (
-            <Loader2Icon className="size-4 animate-spin" />
-          ) : (
-            <ExternalLinkIcon className="size-4" />
-          )}
-          Manage in Stripe
-        </Button>
+        isFreePlan ? (
+          <Button onClick={openUpgrade}>
+            Upgrade
+            <ArrowUpRightIcon />
+          </Button>
+        ) : (
+          <Button
+            disabled={portalSession.isPending}
+            onClick={() => void handleManageBilling()}
+          >
+            {portalSession.isPending ? (
+              <Loader2Icon className="size-4 animate-spin" />
+            ) : null}
+            Manage billing
+            {portalSession.isPending ? null : <ArrowUpRightIcon />}
+          </Button>
+        )
       }
     >
+      <Suspense fallback={null}>
+        <CheckoutReturnHandler refetch={() => refetch()} />
+        {isFreePlan ? <UpgradeQueryHandler onOpen={openUpgrade} /> : null}
+      </Suspense>
       <div className="flex max-w-5xl flex-col gap-6">
         <CurrentPlanSection data={data} />
         <UsageSection
           data={data}
           pending={updateSettings.isPending}
           onOverageToggle={(value) => void handleOverageToggle(value)}
+          onUpgrade={openUpgrade}
         />
         <LimitsSection data={data} />
         <ConversationUsageChart points={data.monthlyUsage.points} />
-        <UpgradeSection currentTier={data.subscription.tier} />
       </div>
+      {isFreePlan ? (
+        <UpgradePlansDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      ) : null}
     </AgentPageFrame>
   );
 }
 
+function UpgradeQueryHandler({ onOpen }: { onOpen: () => void }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (searchParams.get("upgrade") !== "1") {
+      return;
+    }
+
+    onOpen();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("upgrade");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [onOpen, pathname, router, searchParams]);
+
+  return null;
+}
+
+function CheckoutReturnHandler({ refetch }: { refetch: () => Promise<unknown> }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const handled = useRef(false);
+
+  useEffect(() => {
+    const checkout = searchParams.get("checkout");
+    if (!checkout || handled.current) {
+      return;
+    }
+
+    handled.current = true;
+
+    if (checkout === "success") {
+      toast.success("Your plan has been upgraded successfully.");
+      void refetch();
+    }
+
+    router.replace(pathname);
+  }, [pathname, refetch, router, searchParams]);
+
+  return null;
+}
+
 function CurrentPlanSection({ data }: { data: BillingOverview }) {
   const { subscription } = data;
+  const isFreePlan = subscription.tier === "free";
 
   return (
     <Card className="border-border">
       <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="space-y-1">
             <CardTitle>{subscription.planName}</CardTitle>
             <CardDescription>
-              {subscription.monthlyBaseLabel} per month · Renews{" "}
-              {formatBillingDate(subscription.currentPeriodEnd)}
+              {isFreePlan
+                ? `${subscription.monthlyBaseLabel} · ${data.usage.conversationsIncluded} conversations`
+                : subscription.currentPeriodEnd
+                  ? `${subscription.monthlyBaseLabel} per month · Renews on ${formatBillingDate(subscription.currentPeriodEnd)}`
+                  : `${subscription.monthlyBaseLabel} per month`}
             </CardDescription>
           </div>
           <Badge variant={subscription.status === "active" ? "default" : "muted"}>
@@ -160,10 +228,12 @@ function UsageSection({
   data,
   pending,
   onOverageToggle,
+  onUpgrade,
 }: {
   data: BillingOverview;
   pending: boolean;
   onOverageToggle: (allowOverage: boolean) => void;
+  onUpgrade: () => void;
 }) {
   const { usage, settings } = data;
   const isFreePlan = data.subscription.tier === "free";
@@ -188,12 +258,6 @@ function UsageSection({
           progress={includedProgress}
           tone="default"
         />
-
-        {usage.freeRolloverRemaining > 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Free rollover remaining: {usage.freeRolloverRemaining} conversations
-          </p>
-        ) : null}
 
         <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
           <div className="space-y-1">
@@ -231,10 +295,23 @@ function UsageSection({
           />
         ) : null}
 
-        <p className="text-sm text-muted-foreground">
-          Resets on {formatBillingDate(usage.resetsAt)} · {usage.usagePercent}% of included
-          credits used
-        </p>
+        {isFreePlan ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {usage.usagePercent}% of included credits used
+            </p>
+            <Button className="py-1" onClick={onUpgrade}>
+              Upgrade
+              <ArrowUpRightIcon />
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {usage.resetsAt
+              ? `Resets on ${formatBillingDate(usage.resetsAt)} · ${usage.usagePercent}% of included credits used`
+              : `${usage.usagePercent}% of included credits used`}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -258,35 +335,6 @@ function LimitsSection({ data }: { data: BillingOverview }) {
           used={data.limits.integrations.used}
           limit={data.limits.integrations.limit}
         />
-      </CardContent>
-    </Card>
-  );
-}
-
-function UpgradeSection({ currentTier }: { currentTier: BillingOverview["subscription"]["tier"] }) {
-  if (currentTier !== "free") {
-    return null;
-  }
-
-  return (
-    <Card className="border-border">
-      <CardHeader>
-        <CardTitle>Need more conversations?</CardTitle>
-        <CardDescription>
-          Free plan includes 50 conversations with no overage. Upgrade to continue after the
-          free pool is used.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button
-          render={
-            <a
-              href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Upgrade plan request")}`}
-            />
-          }
-        >
-          Contact support to upgrade
-        </Button>
       </CardContent>
     </Card>
   );

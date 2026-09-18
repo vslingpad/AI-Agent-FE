@@ -19,7 +19,15 @@ function BillingUsageCardConnected() {
       }
       overageUsed={data.settings.allowOverage ? data.usage.overageUsed : 0}
       overageLimit={data.usage.overageCap ?? 0}
-      resetsOn={formatSidebarResetDate(data.usage.resetsAt)}
+      isFreePlan={data.subscription.tier === "free"}
+      planName={data.subscription.planName}
+      upgradeHref="/billing?upgrade=1"
+      resetsOn={
+        data.subscription.tier === "free" || !data.usage.resetsAt
+          ? undefined
+          : formatSidebarResetDate(data.usage.resetsAt)
+      }
+      href={data.subscription.tier === "free" ? undefined : "/billing"}
     />
   );
 }

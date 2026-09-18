@@ -25,10 +25,29 @@ export type PlanFeatureKey =
 
 export type PlanFeatureValue = boolean | string;
 
+export const CHECKOUT_PLAN_TIERS = ["starter", "growth", "scale"] as const;
+export type CheckoutPlanTier = (typeof CHECKOUT_PLAN_TIERS)[number];
+
+export const BILLING_INTERVALS = ["month", "year"] as const;
+export type BillingInterval = (typeof BILLING_INTERVALS)[number];
+
+/** Yearly is billed as 10 months; 2 months are included free. */
+export const YEARLY_MONTHS_PAID = 10;
+
+export const UPGRADE_PLAN_TIERS = [
+  "starter",
+  "growth",
+  "scale",
+  "enterprise",
+] as const;
+export type UpgradePlanTier = (typeof UPGRADE_PLAN_TIERS)[number];
+
 export type PlanDefinition = {
   tier: BillingPlanTier;
   name: string;
   monthlyBaseLabel: string;
+  /** Recurring monthly amount. Null means the tier is not sold self-serve. */
+  monthlyAmountCents: number | null;
   includedConversations: number;
   additionalConversationCost: number | null;
   maxOverage: number | null;
@@ -58,6 +77,7 @@ export const PLAN_DEFINITIONS: Record<BillingPlanTier, PlanDefinition> = {
     tier: "free",
     name: "Free",
     monthlyBaseLabel: "$0",
+    monthlyAmountCents: null,
     includedConversations: 50,
     additionalConversationCost: null,
     maxOverage: null,
@@ -82,7 +102,8 @@ export const PLAN_DEFINITIONS: Record<BillingPlanTier, PlanDefinition> = {
   starter: {
     tier: "starter",
     name: "Starter",
-    monthlyBaseLabel: "Contact sales",
+    monthlyBaseLabel: "$49",
+    monthlyAmountCents: 4_900,
     includedConversations: 250,
     additionalConversationCost: 0.2,
     maxOverage: 250,
@@ -107,7 +128,8 @@ export const PLAN_DEFINITIONS: Record<BillingPlanTier, PlanDefinition> = {
   growth: {
     tier: "growth",
     name: "Growth",
-    monthlyBaseLabel: "Contact sales",
+    monthlyBaseLabel: "$149",
+    monthlyAmountCents: 14_900,
     includedConversations: 1000,
     additionalConversationCost: 0.15,
     maxOverage: 1000,
@@ -132,7 +154,8 @@ export const PLAN_DEFINITIONS: Record<BillingPlanTier, PlanDefinition> = {
   scale: {
     tier: "scale",
     name: "Scale",
-    monthlyBaseLabel: "Contact sales",
+    monthlyBaseLabel: "$399",
+    monthlyAmountCents: 39_900,
     includedConversations: 5000,
     additionalConversationCost: 0.1,
     maxOverage: 5000,
@@ -158,6 +181,7 @@ export const PLAN_DEFINITIONS: Record<BillingPlanTier, PlanDefinition> = {
     tier: "enterprise",
     name: "Enterprise",
     monthlyBaseLabel: "Contact sales",
+    monthlyAmountCents: null,
     includedConversations: 0,
     additionalConversationCost: null,
     maxOverage: null,
@@ -187,6 +211,26 @@ export const PUBLIC_PLAN_DEFINITIONS = BILLING_PLAN_TIERS.map(
 
 export function getPlanDefinition(tier: BillingPlanTier) {
   return PLAN_DEFINITIONS[tier];
+}
+
+export function isCheckoutPlanTier(tier: string): tier is CheckoutPlanTier {
+  return (CHECKOUT_PLAN_TIERS as readonly string[]).includes(tier);
+}
+
+export function yearlyAmountCents(monthlyAmountCents: number) {
+  return monthlyAmountCents * YEARLY_MONTHS_PAID;
+}
+
+export function planPriceLabel(plan: PlanDefinition, interval: BillingInterval) {
+  if (plan.monthlyAmountCents === null) {
+    return plan.monthlyBaseLabel;
+  }
+
+  if (interval === "year") {
+    return formatCurrency(yearlyAmountCents(plan.monthlyAmountCents) / 100);
+  }
+
+  return formatCurrency(plan.monthlyAmountCents / 100);
 }
 
 export function formatPlanFeatureValue(value: PlanFeatureValue) {

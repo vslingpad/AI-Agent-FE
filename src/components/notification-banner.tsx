@@ -67,10 +67,10 @@ function AdminUsageNotificationBanner({
         <>
           {alert.lead}{" "}
           <Link
-            href="/billing"
+            href={alert.href}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
-            Upgrade your plan
+            {alert.cta}
           </Link>{" "}
           {alert.tail}
         </>
@@ -88,25 +88,58 @@ function usageAlert(data: BillingOverview | undefined) {
     return null;
   }
 
+  const isFreePlan = data.subscription.tier === "free";
   const thresholds = data.settings.alertThresholds.length
     ? data.settings.alertThresholds
     : DEFAULT_ALERT_THRESHOLDS;
   const warnAt = Math.min(...thresholds);
   const percent = Math.max(0, Math.round(data.usage.usagePercent));
 
+  if (!data.usage.canAnswer) {
+    return isFreePlan
+      ? {
+          lead: "Production AI replies are paused. You've used all free conversations.",
+          cta: "Upgrade",
+          href: "/billing?upgrade=1",
+          tail: "to continue answering customers.",
+        }
+      : {
+          lead: "Production AI replies are paused. Included conversations are used up.",
+          cta: "Review billing",
+          href: "/billing",
+          tail: "to enable overage or change your plan.",
+        };
+  }
+
   if (percent / 100 < warnAt) {
     return null;
+  }
+
+  if (isFreePlan) {
+    return {
+      lead:
+        percent >= 100
+          ? "You've used all 50 free conversations."
+          : `Your free conversation usage is at ${percent}%.`,
+      cta: "Upgrade your plan",
+      href: "/billing?upgrade=1",
+      tail: "to keep production AI running.",
+    };
   }
 
   if (percent >= 100) {
     return {
       lead: `You've used ${percent}% of your included conversations.`,
-      tail: "to avoid overage charges.",
+      cta: "Review billing",
+      href: "/billing",
+      tail: "to enable overage or avoid interruption.",
     };
   }
 
   return {
     lead: `Your conversation usage is at ${percent}%.`,
+    cta: "Review billing",
+    href: "/billing",
     tail: "to avoid overage charges.",
   };
 }

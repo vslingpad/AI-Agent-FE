@@ -38,6 +38,8 @@ function defaultBillingState(): StoredBillingState {
       estimatedOverageCost: overageUsed * (plan.additionalConversationCost ?? 0),
       usagePercent: Math.round((conversationsUsed / conversationsIncluded) * 100),
       resetsAt: "2026-09-01T00:00:00.000Z",
+      canAnswer: true,
+      blockedReason: null,
     },
     limits: {
       agents: { used: 3, limit: plan.agentLimit },

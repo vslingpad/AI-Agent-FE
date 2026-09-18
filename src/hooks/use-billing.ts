@@ -4,10 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@clerk/nextjs";
 import {
   createBillingPortalSession,
+  createCheckoutSession,
   getBillingOverview,
   updateBillingSettings,
 } from "@/lib/api/billing";
-import type { UpdateBillingSettingsInput } from "@/lib/schemas/billing";
+import type {
+  CreateCheckoutSessionInput,
+  UpdateBillingSettingsInput,
+} from "@/lib/schemas/billing";
 
 function billingKey(orgId?: string) {
   return ["billing", orgId] as const;
@@ -38,5 +42,11 @@ export function useUpdateBillingSettings() {
 export function useBillingPortalSession() {
   return useMutation({
     mutationFn: () => createBillingPortalSession(),
+  });
+}
+
+export function useCheckoutSession() {
+  return useMutation({
+    mutationFn: (input: CreateCheckoutSessionInput) => createCheckoutSession(input),
   });
 }

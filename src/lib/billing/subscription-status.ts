@@ -2,6 +2,13 @@ import type { BillingOverview } from "@/lib/schemas/billing";
 
 export type SubscriptionStatus = BillingOverview["subscription"]["status"];
 
+export function canSelectSubscriptionPlan(subscription: {
+  tier: BillingOverview["subscription"]["tier"];
+  status: SubscriptionStatus;
+}) {
+  return subscription.tier === "free" || subscription.status === "canceled";
+}
+
 export function formatSubscriptionStatusLabel(status: SubscriptionStatus) {
   switch (status) {
     case "active":
@@ -50,8 +57,8 @@ export function subscriptionStatusMessage(
         : "Your latest payment has failed. Update your payment method to continue this subscription.";
     case "canceled":
       return forMember
-        ? "Your organization's subscription has ended. Ask an admin to reactivate or choose a new plan."
-        : "Your subscription has ended. Manage billing to reactivate or choose a new plan.";
+        ? "Your organization's subscription has ended. Please contact an admin to renew the subscription."
+        : "Your subscription has ended. Renew your subscription to continue using the service.";
     default:
       return null;
   }

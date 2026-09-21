@@ -7,6 +7,7 @@ import {
   useBillingPortalSession,
 } from "@/hooks/use-billing";
 import { getBillingAlertPlainMessage } from "@/lib/billing/billing-alerts";
+import { canSelectSubscriptionPlan } from "@/lib/billing/subscription-status";
 
 function BillingUsageCardConnected() {
   const { membership } = useOrganization();
@@ -24,10 +25,11 @@ function BillingUsageCardConnected() {
   };
 
   if (isLoading || !data) {
-    return <BillingUsageCard isAdmin={isAdmin} />;
+    return <BillingUsageCard isLoading isAdmin={isAdmin} />;
   }
 
   const alertMessage = getBillingAlertPlainMessage(data, isAdmin);
+  const canSelectPlan = canSelectSubscriptionPlan(data.subscription);
 
   return (
     <BillingUsageCard
@@ -38,19 +40,22 @@ function BillingUsageCardConnected() {
       overageUsed={data.settings.allowOverage ? data.usage.overageUsed : 0}
       overageLimit={data.usage.overageCap ?? 0}
       isFreePlan={data.subscription.tier === "free"}
+      canSelectPlan={canSelectPlan}
       planName={data.subscription.planName}
       subscriptionStatus={data.subscription.status}
       isAdmin={isAdmin}
       alertMessage={alertMessage}
-      onManageBilling={isAdmin ? () => void handleManageBilling() : undefined}
+      onManageBilling={
+        isAdmin && !canSelectPlan ? () => void handleManageBilling() : undefined
+      }
       manageBillingPending={portalSession.isPending}
       upgradeHref="/billing?upgrade=1"
       resetsOn={
-        data.subscription.tier === "free" || !data.usage.resetsAt
+        canSelectPlan || !data.usage.resetsAt
           ? undefined
           : formatSidebarResetDate(data.usage.resetsAt)
       }
-      href={isAdmin && data.subscription.tier !== "free" ? "/billing" : undefined}
+      href={isAdmin && !canSelectPlan ? "/billing" : undefined}
     />
   );
 }

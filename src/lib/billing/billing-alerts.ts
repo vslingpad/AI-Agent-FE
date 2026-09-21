@@ -1,4 +1,5 @@
 import {
+  canSelectSubscriptionPlan,
   subscriptionNeedsAttention,
   subscriptionStatusMessage,
 } from "@/lib/billing/subscription-status";
@@ -95,6 +96,7 @@ export function subscriptionAlertDismissible(
 
 function buildUsageAlert(data: BillingOverview) {
   const isFreePlan = data.subscription.tier === "free";
+  const canSelectPlan = canSelectSubscriptionPlan(data.subscription);
   const thresholds = data.settings.alertThresholds.length
     ? data.settings.alertThresholds
     : DEFAULT_ALERT_THRESHOLDS;
@@ -102,14 +104,19 @@ function buildUsageAlert(data: BillingOverview) {
   const percent = Math.max(0, Math.round(data.usage.usagePercent));
 
   if (!data.usage.canAnswer) {
-    return isFreePlan
+    return canSelectPlan
       ? {
-          lead: "AI replies are paused. You've used all free conversations.",
-          cta: "Upgrade",
+          lead: isFreePlan
+            ? "AI replies are paused. You've used all free conversations."
+            : "AI replies are paused. Your subscription has ended.",
+          cta: isFreePlan ? "Upgrade" : "Choose plan",
           href: "/billing?upgrade=1",
-          tail: "to continue answering customers.",
-          memberMessage:
-            "AI replies are paused. Your organization has used all free conversations.",
+          tail: isFreePlan
+            ? "to continue answering customers."
+            : "to subscribe again.",
+          memberMessage: isFreePlan
+            ? "AI replies are paused. Your organization has used all free conversations."
+            : "AI replies are paused. Your organization's subscription has ended.",
         }
       : {
           lead: "AI replies are paused. Included conversations are used up.",

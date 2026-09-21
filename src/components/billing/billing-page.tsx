@@ -20,6 +20,7 @@ import {
 } from "@/hooks/use-billing";
 import { formatCurrency, formatLimitValue } from "@/lib/billing/plans";
 import {
+  canSelectSubscriptionPlan,
   formatSubscriptionStatusLabel,
   subscriptionStatusBadgeVariant,
   subscriptionStatusMessage,
@@ -91,15 +92,16 @@ function BillingPageContent() {
   };
 
   const isFreePlan = data.subscription.tier === "free";
+  const canSelectPlan = canSelectSubscriptionPlan(data.subscription);
 
   return (
     <AgentPageFrame
       title="Billing"
       description="Review your plan, conversation usage, and overage settings."
       actions={
-        isFreePlan ? (
+        canSelectPlan ? (
           <Button onClick={openUpgrade}>
-            Upgrade
+            {isFreePlan ? "Upgrade" : "Subscribe"}
             <ArrowUpRightIcon />
           </Button>
         ) : (
@@ -118,7 +120,7 @@ function BillingPageContent() {
     >
       <Suspense fallback={null}>
         <CheckoutReturnHandler refetch={() => refetch()} />
-        {isFreePlan ? <UpgradeQueryHandler onOpen={openUpgrade} /> : null}
+        {canSelectPlan ? <UpgradeQueryHandler onOpen={openUpgrade} /> : null}
       </Suspense>
       <div className="flex max-w-5xl flex-col gap-6">
         <SubscriptionStatusAlert data={data} />
@@ -132,7 +134,7 @@ function BillingPageContent() {
         <LimitsSection data={data} />
         <ConversationUsageChart points={data.monthlyUsage.points} />
       </div>
-      {isFreePlan ? (
+      {canSelectPlan ? (
         <UpgradePlansDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       ) : null}
     </AgentPageFrame>
@@ -221,9 +223,11 @@ function CurrentPlanSection({ data }: { data: BillingOverview }) {
             <CardDescription>
               {isFreePlan
                 ? `${subscription.monthlyBaseLabel} · ${data.usage.conversationsIncluded} conversations`
-                : subscription.currentPeriodEnd
-                  ? `${subscription.monthlyBaseLabel} per month · Renews on ${formatBillingDate(subscription.currentPeriodEnd)}`
-                  : `${subscription.monthlyBaseLabel} per month`}
+                : subscription.status === "canceled"
+                  ? `${subscription.monthlyBaseLabel} per month · Subscription ended`
+                  : subscription.currentPeriodEnd
+                    ? `${subscription.monthlyBaseLabel} per month · Renews on ${formatBillingDate(subscription.currentPeriodEnd)}`
+                    : `${subscription.monthlyBaseLabel} per month`}
             </CardDescription>
           </div>
           <Badge variant={subscriptionStatusBadgeVariant(subscription.status)}>
@@ -267,6 +271,7 @@ function UsageSection({
 }) {
   const { usage, settings } = data;
   const isFreePlan = data.subscription.tier === "free";
+  const isCanceled = data.subscription.status === "canceled";
   const includedAllowance = usage.conversationsIncluded + usage.freeRolloverRemaining;
   const includedProgress = Math.min((usage.conversationsUsed / includedAllowance) * 100, 100);
   const showOverage =
@@ -295,12 +300,14 @@ function UsageSection({
             <p className="text-sm text-muted-foreground">
               {isFreePlan
                 ? "Free plan does not support overage. Upgrade to a paid plan to enable it."
-                : `Maximum overage matches your plan included quota (${usage.overageCap ?? 0} conversations).`}
+                : isCanceled
+                  ? "Resubscribe to a paid plan before enabling overage."
+                  : `Maximum overage matches your plan included quota (${usage.overageCap ?? 0} conversations).`}
             </p>
           </div>
           <Switch
             checked={settings.allowOverage}
-            disabled={pending || isFreePlan}
+            disabled={pending || isFreePlan || isCanceled}
             onCheckedChange={onOverageToggle}
             aria-label="Allow overage beyond included credits"
           />
@@ -325,13 +332,15 @@ function UsageSection({
           />
         ) : null}
 
-        {isFreePlan ? (
+        {isFreePlan || data.subscription.status === "canceled" ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
-              {usage.usagePercent}% of included credits used
+              {isFreePlan
+                ? `${usage.usagePercent}% of included credits used`
+                : "Renew your subscription to keep using the service."}
             </p>
             <Button className="py-1" onClick={onUpgrade}>
-              Upgrade
+              {isFreePlan ? "Upgrade" : "Subscribe"}
               <ArrowUpRightIcon />
             </Button>
           </div>

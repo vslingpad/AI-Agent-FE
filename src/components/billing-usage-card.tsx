@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +19,7 @@ import {
 } from "@/lib/billing/subscription-status";
 
 type BillingUsageCardProps = {
+  isLoading?: boolean;
   conversationsUsed?: number;
   conversationsLimit?: number;
   overageUsed?: number;
@@ -25,6 +27,7 @@ type BillingUsageCardProps = {
   resetsOn?: string;
   href?: string;
   isFreePlan?: boolean;
+  canSelectPlan?: boolean;
   upgradeHref?: string;
   planName?: string;
   subscriptionStatus?: SubscriptionStatus;
@@ -42,6 +45,7 @@ function BillingUsageDetails({
   resetsOn,
   hasOverage,
   isFreePlan,
+  canSelectPlan,
   upgradeHref,
   planName,
   subscriptionStatus,
@@ -58,6 +62,7 @@ function BillingUsageDetails({
   resetsOn?: string;
   hasOverage: boolean;
   isFreePlan?: boolean;
+  canSelectPlan?: boolean;
   upgradeHref?: string;
   planName?: string;
   subscriptionStatus?: SubscriptionStatus;
@@ -70,7 +75,10 @@ function BillingUsageDetails({
   const needsAttention =
     subscriptionStatus !== undefined &&
     subscriptionNeedsAttention(subscriptionStatus);
+  const showPlanCheckout = Boolean(isFreePlan || canSelectPlan);
   const showAlertIcon = Boolean(alertMessage) && !isAdmin;
+  const includedDenominator = conversationsLimit > 0 ? conversationsLimit : 1;
+  const overageDenominator = overageLimit > 0 ? overageLimit : 1;
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -85,7 +93,7 @@ function BillingUsageDetails({
           <div
             className="h-full rounded-full bg-sidebar-primary"
             style={{
-              width: `${Math.min((conversationsUsed / conversationsLimit) * 100, 100)}%`,
+              width: `${Math.min((conversationsUsed / includedDenominator) * 100, 100)}%`,
             }}
           />
         </div>
@@ -103,7 +111,7 @@ function BillingUsageDetails({
             <div
               className="h-full rounded-full bg-indigo-500"
               style={{
-                width: `${Math.min((overageUsed / overageLimit) * 100, 100)}%`,
+                width: `${Math.min((overageUsed / overageDenominator) * 100, 100)}%`,
               }}
             />
           </div>
@@ -112,16 +120,20 @@ function BillingUsageDetails({
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="default">{planName ?? (isFreePlan ? "Free" : "Plan")}</Badge>
+          <Badge variant={subscriptionStatus === "canceled" ? "muted" : "default"}>
+            {subscriptionStatus === "canceled"
+              ? "No Active Plan"
+              : (planName ?? (isFreePlan ? "Free" : "Plan"))}
+          </Badge>
         </div>
         {showAlertIcon ? (
           <BillingAlertInfoIcon message={alertMessage!} />
-        ) : isAdmin && isFreePlan ? (
+        ) : isAdmin && showPlanCheckout ? (
           <Button
             size="xs"
             render={<Link href={upgradeHref ?? "/billing?upgrade=1"} />}
           >
-            Upgrade
+            {isFreePlan ? "Upgrade" : "Subscribe"}
             <ArrowUpRightIcon />
           </Button>
         ) : isAdmin && needsAttention && onManageBilling ? (
@@ -137,6 +149,28 @@ function BillingUsageDetails({
         ) : isAdmin && resetsOn ? (
           <p className="text-xs text-sidebar-foreground/60">Renews on {resetsOn}</p>
         ) : null}
+      </div>
+    </div>
+  );
+}
+
+function BillingUsageCardSkeleton() {
+  return (
+    <div
+      className="space-y-3 rounded-lg border border-sidebar-border bg-sidebar p-3"
+      aria-busy="true"
+      aria-label="Loading billing usage"
+    >
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-3 w-24 bg-sidebar-accent" />
+          <Skeleton className="h-3 w-14 bg-sidebar-accent" />
+        </div>
+        <Skeleton className="h-1.5 w-full rounded-full bg-sidebar-accent" />
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <Skeleton className="h-5 w-20 rounded-full bg-sidebar-accent" />
+        <Skeleton className="h-6 w-16 rounded-md bg-sidebar-accent" />
       </div>
     </div>
   );
@@ -165,13 +199,15 @@ function BillingAlertInfoIcon({ message }: { message: string }) {
 }
 
 export function BillingUsageCard({
-  conversationsUsed = 412,
-  conversationsLimit = 500,
-  overageUsed = 127,
-  overageLimit = 500,
+  isLoading = false,
+  conversationsUsed = 0,
+  conversationsLimit = 0,
+  overageUsed = 0,
+  overageLimit = 0,
   resetsOn,
   href,
   isFreePlan = false,
+  canSelectPlan = false,
   upgradeHref,
   planName,
   subscriptionStatus,
@@ -185,6 +221,19 @@ export function BillingUsageCard({
   const isCollapsed = state === "collapsed";
   const memberAlertOnly = !isAdmin && Boolean(alertMessage);
 
+  if (isLoading) {
+    if (isCollapsed) {
+      return (
+        <Skeleton
+          className="mx-auto size-8 rounded-md bg-sidebar-accent"
+          aria-busy="true"
+          aria-label="Loading billing usage"
+        />
+      );
+    }
+    return <BillingUsageCardSkeleton />;
+  }
+
   const details = (
     <BillingUsageDetails
       conversationsUsed={conversationsUsed}
@@ -194,6 +243,7 @@ export function BillingUsageCard({
       resetsOn={resetsOn}
       hasOverage={hasOverage}
       isFreePlan={isFreePlan}
+      canSelectPlan={canSelectPlan}
       upgradeHref={upgradeHref}
       planName={planName}
       subscriptionStatus={subscriptionStatus}
@@ -237,7 +287,7 @@ export function BillingUsageCard({
               className="mx-auto size-8 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
               aria-label="View billing usage"
               render={
-                isAdmin && isFreePlan ? (
+                isAdmin && (isFreePlan || canSelectPlan) ? (
                   <Link href={upgradeHref ?? "/billing?upgrade=1"} />
                 ) : isAdmin && href ? (
                   <Link href={href} />
@@ -260,7 +310,7 @@ export function BillingUsageCard({
     );
   }
 
-  if (href && isAdmin && !isFreePlan) {
+  if (href && isAdmin && !isFreePlan && !canSelectPlan) {
     return (
       <Link
         href={href}

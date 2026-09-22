@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { ChevronDownIcon } from "lucide-react";
-import {
-  OrganizationList,
-  useClerk,
-  useOrganization,
-} from "@clerk/nextjs";
-import { formatPlanLabel, getOrgInitials } from "@/lib/org-utils";
+import { OrganizationList, useOrganization } from "@clerk/nextjs";
+import { useBillingOverview } from "@/hooks/use-billing";
+import { formatOrgSwitcherPlanLabel } from "@/lib/billing/subscription-status";
+import { getOrgInitials } from "@/lib/org-utils";
 import { cn } from "@/lib/utils";
 import {
   Popover,
@@ -106,52 +104,28 @@ function OrganizationSwitcherPopover({
   );
 }
 
-export function OrgSwitcherHeader({ collapsed = false }: OrgSwitcherHeaderProps) {
-  const { organization, isLoaded } = useOrganization();
-  const clerk = useClerk();
-  const [planName, setPlanName] = useState<string | null>(null);
-  const hasBilling = Boolean(organization?.id && clerk.billing);
-
-  if (!hasBilling && planName !== null) {
-    setPlanName(null);
+function PlanSubtitle({ loading, label }: { loading: boolean; label: string }) {
+  if (loading) {
+    return (
+      <span
+        className="mt-0.5 block h-3 w-20 animate-pulse rounded bg-sidebar-accent"
+        aria-hidden
+      />
+    );
   }
 
-  useEffect(() => {
-    if (!organization?.id || !clerk.billing) {
-      return;
-    }
+  return (
+    <p className="truncate text-xs text-sidebar-foreground/60">{label}</p>
+  );
+}
 
-    let cancelled = false;
+export function OrgSwitcherHeader({ collapsed = false }: OrgSwitcherHeaderProps) {
+  const { organization, isLoaded } = useOrganization();
+  const { data: billing, isLoading: billingLoading } = useBillingOverview();
 
-    clerk.billing
-      .getSubscription({ orgId: organization.id })
-      .then((subscription) => {
-        if (cancelled) {
-          return;
-        }
-
-        const activeItem = subscription.subscriptionItems.find(
-          (item) => item.status === "active" && !item.plan.isDefault
-        );
-
-        const fallbackItem = subscription.subscriptionItems.find(
-          (item) => item.status === "active"
-        );
-
-        setPlanName(
-          activeItem?.plan.name ?? fallbackItem?.plan.name ?? null
-        );
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setPlanName(null);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [clerk.billing, organization?.id]);
+  const planLabel = billing
+    ? formatOrgSwitcherPlanLabel(billing.subscription)
+    : "Free";
 
   if (!isLoaded) {
     return (
@@ -163,13 +137,6 @@ export function OrgSwitcherHeader({ collapsed = false }: OrgSwitcherHeaderProps)
       />
     );
   }
-
-  const metadataPlan =
-    typeof organization?.publicMetadata?.plan === "string"
-      ? organization.publicMetadata.plan
-      : null;
-
-  const planLabel = formatPlanLabel(planName ?? metadataPlan);
 
   if (collapsed) {
     return (
@@ -206,9 +173,7 @@ export function OrgSwitcherHeader({ collapsed = false }: OrgSwitcherHeaderProps)
           <p className="truncate text-sm font-semibold text-sidebar-foreground">
             {organization?.name ?? "Organization"}
           </p>
-          <p className="truncate text-xs text-sidebar-foreground/60">
-            {planLabel}
-          </p>
+          <PlanSubtitle loading={billingLoading} label={planLabel} />
         </div>
 
         <ChevronDownIcon className="size-4 shrink-0 text-sidebar-foreground/60" />

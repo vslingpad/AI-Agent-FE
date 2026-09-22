@@ -9,6 +9,21 @@ export function canSelectSubscriptionPlan(subscription: {
   return subscription.tier === "free" || subscription.status === "canceled";
 }
 
+/** Sidebar org switcher and other compact plan labels from control-plane billing. */
+export function formatOrgSwitcherPlanLabel(subscription: {
+  tier: BillingOverview["subscription"]["tier"];
+  status: SubscriptionStatus;
+  planName: string;
+}) {
+  if (subscription.status === "canceled") {
+    return "No Active Plan";
+  }
+  if (subscription.tier === "free") {
+    return "Free";
+  }
+  return subscription.planName;
+}
+
 export function formatSubscriptionStatusLabel(status: SubscriptionStatus) {
   switch (status) {
     case "active":

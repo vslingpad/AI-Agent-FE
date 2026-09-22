@@ -137,11 +137,15 @@ export function ConnectorInstanceCard({
 type AvailableIntegrationCardProps = {
   item: IntegrationCatalogItem;
   connectedCount: number;
+  atPlanLimit?: boolean;
+  onPlanLimitReached?: () => void;
 };
 
 export function AvailableIntegrationCard({
   item,
   connectedCount,
+  atPlanLimit = false,
+  onPlanLimitReached,
 }: AvailableIntegrationCardProps) {
   return (
     <Card size="sm" className="h-full">
@@ -172,13 +176,23 @@ export function AvailableIntegrationCard({
 
         <div className="mt-auto flex justify-end border-t border-border pt-3">
           {item.available ? (
-            <Button
-              size="sm"
-              variant="outline"
-              render={<Link href={`/integrations/new/${item.slug}`} />}
-            >
-              Connect
-            </Button>
+            atPlanLimit ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onPlanLimitReached?.()}
+              >
+                Connect
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                render={<Link href={`/integrations/new/${item.slug}`} />}
+              >
+                Connect
+              </Button>
+            )
           ) : (
             <Badge variant="muted">Coming soon</Badge>
           )}

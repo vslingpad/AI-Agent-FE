@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { EllipsisVerticalIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Show } from "@clerk/nextjs";
+import { PlanLimitReachedDialog } from "@/components/billing/plan-limit-reached-dialog";
 import { CreateAgentDialog } from "@/components/agents/dialogs/create-agent-dialog";
 import { DeleteAgentDialog } from "@/components/agents/dialogs/delete-agent-dialog";
 import { UpdateAgentDialog } from "@/components/agents/dialogs/update-agent-dialog";
@@ -36,6 +37,7 @@ function limitChars(value: string, max: number) {
 export function AgentsListPage() {
   const { data, isLoading, isError, refetch } = useAgentsList();
   const [createOpen, setCreateOpen] = useState(false);
+  const [agentLimitOpen, setAgentLimitOpen] = useState(false);
   const [updateTarget, setUpdateTarget] = useState<AgentListItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AgentListItem | null>(null);
   const { searchQuery } = useBuildSearchQuery();
@@ -88,9 +90,13 @@ export function AgentsListPage() {
           </p>
         </div>
         <Button
-          onClick={() => setCreateOpen(true)}
-          disabled={atLimit}
-          title={atLimit ? "Plan agent limit reached" : undefined}
+          onClick={() => {
+            if (atLimit) {
+              setAgentLimitOpen(true);
+              return;
+            }
+            setCreateOpen(true);
+          }}
         >
           <PlusIcon />
           Create agent
@@ -118,6 +124,13 @@ export function AgentsListPage() {
       )}
 
       <CreateAgentDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+      <PlanLimitReachedDialog
+        open={agentLimitOpen}
+        onOpenChange={setAgentLimitOpen}
+        resource="agents"
+        limit={data.planAgentLimit}
+      />
 
       <UpdateAgentDialog
         agent={updateTarget}

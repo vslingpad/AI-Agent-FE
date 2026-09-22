@@ -10,7 +10,9 @@ import {
   CAPABILITY_LABELS,
   groupConnectorsBySlug,
 } from "@/components/integrations/integration-utils";
+import { PlanLimitReachedDialog } from "@/components/billing/plan-limit-reached-dialog";
 import { RenameConnectorDialog } from "@/components/integrations/rename-connector-dialog";
+import { isPlanResourceAtLimit } from "@/lib/billing/plan-limits";
 import { useBuildSearchQuery } from "@/components/build/use-build-page-meta";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,6 +89,7 @@ export function IntegrationsHubPage() {
   const { data, isLoading, isError, refetch } = useIntegrationsHub();
   const [renameTarget, setRenameTarget] = useState<OrgConnector | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<OrgConnector | null>(null);
+  const [integrationLimitOpen, setIntegrationLimitOpen] = useState(false);
   const [capabilityFilter, setCapabilityFilter] =
     useState<CapabilityFilter>("all");
   const { searchQuery } = useBuildSearchQuery();
@@ -131,6 +134,11 @@ export function IntegrationsHubPage() {
       </div>
     );
   }
+
+  const atIntegrationLimit = isPlanResourceAtLimit(
+    data.connected_count,
+    data.plan_limit
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-8 px-6 pb-8 pt-6">
@@ -204,6 +212,8 @@ export function IntegrationsHubPage() {
                 key={item.slug}
                 item={item}
                 connectedCount={grouped[item.slug]?.length ?? 0}
+                atPlanLimit={atIntegrationLimit}
+                onPlanLimitReached={() => setIntegrationLimitOpen(true)}
               />
             ))}
           </div>
@@ -229,6 +239,15 @@ export function IntegrationsHubPage() {
           }
         }}
       />
+
+      {data.plan_limit != null ? (
+        <PlanLimitReachedDialog
+          open={integrationLimitOpen}
+          onOpenChange={setIntegrationLimitOpen}
+          resource="integrations"
+          limit={data.plan_limit}
+        />
+      ) : null}
     </div>
   );
 }

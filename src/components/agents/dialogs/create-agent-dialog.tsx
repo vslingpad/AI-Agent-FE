@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PlanLimitReachedDialog } from "@/components/billing/plan-limit-reached-dialog";
+import { useBillingOverview } from "@/hooks/use-billing";
 import { useCreateAgent } from "@/hooks/use-agents";
+import { isPlanResourceAtLimit } from "@/lib/billing/plan-limits";
 import { agentPath } from "@/lib/navigation/agent-sections";
 
 const textareaClassName =
@@ -27,8 +30,10 @@ type CreateAgentDialogProps = {
 export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps) {
   const router = useRouter();
   const createAgent = useCreateAgent();
+  const { data: billing } = useBillingOverview();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [limitOpen, setLimitOpen] = useState(false);
 
   const reset = () => {
     setName("");
@@ -42,6 +47,15 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
       return;
     }
 
+    const agentLimit = billing?.limits.agents;
+    if (
+      agentLimit &&
+      isPlanResourceAtLimit(agentLimit.used, agentLimit.limit)
+    ) {
+      setLimitOpen(true);
+      return;
+    }
+
     const agent = await createAgent.mutateAsync({
       name: trimmed,
       description: description.trim() || undefined,
@@ -52,7 +66,10 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
     router.push(agentPath(agent.id, "build/knowledge"));
   };
 
+  const agentLimit = billing?.limits.agents;
+
   return (
+    <>
     <Dialog
       open={open}
       onOpenChange={(next) => {
@@ -107,5 +124,15 @@ export function CreateAgentDialog({ open, onOpenChange }: CreateAgentDialogProps
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {agentLimit?.limit != null ? (
+      <PlanLimitReachedDialog
+        open={limitOpen}
+        onOpenChange={setLimitOpen}
+        resource="agents"
+        limit={agentLimit.limit}
+      />
+    ) : null}
+    </>
   );
 }

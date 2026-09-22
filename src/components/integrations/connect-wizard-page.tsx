@@ -9,7 +9,9 @@ import {
   ExternalLinkIcon,
   LoaderCircleIcon,
 } from "lucide-react";
+import { PlanLimitReachedDialog } from "@/components/billing/plan-limit-reached-dialog";
 import { useBuildPageMeta } from "@/components/build/use-build-page-meta";
+import { isPlanResourceAtLimit } from "@/lib/billing/plan-limits";
 import { IntegrationBrandIcon } from "@/components/integrations/connector-instance-card";
 import { getConnectorPath } from "@/lib/integrations/connector-paths";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +59,7 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
   const [configValues, setConfigValues] = useState<Record<string, string>>({});
   const [session, setSession] = useState<ConnectSession | null>(null);
   const [connectorId, setConnectorId] = useState<string | null>(null);
+  const [integrationLimitOpen, setIntegrationLimitOpen] = useState(false);
   const completeOAuth = useCompleteOAuthStep(connectorId ?? "");
   const connectStatus = useConnectStatus(
     connectorId ?? "",
@@ -141,6 +144,14 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
       return;
     }
 
+    if (
+      hub &&
+      isPlanResourceAtLimit(hub.connected_count, hub.plan_limit)
+    ) {
+      setIntegrationLimitOpen(true);
+      return;
+    }
+
     const result = await createConnector.mutateAsync({
       integration_slug: slug,
       display_name: defaultDisplayName,
@@ -209,7 +220,10 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
     (item) => item.id === session.wizard.current_step
   );
 
+  const integrationLimit = hub?.plan_limit ?? null;
+
   return (
+    <>
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 pb-8 pt-6">
       <div>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">
@@ -402,6 +416,16 @@ export function ConnectWizardPage({ slug, from }: ConnectWizardPageProps) {
         </Card>
       )}
     </div>
+
+    {integrationLimit != null ? (
+      <PlanLimitReachedDialog
+        open={integrationLimitOpen}
+        onOpenChange={setIntegrationLimitOpen}
+        resource="integrations"
+        limit={integrationLimit}
+      />
+    ) : null}
+    </>
   );
 }
 

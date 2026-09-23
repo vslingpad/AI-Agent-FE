@@ -66,12 +66,28 @@ export function useChangePlan() {
   });
 }
 
-export function useBillingInvoices() {
+export function useBillingInvoices(params?: {
+  page?: number;
+  pageSize?: number;
+  paidFrom?: string;
+  paidTo?: string;
+}) {
   const { organization, isLoaded } = useOrganization();
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 10;
+  const paidFrom = params?.paidFrom;
+  const paidTo = params?.paidTo;
 
   return useQuery({
-    queryKey: [...billingKey(organization?.id), "invoices"] as const,
-    queryFn: () => getBillingInvoices(),
+    queryKey: [
+      ...billingKey(organization?.id),
+      "invoices",
+      page,
+      pageSize,
+      paidFrom ?? "",
+      paidTo ?? "",
+    ] as const,
+    queryFn: () => getBillingInvoices({ page, pageSize, paidFrom, paidTo }),
     enabled: isLoaded && Boolean(organization?.id),
   });
 }

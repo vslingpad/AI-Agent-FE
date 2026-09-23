@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { Show } from "@clerk/nextjs";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpRightIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
-import { BillingInvoicesSection } from "@/components/billing/billing-invoices-section";
 import { ConversationUsageChart } from "@/components/billing/conversation-usage-chart";
 import { UpgradePlansDialog } from "@/components/billing/upgrade-plans";
 import { Badge } from "@/components/ui/badge";
@@ -101,11 +101,34 @@ function BillingPageContent() {
       title="Billing"
       description="Review your plan, conversation usage, and overage settings."
       actions={
-        hasActiveSubscription ? (
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={openUpgrade}>Change plan</Button>
+        <div className="flex flex-wrap gap-2">
+          {!isFreePlan ? (
+            <Button variant="outline" render={<Link href="/billing/invoices" />}>
+              Invoices
+            </Button>
+          ) : null}
+          {hasActiveSubscription ? (
+            <>
+              <Button
+                variant="outline"
+                disabled={portalSession.isPending}
+                onClick={() => void openStripePortal()}
+              >
+                {portalSession.isPending ? (
+                  <Loader2Icon className="size-4 animate-spin" />
+                ) : null}
+                Manage billing
+                {portalSession.isPending ? null : <ArrowUpRightIcon />}
+              </Button>
+              <Button onClick={openUpgrade}>Change plan</Button>
+            </>
+          ) : canSelectPlan ? (
+            <Button onClick={openUpgrade}>
+              {isFreePlan ? "Upgrade" : "Subscribe"}
+              <ArrowUpRightIcon />
+            </Button>
+          ) : (
             <Button
-              variant="outline"
               disabled={portalSession.isPending}
               onClick={() => void openStripePortal()}
             >
@@ -115,24 +138,8 @@ function BillingPageContent() {
               Manage billing
               {portalSession.isPending ? null : <ArrowUpRightIcon />}
             </Button>
-          </div>
-        ) : canSelectPlan ? (
-          <Button onClick={openUpgrade}>
-            {isFreePlan ? "Upgrade" : "Subscribe"}
-            <ArrowUpRightIcon />
-          </Button>
-        ) : (
-          <Button
-            disabled={portalSession.isPending}
-            onClick={() => void openStripePortal()}
-          >
-            {portalSession.isPending ? (
-              <Loader2Icon className="size-4 animate-spin" />
-            ) : null}
-            Manage billing
-            {portalSession.isPending ? null : <ArrowUpRightIcon />}
-          </Button>
-        )
+          )}
+        </div>
       }
     >
       <Suspense fallback={null}>
@@ -149,7 +156,6 @@ function BillingPageContent() {
           onUpgrade={openUpgrade}
         />
         <LimitsSection data={data} />
-        <BillingInvoicesSection isFreePlan={!hasActiveSubscription} />
         <ConversationUsageChart points={data.monthlyUsage.points} />
       </div>
       <UpgradePlansDialog

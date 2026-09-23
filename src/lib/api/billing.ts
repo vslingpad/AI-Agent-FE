@@ -4,12 +4,13 @@ import {
   BillingPortalSessionSchema,
   ChangePlanInputSchema,
   CreateCheckoutSessionInputSchema,
-  OrgInvoiceListSchema,
+  OrgInvoiceListResponseSchema,
+  OrgInvoiceViewUrlSchema,
   UpdateBillingSettingsInputSchema,
   type BillingOverview,
   type ChangePlanInput,
   type CreateCheckoutSessionInput,
-  type OrgInvoice,
+  type OrgInvoiceListResponse,
   type UpdateBillingSettingsInput,
 } from "@/lib/schemas/billing";
 
@@ -41,7 +42,24 @@ export async function changeSubscriptionPlan(input: ChangePlanInput) {
   return BillingOverviewSchema.parse(json) as BillingOverview;
 }
 
-export async function getBillingInvoices() {
-  const json = await apiGet<unknown>("/api/billing/invoices");
-  return OrgInvoiceListSchema.parse(json) as OrgInvoice[];
+export async function getBillingInvoices(params?: {
+  page?: number;
+  pageSize?: number;
+  paidFrom?: string;
+  paidTo?: string;
+}) {
+  const json = await apiGet<unknown>("/api/billing/invoices", {
+    page: params?.page !== undefined ? String(params.page) : undefined,
+    pageSize: params?.pageSize !== undefined ? String(params.pageSize) : undefined,
+    paidFrom: params?.paidFrom,
+    paidTo: params?.paidTo,
+  });
+  return OrgInvoiceListResponseSchema.parse(json) as OrgInvoiceListResponse;
+}
+
+export async function getBillingInvoiceViewUrl(stripeInvoiceId: string) {
+  const json = await apiGet<unknown>(
+    `/api/billing/invoices/${encodeURIComponent(stripeInvoiceId)}/view-url`
+  );
+  return OrgInvoiceViewUrlSchema.parse(json);
 }

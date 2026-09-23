@@ -80,17 +80,11 @@ export const BillingPortalSessionSchema = z.object({
   url: z.string().url(),
 });
 
-export const OrgInvoiceStatusSchema = z.enum([
-  "pending",
-  "synced",
-  "failed",
-  "skipped",
-]);
+export const OrgInvoiceStatusSchema = z.enum(["paid"]);
 
 export const OrgInvoiceSchema = z.object({
   stripeInvoiceId: z.string(),
   stripeInvoiceNumber: z.string().nullish(),
-  zohoInvoiceId: z.string().nullish(),
   zohoInvoiceNumber: z.string().nullish(),
   status: OrgInvoiceStatusSchema.or(z.string()),
   amount: z.string(),
@@ -100,6 +94,23 @@ export const OrgInvoiceSchema = z.object({
   createdAt: z.string(),
 });
 
+export const OrgInvoicePaginationSchema = z.object({
+  page: z.number(),
+  pageSize: z.number(),
+  totalItems: z.number(),
+  totalPages: z.number(),
+});
+
+export const OrgInvoiceViewUrlSchema = z.object({
+  url: z.string().url(),
+});
+
+export const OrgInvoiceListResponseSchema = z.object({
+  items: z.array(OrgInvoiceSchema),
+  pagination: OrgInvoicePaginationSchema,
+});
+
+/** @deprecated Use OrgInvoiceListResponseSchema */
 export const OrgInvoiceListSchema = z.array(OrgInvoiceSchema);
 
 export const CheckoutPlanTierSchema = z.enum(["starter", "growth", "scale"]);
@@ -125,3 +136,5 @@ export type ChangePlanInput = z.infer<typeof ChangePlanInputSchema>;
 export type CheckoutPlanTier = z.infer<typeof CheckoutPlanTierSchema>;
 export type BillingInterval = z.infer<typeof BillingIntervalSchema>;
 export type OrgInvoice = z.infer<typeof OrgInvoiceSchema>;
+export type OrgInvoiceListResponse = z.infer<typeof OrgInvoiceListResponseSchema>;
+export type OrgInvoicePagination = z.infer<typeof OrgInvoicePaginationSchema>;

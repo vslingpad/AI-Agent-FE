@@ -116,6 +116,49 @@ The console opens this URL for payment method updates, invoices, and plan change
 
 ---
 
+## GET /api/billing/invoices
+
+Paginated list of **paid Zoho Books invoices** only (`status=synced` with a Zoho invoice id). Powers `/billing/invoices`.
+
+**Auth:** org admin (BFF). Control Plane allows org members.
+
+**Query:** `page` (default 1), `pageSize` (default 10), `paidFrom` / `paidTo` (ISO dates, filter on `paid_at`).
+
+Only **paid** Zoho-synced invoices (`status=paid` in the API). The Zoho portal URL is **not** stored or listed; fetch it when the user clicks **View** via `GET /api/billing/invoices/{stripeInvoiceId}/view-url`.
+
+### Response
+
+```json
+{
+  "items": [
+    {
+      "stripeInvoiceId": "in_1ABC",
+      "zohoInvoiceNumber": "INV-001",
+      "amount": "149.00",
+      "currency": "usd",
+      "paidAt": "2026-09-01T12:00:00Z",
+      "status": "paid"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 10,
+    "totalItems": 1,
+    "totalPages": 1
+  }
+}
+```
+
+## GET /api/billing/invoices/{stripeInvoiceId}/view-url
+
+Resolves the Zoho Books customer portal link on demand (when the user clicks **View**).
+
+```json
+{ "url": "https://books.zoho.com/portal/..." }
+```
+
+---
+
 ## POST /api/billing/checkout
 
 Starts Stripe Checkout for the first paid plan via Control Plane `POST /billing/checkout`. Use this for Free → Starter / Growth / Scale. Enterprise remains sales-led.

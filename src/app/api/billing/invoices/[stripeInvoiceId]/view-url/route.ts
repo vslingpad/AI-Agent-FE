@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiError, requireOrgAdmin } from "@/lib/api/auth";
 import {
   ControlPlaneAuthError,
@@ -8,7 +8,7 @@ import {
   jsonFromResponse,
   keysToCamel,
 } from "@/lib/api/control-plane";
-import { OrgInvoiceListResponseSchema } from "@/lib/schemas/billing";
+import { OrgInvoiceViewUrlSchema } from "@/lib/schemas/billing";
 
 function backendError(status: number, body: unknown) {
   if (isPlainObject(body) && "detail" in body) {
@@ -25,28 +25,24 @@ function backendError(status: number, body: unknown) {
   );
 }
 
-export async function GET(request: NextRequest) {
+type RouteContext = { params: Promise<{ stripeInvoiceId: string }> };
+
+export async function GET(_request: Request, context: RouteContext) {
   const authResult = await requireOrgAdmin();
 
   if ("error" in authResult) {
     return authResult.error;
   }
 
-  const { searchParams } = request.nextUrl;
-  const page = searchParams.get("page") ?? "1";
-  const pageSize = searchParams.get("pageSize") ?? "10";
-  const paidFrom = searchParams.get("paidFrom");
-  const paidTo = searchParams.get("paidTo");
-  const query = new URLSearchParams({ page, page_size: pageSize });
-  if (paidFrom) {
-    query.set("paid_from", paidFrom);
-  }
-  if (paidTo) {
-    query.set("paid_to", paidTo);
+  const { stripeInvoiceId } = await context.params;
+  if (!stripeInvoiceId?.trim()) {
+    return apiError("Invoice id required", 400);
   }
 
   try {
-    const response = await controlPlaneFetch(`/billing/invoices?${query.toString()}`);
+    const response = await controlPlaneFetch(
+      `/billing/invoices/${encodeURIComponent(stripeInvoiceId)}/view-url`
+    );
     const payload = await jsonFromResponse(response);
 
     if (!response.ok) {
@@ -54,14 +50,14 @@ export async function GET(request: NextRequest) {
     }
 
     const camel = keysToCamel(payload);
-    const invoices = OrgInvoiceListResponseSchema.parse(camel);
-    return NextResponse.json(invoices);
+    const body = OrgInvoiceViewUrlSchema.parse(camel);
+    return NextResponse.json(body);
   } catch (error) {
     if (error instanceof ControlPlaneAuthError) {
       return apiError("Unauthorized", 401);
     }
 
-    console.error("Billing invoices failed", error);
+    console.error("Billing invoice view URL failed", error);
     return apiError("Control plane unavailable", 502);
   }
 }

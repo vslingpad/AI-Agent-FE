@@ -327,7 +327,9 @@ export async function controlPlaneFetch(
 
   const url = `${controlPlaneBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
   const headers = new Headers(init.headers);
-  headers.set("Accept", "application/json");
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
   headers.set("Authorization", `Bearer ${token}`);
   if (actorName && !headers.has("X-Actor-Name")) {
     headers.set("X-Actor-Name", actorName);

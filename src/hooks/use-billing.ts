@@ -3,12 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@clerk/nextjs";
 import {
+  changeSubscriptionPlan,
   createBillingPortalSession,
   createCheckoutSession,
+  getBillingInvoices,
   getBillingOverview,
   updateBillingSettings,
 } from "@/lib/api/billing";
 import type {
+  ChangePlanInput,
   CreateCheckoutSessionInput,
   UpdateBillingSettingsInput,
 } from "@/lib/schemas/billing";
@@ -48,5 +51,27 @@ export function useBillingPortalSession() {
 export function useCheckoutSession() {
   return useMutation({
     mutationFn: (input: CreateCheckoutSessionInput) => createCheckoutSession(input),
+  });
+}
+
+export function useChangePlan() {
+  const queryClient = useQueryClient();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: (input: ChangePlanInput) => changeSubscriptionPlan(input),
+    onSuccess: (data) => {
+      queryClient.setQueryData(billingKey(organization?.id), data);
+    },
+  });
+}
+
+export function useBillingInvoices() {
+  const { organization, isLoaded } = useOrganization();
+
+  return useQuery({
+    queryKey: [...billingKey(organization?.id), "invoices"] as const,
+    queryFn: () => getBillingInvoices(),
+    enabled: isLoaded && Boolean(organization?.id),
   });
 }

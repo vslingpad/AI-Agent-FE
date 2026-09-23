@@ -60,6 +60,11 @@ function isoDateOrNull(value: unknown) {
   return null;
 }
 
+function asBillingInterval(value: unknown): "month" | "year" {
+  const raw = asString(value, "month").toLowerCase();
+  return raw === "year" ? "year" : "month";
+}
+
 function asPlanTier(value: unknown): BillingPlanTier {
   const tier = asString(value, "free").toLowerCase();
   return (BILLING_PLAN_TIERS as readonly string[]).includes(tier)
@@ -225,7 +230,8 @@ export function composeBillingOverview(
       planName: asString(usage.planName, plan ? asString(plan.displayName, "Plan") : "Plan"),
       status: mapSubscriptionStatus(tier, asString(usage.status, "active")),
       monthlyBaseLabel: monthlyBaseLabel(plan, tier),
-      hasActiveSubscription: tier !== "free" && asString(usage.status) !== "deleted",
+      hasActiveSubscription: asBoolean(usage.hasActiveSubscription, false),
+      billingInterval: asBillingInterval(usage.billingInterval),
       currentPeriodEnd: resetsAt,
     },
     usage: {

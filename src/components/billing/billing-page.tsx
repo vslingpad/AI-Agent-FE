@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpRightIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { AgentPageFrame } from "@/components/agents/agent-page-frame";
+import { BillingInvoicesSection } from "@/components/billing/billing-invoices-section";
 import { ConversationUsageChart } from "@/components/billing/conversation-usage-chart";
 import { UpgradePlansDialog } from "@/components/billing/upgrade-plans";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,7 @@ import {
   useBillingPortalSession,
   useUpdateBillingSettings,
 } from "@/hooks/use-billing";
-import { formatCurrency, formatLimitValue } from "@/lib/billing/plans";
+import { formatCurrency, formatLimitValue, isCheckoutPlanTier } from "@/lib/billing/plans";
 import {
   canSelectSubscriptionPlan,
   formatSubscriptionStatusLabel,
@@ -58,6 +59,15 @@ function BillingPageContent() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const openUpgrade = useCallback(() => setUpgradeOpen(true), []);
 
+  const openStripePortal = useCallback(async () => {
+    try {
+      const session = await portalSession.mutateAsync();
+      window.open(session.url, "_blank", "noopener,noreferrer");
+    } catch {
+      // Mutation toast is shown globally.
+    }
+  }, [portalSession]);
+
   if (isLoading) {
     return <BillingPageSkeleton />;
   }
@@ -82,24 +92,31 @@ function BillingPageContent() {
     void updateSettings.mutateAsync({ allowOverage });
   };
 
-  const handleManageBilling = async () => {
-    try {
-      const session = await portalSession.mutateAsync();
-      window.open(session.url, "_blank", "noopener,noreferrer");
-    } catch {
-      // Mutation toast is shown globally.
-    }
-  };
-
   const isFreePlan = data.subscription.tier === "free";
   const canSelectPlan = canSelectSubscriptionPlan(data.subscription);
+  const hasActiveSubscription = data.subscription.hasActiveSubscription;
 
   return (
     <AgentPageFrame
       title="Billing"
       description="Review your plan, conversation usage, and overage settings."
       actions={
-        canSelectPlan ? (
+        hasActiveSubscription ? (
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={openUpgrade}>Change plan</Button>
+            <Button
+              variant="outline"
+              disabled={portalSession.isPending}
+              onClick={() => void openStripePortal()}
+            >
+              {portalSession.isPending ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : null}
+              Manage billing
+              {portalSession.isPending ? null : <ArrowUpRightIcon />}
+            </Button>
+          </div>
+        ) : canSelectPlan ? (
           <Button onClick={openUpgrade}>
             {isFreePlan ? "Upgrade" : "Subscribe"}
             <ArrowUpRightIcon />
@@ -107,7 +124,7 @@ function BillingPageContent() {
         ) : (
           <Button
             disabled={portalSession.isPending}
-            onClick={() => void handleManageBilling()}
+            onClick={() => void openStripePortal()}
           >
             {portalSession.isPending ? (
               <Loader2Icon className="size-4 animate-spin" />
@@ -120,7 +137,7 @@ function BillingPageContent() {
     >
       <Suspense fallback={null}>
         <CheckoutReturnHandler refetch={() => refetch()} />
-        {canSelectPlan ? <UpgradeQueryHandler onOpen={openUpgrade} /> : null}
+        <UpgradeQueryHandler onOpen={openUpgrade} />
       </Suspense>
       <div className="flex max-w-5xl flex-col gap-6">
         <SubscriptionStatusAlert data={data} />
@@ -132,11 +149,20 @@ function BillingPageContent() {
           onUpgrade={openUpgrade}
         />
         <LimitsSection data={data} />
+        <BillingInvoicesSection isFreePlan={!hasActiveSubscription} />
         <ConversationUsageChart points={data.monthlyUsage.points} />
       </div>
-      {canSelectPlan ? (
-        <UpgradePlansDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
-      ) : null}
+      <UpgradePlansDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        mode={hasActiveSubscription ? "change" : "checkout"}
+        currentTier={
+          hasActiveSubscription && isCheckoutPlanTier(data.subscription.tier)
+            ? data.subscription.tier
+            : null
+        }
+        currentBillingInterval={data.subscription.billingInterval}
+      />
     </AgentPageFrame>
   );
 }

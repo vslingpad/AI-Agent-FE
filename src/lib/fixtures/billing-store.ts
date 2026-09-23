@@ -72,6 +72,7 @@ export function getBillingOverview(orgId: string): BillingOverview {
       status: state.tier === "free" ? "none" : "active",
       monthlyBaseLabel: plan.monthlyBaseLabel,
       hasActiveSubscription: state.tier !== "free",
+      billingInterval: "month",
       currentPeriodEnd: state.usage.resetsAt,
     },
     usage: state.usage,

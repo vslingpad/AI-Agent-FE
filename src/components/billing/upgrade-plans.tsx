@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CheckIcon, Loader2Icon } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCheckoutSession } from "@/hooks/use-billing";
+import { useChangePlan, useCheckoutSession } from "@/hooks/use-billing";
 import {
   PLAN_DEFINITIONS,
   UPGRADE_PLAN_TIERS,
@@ -32,18 +33,45 @@ const RECOMMENDED_TIER: CheckoutPlanTier = "growth";
 export function UpgradePlansDialog({
   open,
   onOpenChange,
+  mode = "checkout",
+  currentTier,
+  currentBillingInterval = "month",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode?: "checkout" | "change";
+  currentTier?: CheckoutPlanTier | null;
+  currentBillingInterval?: BillingInterval;
 }) {
-  const [interval, setInterval] = useState<BillingInterval>("month");
+  const [interval, setInterval] = useState<BillingInterval>(currentBillingInterval);
   const [pendingTier, setPendingTier] = useState<CheckoutPlanTier | null>(null);
   const checkout = useCheckoutSession();
+  const changePlan = useChangePlan();
+  const pending = checkout.isPending || changePlan.isPending;
 
-  const handleCheckout = async (tier: CheckoutPlanTier) => {
-    const origin = window.location.origin;
+  useEffect(() => {
+    if (open && mode === "change") {
+      setInterval(currentBillingInterval);
+    }
+  }, [open, mode, currentBillingInterval]);
+
+  const handleSelectPlan = async (tier: CheckoutPlanTier) => {
     setPendingTier(tier);
 
+    if (mode === "change") {
+      try {
+        await changePlan.mutateAsync({ planTier: tier, billingInterval: interval });
+        toast.success("Your plan was updated.");
+        onOpenChange(false);
+      } catch {
+        // Global mutation error toast.
+      } finally {
+        setPendingTier(null);
+      }
+      return;
+    }
+
+    const origin = window.location.origin;
     try {
       const session = await checkout.mutateAsync({
         planTier: tier,
@@ -61,7 +89,7 @@ export function UpgradePlansDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (checkout.isPending) {
+        if (pending) {
           return;
         }
         onOpenChange(next);
@@ -74,9 +102,11 @@ export function UpgradePlansDialog({
         <DialogHeader className="pb-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <DialogTitle>Choose a plan</DialogTitle>
+              <DialogTitle>{mode === "change" ? "Change plan" : "Choose a plan"}</DialogTitle>
               <DialogDescription>
-                Unused free conversations roll into your first paid month.
+                {mode === "change"
+                  ? "Proration is applied on your next Stripe invoice."
+                  : "Unused free conversations roll into your first paid month."}
               </DialogDescription>
             </div>
             <Tabs
@@ -97,9 +127,20 @@ export function UpgradePlansDialog({
               tier={tier}
               interval={interval}
               recommended={tier === RECOMMENDED_TIER}
-              pending={checkout.isPending && pendingTier === tier}
-              disabled={checkout.isPending}
-              onCheckout={handleCheckout}
+              mode={mode}
+              isCurrent={
+                mode === "change" &&
+                currentTier === tier &&
+                interval === currentBillingInterval
+              }
+              sameTierDifferentInterval={
+                mode === "change" &&
+                currentTier === tier &&
+                interval !== currentBillingInterval
+              }
+              pending={pending && pendingTier === tier}
+              disabled={pending}
+              onSelectPlan={handleSelectPlan}
             />
           ))}
         </div>
@@ -112,16 +153,22 @@ function PlanCard({
   tier,
   interval,
   recommended,
+  mode,
+  isCurrent,
+  sameTierDifferentInterval,
   pending,
   disabled,
-  onCheckout,
+  onSelectPlan,
 }: {
   tier: BillingPlanTier;
   interval: BillingInterval;
   recommended: boolean;
+  mode: "checkout" | "change";
+  isCurrent: boolean;
+  sameTierDifferentInterval: boolean;
   pending: boolean;
   disabled: boolean;
-  onCheckout: (tier: CheckoutPlanTier) => void;
+  onSelectPlan: (tier: CheckoutPlanTier) => void;
 }) {
   const plan = PLAN_DEFINITIONS[tier];
   const selfServe = isCheckoutPlanTier(tier);
@@ -172,9 +219,22 @@ function PlanCard({
       </ul>
 
       {selfServe ? (
-        <Button className="mt-auto" disabled={disabled} onClick={() => onCheckout(tier)}>
+        <Button
+          className="mt-auto"
+          disabled={disabled || isCurrent}
+          variant={isCurrent ? "secondary" : "default"}
+          onClick={() => onSelectPlan(tier)}
+        >
           {pending ? <Loader2Icon className="size-4 animate-spin" /> : null}
-          Upgrade to {plan.name}
+          {isCurrent
+            ? "Current plan"
+            : sameTierDifferentInterval
+              ? interval === "year"
+                ? "Switch to yearly billing"
+                : "Switch to monthly billing"
+              : mode === "change"
+                ? `Switch to ${plan.name}`
+                : `Upgrade to ${plan.name}`}
         </Button>
       ) : (
         <Button

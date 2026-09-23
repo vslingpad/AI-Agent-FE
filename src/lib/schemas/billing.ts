@@ -11,12 +11,15 @@ export const BillingSubscriptionStatusSchema = z.enum([
   "none",
 ]);
 
+export const BillingIntervalSchema = z.enum(["month", "year"]);
+
 export const BillingSubscriptionSchema = z.object({
   tier: BillingPlanTierSchema,
   planName: z.string(),
   status: BillingSubscriptionStatusSchema,
   monthlyBaseLabel: z.string(),
   hasActiveSubscription: z.boolean(),
+  billingInterval: BillingIntervalSchema,
   currentPeriodEnd: z.string().nullable(),
 });
 
@@ -77,8 +80,29 @@ export const BillingPortalSessionSchema = z.object({
   url: z.string().url(),
 });
 
+export const OrgInvoiceStatusSchema = z.enum([
+  "pending",
+  "synced",
+  "failed",
+  "skipped",
+]);
+
+export const OrgInvoiceSchema = z.object({
+  stripeInvoiceId: z.string(),
+  stripeInvoiceNumber: z.string().nullish(),
+  zohoInvoiceId: z.string().nullish(),
+  zohoInvoiceNumber: z.string().nullish(),
+  status: OrgInvoiceStatusSchema.or(z.string()),
+  amount: z.string(),
+  currency: z.string(),
+  paidAt: z.string().nullish(),
+  syncedAt: z.string().nullish(),
+  createdAt: z.string(),
+});
+
+export const OrgInvoiceListSchema = z.array(OrgInvoiceSchema);
+
 export const CheckoutPlanTierSchema = z.enum(["starter", "growth", "scale"]);
-export const BillingIntervalSchema = z.enum(["month", "year"]);
 
 export const CreateCheckoutSessionInputSchema = z.object({
   planTier: CheckoutPlanTierSchema,
@@ -87,10 +111,17 @@ export const CreateCheckoutSessionInputSchema = z.object({
   cancelUrl: z.string().url(),
 });
 
+export const ChangePlanInputSchema = z.object({
+  planTier: CheckoutPlanTierSchema,
+  billingInterval: BillingIntervalSchema,
+});
+
 export type BillingOverview = z.infer<typeof BillingOverviewSchema>;
 export type BillingSettings = z.infer<typeof BillingSettingsSchema>;
 export type UpdateBillingSettingsInput = z.infer<typeof UpdateBillingSettingsInputSchema>;
 export type MonthlyConversationUsagePoint = z.infer<typeof MonthlyConversationUsagePointSchema>;
 export type CreateCheckoutSessionInput = z.infer<typeof CreateCheckoutSessionInputSchema>;
+export type ChangePlanInput = z.infer<typeof ChangePlanInputSchema>;
 export type CheckoutPlanTier = z.infer<typeof CheckoutPlanTierSchema>;
 export type BillingInterval = z.infer<typeof BillingIntervalSchema>;
+export type OrgInvoice = z.infer<typeof OrgInvoiceSchema>;

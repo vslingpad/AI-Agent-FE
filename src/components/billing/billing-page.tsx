@@ -305,7 +305,10 @@ function UsageSection({
   const isFreePlan = data.subscription.tier === "free";
   const isCanceled = data.subscription.status === "canceled";
   const includedAllowance = usage.conversationsIncluded + usage.freeRolloverRemaining;
-  const includedProgress = Math.min((usage.conversationsUsed / includedAllowance) * 100, 100);
+  const includedProgress =
+    includedAllowance > 0
+      ? Math.min((usage.conversationsUsed / includedAllowance) * 100, 100)
+      : 0;
   const showOverage =
     usage.overageUsed > 0 || (settings.allowOverage && usage.overageCap !== null);
 

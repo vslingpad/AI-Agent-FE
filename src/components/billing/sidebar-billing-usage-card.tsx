@@ -30,13 +30,13 @@ function BillingUsageCardConnected() {
 
   const alertMessage = getBillingAlertPlainMessage(data, isAdmin);
   const canSelectPlan = canSelectSubscriptionPlan(data.subscription);
+  const conversationsLimit =
+    data.usage.conversationsIncluded + data.usage.freeRolloverRemaining;
 
   return (
     <BillingUsageCard
       conversationsUsed={data.usage.conversationsUsed}
-      conversationsLimit={
-        data.usage.conversationsIncluded + data.usage.freeRolloverRemaining
-      }
+      conversationsLimit={conversationsLimit}
       overageUsed={data.settings.allowOverage ? data.usage.overageUsed : 0}
       overageLimit={data.usage.overageCap ?? 0}
       isFreePlan={data.subscription.tier === "free"}

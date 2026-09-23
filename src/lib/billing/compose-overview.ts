@@ -1,4 +1,5 @@
 import { isPlainObject, keysToCamel } from "@/lib/api/control-plane";
+import { includedUsageCount } from "@/lib/billing/included-usage";
 import {
   BILLING_PLAN_TIERS,
   formatCurrency,
@@ -199,11 +200,17 @@ export function composeBillingOverview(
   const tier = asPlanTier(usage.planTier);
   const plan = findPlan(plans, tier);
   const overageSupported = asBoolean(usage.overageSupported);
-  const conversationsIncluded =
-    asNumber(usage.planIncludedTotal) > 0
-      ? asNumber(usage.planIncludedTotal)
-      : asNumber(plan?.freeGrant);
-  const conversationsUsed = asNumber(usage.conversationsBilledThisPeriod);
+  const planIncludedTotal = asNumber(usage.planIncludedTotal);
+  const freeGrant = asNumber(plan?.freeGrant);
+  const conversationsIncluded = planIncludedTotal > 0 ? planIncludedTotal : freeGrant;
+  const billedThisPeriod = asNumber(usage.conversationsBilledThisPeriod);
+  const conversationsUsed = includedUsageCount({
+    tier,
+    planIncludedTotal,
+    planIncludedRemaining: asNumber(usage.planIncludedRemaining),
+    freeGrant,
+    freeRemaining: asNumber(usage.freeRemaining),
+  });
   const overageUsed = asNumber(usage.overageUsed);
   const resetsAt =
     tier === "free" ? null : isoDateOrNull(usage.billingPeriodEnd ?? usage.billingPeriodStart);
@@ -275,7 +282,7 @@ export function composeBillingOverview(
       alertThresholds: [0.8, 1.0],
     },
     monthlyUsage: {
-      points: chartPoints(usage, conversationsUsed, overageUsed),
+      points: chartPoints(usage, billedThisPeriod, overageUsed),
     },
   });
 }

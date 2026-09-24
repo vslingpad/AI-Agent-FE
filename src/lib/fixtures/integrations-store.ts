@@ -404,7 +404,7 @@ function buildConnectorDetail(connector: OrgConnector): ConnectorDetail {
     base.channel = {
       webhook_status: "healthy",
       webhook_url:
-        "https://hooks.lingpad.ai/webhooks/zendesk/sunshine/conn_zd_us",
+        "https://hooks.nelto.ai/webhooks/zendesk/sunshine/conn_zd_us",
       sunshine_app_id: "5f8a9b2c1d3e4f5a",
       default_routing_agent: null,
       tag_rules: [
@@ -751,7 +751,7 @@ export function createOrgConnector(orgId: string, input: CreateConnectorInput) {
       })),
     },
     authorize_url: currentStep
-      ? `https://oauth.lingpad.ai/${input.integration_slug}/${currentStep}?session=${connect_session_id}`
+      ? `https://oauth.nelto.ai/${input.integration_slug}/${currentStep}?session=${connect_session_id}`
       : null,
   };
 
@@ -817,7 +817,7 @@ export function completeOAuthStep(
       }),
     },
     authorize_url: currentStep
-      ? `https://oauth.lingpad.ai/${session.integration_slug}/${currentStep}?session=${connect_session_id}`
+      ? `https://oauth.nelto.ai/${session.integration_slug}/${currentStep}?session=${connect_session_id}`
       : null,
   };
 
@@ -984,7 +984,7 @@ export function startOAuthStep(
             : ("pending" as const),
       })),
     },
-    authorize_url: `https://oauth.lingpad.ai/${connector.integration_slug}/${currentStep}?session=${connect_session_id}`,
+    authorize_url: `https://oauth.nelto.ai/${connector.integration_slug}/${currentStep}?session=${connect_session_id}`,
   };
 
   connectSessions.set(connect_session_id, session);

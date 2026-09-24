@@ -1,8 +1,11 @@
 "use client";
 
 import type { ComponentType } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import neltoLogo from "@/assets/brand/nelto-logo.png";
+import neltoMark from "@/assets/brand/nelto-mark.png";
 import {
   BotIcon,
   CreditCardIcon,
@@ -83,12 +86,22 @@ export function AppSidebar() {
       className="top-(--notification-banner-height)! h-[calc(100svh-var(--notification-banner-height))]!"
     >
       <SidebarHeader className="p-2">
-        <div className="flex items-center gap-1 py-1 pl-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+        <div className="flex items-center gap-1 py-1 pl-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
           <Link
             href="/"
-            className="min-w-0 flex-1 truncate text-xl font-semibold tracking-tight text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+            aria-label="Nelto"
+            className="flex min-w-0 flex-1 items-center group-data-[collapsible=icon]:flex-none"
           >
-            Nelto
+            <Image
+              src={neltoLogo}
+              alt=""
+              className="h-5 w-auto group-data-[collapsible=icon]:hidden"
+            />
+            <Image
+              src={neltoMark}
+              alt=""
+              className="hidden size-6 group-data-[collapsible=icon]:block"
+            />
           </Link>
           <SidebarTrigger className="shrink-0" />
         </div>

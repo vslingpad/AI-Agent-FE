@@ -18,8 +18,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Agent",
-  description: "AI Agent application",
+  title: "Nelto",
+  description:
+    "Nelto resolves support requests from start to finish. It checks your policy, makes the change in your systems and confirms the outcome with the customer. When a request is outside your rules, it hands off to your team with the work done. Start your free trial today.",
+  openGraph: {
+    title: "Nelto",
+    description:
+      "Nelto resolves support requests from start to finish. It checks your policy, makes the change in your systems and confirms the outcome with the customer. When a request is outside your rules, it hands off to your team with the work done. Start your free trial today.",
+    images: ["/logo.svg"],
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      {
+        url: "/favicon-light.png",
+        media: "(prefers-color-scheme: light)",
+        type: "image/png",
+      },
+      {
+        url: "/favicon-dark.png",
+        media: "(prefers-color-scheme: dark)",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

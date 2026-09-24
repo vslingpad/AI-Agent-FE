@@ -1,4 +1,4 @@
-# Lingpad AI Console — AWS Deployment (CloudFront)
+# Nelto Console — AWS Deployment (CloudFront)
 
 This app deploys to AWS using [SST](https://sst.dev) + [OpenNext](https://opennext.js.org/aws), which provisions:
 

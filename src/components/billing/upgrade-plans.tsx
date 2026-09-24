@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { CheckIcon, Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -49,11 +49,21 @@ export function UpgradePlansDialog({
   const changePlan = useChangePlan();
   const pending = checkout.isPending || changePlan.isPending;
 
-  useEffect(() => {
+  const [trackedInterval, setTrackedInterval] = useState({
+    open,
+    mode,
+    currentBillingInterval,
+  });
+  if (
+    open !== trackedInterval.open ||
+    mode !== trackedInterval.mode ||
+    currentBillingInterval !== trackedInterval.currentBillingInterval
+  ) {
+    setTrackedInterval({ open, mode, currentBillingInterval });
     if (open && mode === "change") {
       setInterval(currentBillingInterval);
     }
-  }, [open, mode, currentBillingInterval]);
+  }
 
   const handleSelectPlan = async (tier: CheckoutPlanTier) => {
     setPendingTier(tier);

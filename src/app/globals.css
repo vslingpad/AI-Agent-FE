@@ -179,3 +179,7 @@
     content: attr(data-placeholder);
   }
 }
+
+.cl-profileSection__activeDevices {
+  display: none;
+}

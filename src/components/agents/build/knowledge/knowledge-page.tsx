@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useAgentKnowledge, useUpdateAgentKnowledge } from "@/hooks/use-agents";
 import { formatLastSyncAttempt } from "@/lib/integrations/connector-paths";
+import { SyncStatusBadge } from "@/components/integrations/integration-utils";
 import {
   KNOWLEDGE_TILES,
   flattenKnowledgeOptions,
@@ -509,6 +510,7 @@ function ConnectedKnowledgeCard({
   const count = sourceItemCount(source);
   const isIntegration = isIntegrationKnowledgeSource(source);
   const canOpen = !isIntegration || source.enabled;
+  const syncing = source.syncStatus === "syncing";
 
   return (
     <div
@@ -559,7 +561,7 @@ function ConnectedKnowledgeCard({
                     <Switch
                       id={`knowledge-${source.id}`}
                       checked={source.enabled}
-                      disabled={pending}
+                      disabled={pending || syncing}
                       onCheckedChange={(checked) => onToggle(source.id, checked)}
                     />
                   </div>
@@ -569,17 +571,22 @@ function ConnectedKnowledgeCard({
               </div>
             </div>
           </div>
-          {isIntegration && !source.enabled ? (
+          {isIntegration && !source.enabled && !syncing ? (
             <p className="text-xs text-muted-foreground">
               Enable to use {source.name} for this agent.
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground">
-              {resourceCountLabel(source.kind, count)}
-              {source.lastSyncedAt
-                ? ` · synced ${formatLastSyncAttempt(source.lastSyncedAt)}`
-                : ""}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {isIntegration && source.syncStatus ? (
+                <SyncStatusBadge status={source.syncStatus} />
+              ) : null}
+              <p className="text-xs text-muted-foreground">
+                {resourceCountLabel(source.kind, count)}
+                {source.lastSyncedAt
+                  ? ` · synced ${formatLastSyncAttempt(source.lastSyncedAt)}`
+                  : ""}
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>

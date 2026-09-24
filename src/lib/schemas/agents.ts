@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { SyncStatusSchema } from "@/lib/schemas/integrations";
+
 export const AgentStatusSchema = z.enum(["draft", "live"]);
 export const AgentIconSchema = z.enum(["support", "billing", "technical"]);
 export const KnowledgeSourceStateSchema = z.enum([
@@ -162,6 +164,7 @@ export const KnowledgeSourceSchema = z.object({
   enabled: z.boolean(),
   instanceName: z.string().nullable(),
   lastSyncedAt: z.string().nullable(),
+  syncStatus: SyncStatusSchema.optional(),
   collections: z.array(KnowledgeCollectionSchema),
   resources: z.array(KnowledgeResourceSchema),
 });

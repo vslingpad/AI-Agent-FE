@@ -333,6 +333,7 @@ Returns `AgentAnalytics`:
       "enabled": true,
       "instanceName": null,
       "lastSyncedAt": "2026-08-31T05:00:00.000Z",
+      "syncStatus": "never",
       "collections": [],
       "resources": []
     }
@@ -346,6 +347,8 @@ Returns `AgentAnalytics`:
 |--------|---------|---------|
 | Native | `src_{kind}` | `src_website`, `src_files`, `src_qna` |
 | Connector | `src_{vendorSlug}_{kind}_{connectorId}` | `src_zendesk_help_center_42` |
+
+Connector sources include `syncStatus`: `syncing`, `synced`, `sync_failed`, or `never`. Native sources send `never`. While `syncStatus` is `syncing`, the Enable switch stays off. Turning Enable on after `sync_failed` runs the full connector sync again.
 
 **Resource types** (discriminated union on `type`): `url`, `file`, `qna`, `article`, `ticket` — see `KnowledgeResourceSchema` in `src/lib/schemas/agents.ts`.
 

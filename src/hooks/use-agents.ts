@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { useOrganization } from "@clerk/nextjs";
 import {
   createAgent,
@@ -147,8 +148,35 @@ export function useAgentAnalytics(agentId: string, query: DashboardQueryParams =
   });
 }
 
+const KNOWLEDGE_SYNC_POLL_MS = 60_000;
+const KNOWLEDGE_SYNC_POLL_LIMIT = 20;
+
 export function useAgentKnowledge(agentId: string) {
-  return useAgentSectionQuery(agentId, "knowledge", () => getAgentKnowledge(agentId));
+  const { organization, isLoaded } = useOrganization();
+  const syncBaseline = useRef<number | null>(null);
+
+  return useQuery({
+    queryKey: agentSectionKey(organization?.id, agentId, "knowledge"),
+    queryFn: () => getAgentKnowledge(agentId),
+    enabled: isLoaded && Boolean(organization?.id) && Boolean(agentId),
+    refetchInterval: (query) => {
+      const syncing = (query.state.data?.sources ?? []).some(
+        (source) => source.syncStatus === "syncing"
+      );
+      if (!syncing) {
+        syncBaseline.current = null;
+        return false;
+      }
+      if (syncBaseline.current == null) {
+        syncBaseline.current = query.state.dataUpdateCount;
+      }
+      const polls = query.state.dataUpdateCount - syncBaseline.current;
+      if (polls >= KNOWLEDGE_SYNC_POLL_LIMIT) {
+        return false;
+      }
+      return KNOWLEDGE_SYNC_POLL_MS;
+    },
+  });
 }
 
 export function useAgentActions(agentId: string) {

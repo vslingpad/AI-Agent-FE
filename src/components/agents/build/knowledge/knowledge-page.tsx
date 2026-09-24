@@ -510,7 +510,7 @@ function ConnectedKnowledgeCard({
   const count = sourceItemCount(source);
   const isIntegration = isIntegrationKnowledgeSource(source);
   const canOpen = !isIntegration || source.enabled;
-  const syncing = source.syncStatus === "syncing";
+  const syncing = source.enabled && source.syncStatus === "syncing";
 
   return (
     <div
@@ -571,7 +571,7 @@ function ConnectedKnowledgeCard({
               </div>
             </div>
           </div>
-          {isIntegration && !source.enabled && !syncing ? (
+          {isIntegration && !source.enabled ? (
             <p className="text-xs text-muted-foreground">
               Enable to use {source.name} for this agent.
             </p>

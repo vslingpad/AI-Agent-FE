@@ -214,6 +214,7 @@ export function composeBillingOverview(
   const overageUsed = asNumber(usage.overageUsed);
   const resetsAt =
     tier === "free" ? null : isoDateOrNull(usage.billingPeriodEnd ?? usage.billingPeriodStart);
+  const renewsAt = isoDateOrNull(usage.subscriptionRenewsAt) ?? resetsAt;
   const usageRatio = usage.includedUsageRatio;
   const usagePercent =
     typeof usageRatio === "number" && Number.isFinite(usageRatio)
@@ -239,7 +240,7 @@ export function composeBillingOverview(
       monthlyBaseLabel: monthlyBaseLabel(plan, tier),
       hasActiveSubscription: asBoolean(usage.hasActiveSubscription, false),
       billingInterval: asBillingInterval(usage.billingInterval),
-      currentPeriodEnd: resetsAt,
+      currentPeriodEnd: renewsAt,
     },
     usage: {
       conversationsUsed,

@@ -19,7 +19,13 @@ import {
   useBillingPortalSession,
   useUpdateBillingSettings,
 } from "@/hooks/use-billing";
-import { formatCurrency, formatLimitValue, isCheckoutPlanTier } from "@/lib/billing/plans";
+import {
+  formatCurrency,
+  formatLimitValue,
+  getPlanDefinition,
+  isCheckoutPlanTier,
+  planPriceLabel,
+} from "@/lib/billing/plans";
 import {
   canSelectSubscriptionPlan,
   formatSubscriptionStatusLabel,
@@ -245,6 +251,12 @@ function SubscriptionStatusAlert({ data }: { data: BillingOverview }) {
 function CurrentPlanSection({ data }: { data: BillingOverview }) {
   const { subscription } = data;
   const isFreePlan = subscription.tier === "free";
+  const yearly = subscription.billingInterval === "year";
+  const price = planPriceLabel(
+    getPlanDefinition(subscription.tier),
+    yearly ? "year" : "month"
+  );
+  const cadence = yearly ? "per year" : "per month";
 
   return (
     <Card className="border-border">
@@ -256,10 +268,10 @@ function CurrentPlanSection({ data }: { data: BillingOverview }) {
               {isFreePlan
                 ? `${subscription.monthlyBaseLabel} · ${data.usage.conversationsIncluded} conversations`
                 : subscription.status === "canceled"
-                  ? `${subscription.monthlyBaseLabel} per month · Subscription ended`
+                  ? `${price} ${cadence} · Subscription ended`
                   : subscription.currentPeriodEnd
-                    ? `${subscription.monthlyBaseLabel} per month · Renews on ${formatBillingDate(subscription.currentPeriodEnd)}`
-                    : `${subscription.monthlyBaseLabel} per month`}
+                    ? `${price} ${cadence} · Renews on ${formatBillingDate(subscription.currentPeriodEnd)}`
+                    : `${price} ${cadence}`}
             </CardDescription>
           </div>
           <Badge variant={subscriptionStatusBadgeVariant(subscription.status)}>

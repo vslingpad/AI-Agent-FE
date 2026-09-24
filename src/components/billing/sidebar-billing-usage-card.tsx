@@ -51,9 +51,9 @@ function BillingUsageCardConnected() {
       manageBillingPending={portalSession.isPending}
       upgradeHref="/billing?upgrade=1"
       resetsOn={
-        canSelectPlan || !data.usage.resetsAt
+        canSelectPlan || !data.subscription.currentPeriodEnd
           ? undefined
-          : formatSidebarResetDate(data.usage.resetsAt)
+          : formatSidebarResetDate(data.subscription.currentPeriodEnd)
       }
       href={isAdmin && !canSelectPlan ? "/billing" : undefined}
     />
